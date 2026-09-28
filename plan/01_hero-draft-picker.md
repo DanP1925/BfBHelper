@@ -113,7 +113,7 @@ id — name — class — source asset (in `specs/Hero Cards/`):
 
 ## Milestone Checklist
 
-- [ ] M0. Scaffold Next.js + TypeScript (App Router), `output: 'export'` +
+- [x] M0. Scaffold Next.js + TypeScript (App Router), `output: 'export'` +
       `images.unoptimized: true`, ESLint, Vitest + RTL + jsdom wired up with
       a passing placeholder test, npm scripts (dev/build/test/lint). Confirm
       `next build` emits a static `out/` dir. Replace frontend/README.md's
