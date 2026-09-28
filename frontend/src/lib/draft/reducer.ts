@@ -1,9 +1,9 @@
 import type { DraftAction, DraftState } from "./types";
 import { isDraftDone } from "./sequence";
 import { getCurrentTurnPlayer, getTotalPicks } from "./selectors";
-import { ALL_HERO_IDS } from "./heroIdsLocal";
+import { HERO_IDS } from "../../data/heroes";
 
-const KNOWN_HERO_IDS = new Set(ALL_HERO_IDS);
+const KNOWN_HERO_IDS = new Set(HERO_IDS);
 
 /**
  * Pure reducer over the only stored/dispatched draft state. NEW_DRAFT resets

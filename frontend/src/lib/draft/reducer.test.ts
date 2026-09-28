@@ -8,7 +8,7 @@ import {
   getRemainingPool,
   isDraftComplete,
 } from "./selectors";
-import { ALL_HERO_IDS } from "./heroIdsLocal";
+import { HERO_IDS } from "../../data/heroes";
 
 function pick(player: PlayerId, heroId: HeroId) {
   return { type: "PICK_HERO" as const, player, heroId };
@@ -28,7 +28,7 @@ function playFullDraft(initiative: PlayerId): DraftState {
   while (!isDraftComplete(state)) {
     const turn = getCurrentTurnPlayer(state);
     if (!turn) break;
-    state = draftReducer(state, pick(turn, ALL_HERO_IDS[heroIndex]));
+    state = draftReducer(state, pick(turn, HERO_IDS[heroIndex]));
     heroIndex += 1;
   }
   return state;
@@ -129,7 +129,7 @@ describe("draftReducer", () => {
   it("further picks after the 8th are no-ops", () => {
     const done = playFullDraft("p1");
     expect(isDraftComplete(done)).toBe(true);
-    const unusedHero = ALL_HERO_IDS.find(
+    const unusedHero = HERO_IDS.find(
       (id) => !done.picks.p1.includes(id) && !done.picks.p2.includes(id),
     )!;
     const next = draftReducer(done, pick("p1", unusedHero));
@@ -139,7 +139,7 @@ describe("draftReducer", () => {
   it("scenario 10 sanity via reducer: pool shrinks and never re-offers a picked hero", () => {
     let state: DraftState = { initiative: "p1", picks: { p1: [], p2: [] } };
     state = draftReducer(state, pick("p1", "baldwin"));
-    const pool = getRemainingPool(state, ALL_HERO_IDS);
+    const pool = getRemainingPool(state, HERO_IDS);
     expect(pool).not.toContain("baldwin");
   });
 });

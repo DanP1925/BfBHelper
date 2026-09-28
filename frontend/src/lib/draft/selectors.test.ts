@@ -9,7 +9,7 @@ import {
   getTotalPicks,
   isDraftComplete,
 } from "./selectors";
-import { ALL_HERO_IDS } from "./heroIdsLocal";
+import { HERO_IDS } from "../../data/heroes";
 
 function freshState(initiative: DraftState["initiative"] = "p1"): DraftState {
   return { initiative, picks: { p1: [], p2: [] } };
@@ -131,18 +131,18 @@ describe("selectors", () => {
       initiative: "p1",
       picks: { p1: ["baldwin", "cyrus"], p2: ["felix"] },
     };
-    const pool = getRemainingPool(state, ALL_HERO_IDS);
+    const pool = getRemainingPool(state, HERO_IDS);
     expect(pool).not.toContain("baldwin");
     expect(pool).not.toContain("cyrus");
     expect(pool).not.toContain("felix");
-    expect(pool.length).toBe(ALL_HERO_IDS.length - 3);
+    expect(pool.length).toBe(HERO_IDS.length - 3);
     // every remaining id is still a known id
-    pool.forEach((id) => expect(ALL_HERO_IDS).toContain(id));
+    pool.forEach((id) => expect(HERO_IDS).toContain(id));
   });
 
   it("offers the full pool when nothing has been picked", () => {
-    const pool = getRemainingPool(freshState(), ALL_HERO_IDS);
-    expect(pool).toEqual(ALL_HERO_IDS);
+    const pool = getRemainingPool(freshState(), HERO_IDS);
+    expect(pool).toEqual(HERO_IDS);
   });
 
   // Scenario 11: each player's derived team slots contain exactly their
