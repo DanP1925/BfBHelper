@@ -3,18 +3,19 @@
 > **Living checklist.** This is the Build-phase plan for the feature scoped
 > in [../intent/01_hero-draft-picker.md](../intent/01_hero-draft-picker.md)
 > and [../specs/01_hero-draft-picker.md](../specs/01_hero-draft-picker.md).
-> No application code exists yet — `frontend/` is an empty stub. This doc
-> is updated and checked off incrementally as implementation proceeds, in
-> the PR(s) that do that work.
+> M0–M9 are implemented (see the Milestone Checklist); this doc has been
+> updated to reflect what was actually built, including a few deviations
+> from the original plan discovered along the way. M10 (deployment) is
+> tracked in a separate MR; M11 (docs follow-up) is deliberately skipped
+> for now.
 
 ## Context
 
-The repo has zero application code so far — `frontend/` and `backend/` are
-empty stub folders with only placeholder READMEs. Intent and spec are done
-and stable, including a reviewed UI mockup (3 screens: Start, Draft Board,
-Results). This plan turns that into a concrete, dependency-ordered build
-checklist so implementation can proceed incrementally without re-deriving
-architecture decisions each session.
+Intent and spec were done and stable going in, including a reviewed UI
+mockup (3 screens: Start, Draft Board, Results). This plan turned that into
+a concrete, dependency-ordered build checklist; M0–M9 are now implemented
+on `frontend/` (Next.js static export), with the deviations from the
+original plan called out below rather than left implicit in the diff.
 
 Decisions already made with the user (not re-litigated below): frontend
 framework **Next.js** + TypeScript, styling **plain CSS / CSS Modules**,
@@ -43,14 +44,15 @@ persistence layer.
 frontend/
   next.config.ts          # output: 'export', images: { unoptimized: true }
   vitest.config.ts
-  public/heroes/           # 19 hero portraits + card-back.png, copied from specs/Hero Cards/
+  public/heroes/           # 19 hero cards + card-back.png, copied from specs/Hero Cards/
   src/
     app/
       layout.tsx            # next/font/google (Cinzel, Spectral), globals.css
-      globals.css            # CSS custom properties for the mockup's palette
+      globals.css            # design tokens; body pinned to 100dvh, overflow hidden
       page.tsx                # 'use client'; useDraft(); switches Start/DraftBoard/Results by phase
+      page.test.tsx
     data/
-      heroes.ts                 # static HERO_ROSTER: Hero[], HeroId union
+      heroes.ts                 # HERO_ROSTER: Hero[], HERO_IDS, getHeroById()
       heroes.test.ts             # 19 unique ids, each resolves to a public/heroes/*.png
     lib/
       draft/
@@ -60,6 +62,8 @@ frontend/
         schema.ts, storage.ts (load/save/clear + validation)
         + storage.test.ts
       useDraft.ts + useDraft.test.tsx
+      useFitGrid.ts            # width+height ResizeObserver fit (hero pool)
+      useHeightFitColumns.ts   # height-only ResizeObserver fit (team panels, results)
     components/
       HeroCard/, TeamPanel/, HeroPool/, TurnBanner/  (each with .module.css)
       screens/StartScreen/, DraftBoardScreen/, ResultsScreen/
@@ -71,7 +75,8 @@ Key decisions:
   is the *only* stored/dispatched state; phase, step, turn, remaining pool,
   and per-player team slots are all derived in `selectors.ts` from that plus
   the fixed step sequence `[1,2,2,2,1]`. Keeps the reducer trivial to test
-  and the persisted payload minimal.
+  and the persisted payload minimal. (Also added: `getPicksRemainingThisStep`,
+  needed for the turn banner's "pick N more heroes" wording.)
 - Coin flip runs in `useDraft`'s `startNewDraft()`, not inside the reducer —
   `NEW_DRAFT` carries the already-decided initiative as payload, so tests
   never need to mock `Math.random`.
@@ -81,7 +86,33 @@ Key decisions:
   than an implicit UI-only invariant.
 - Screens (`StartScreen`, `DraftBoardScreen`, `ResultsScreen`) are pure
   props-in/callbacks-out; `useDraft()` is called exactly once, in
-  `app/page.tsx`.
+  `app/page.tsx`. Both `DraftBoardScreen` and `ResultsScreen` split into a
+  fixed header, a scrollable body, and a fixed footer — an action button
+  living inside the scrollable region would otherwise scroll out of view
+  on short windows.
+- **Deviation from plan:** the source hero art in `specs/Hero Cards/` turned
+  out to be full illustrated cards (750×1050, a 5:7 aspect ratio, with
+  name/class/stats/ability all baked into the image) rather than plain
+  portraits. `HeroCard` just displays the whole image per variant
+  (`pool`/`slot`/`result`) with no separate text overlay — an earlier
+  attempt that cropped to a headshot and duplicated the name/class in a
+  label underneath was wrong and got fixed.
+- **Deviation from plan:** the results screen's "← New Draft" is a back
+  link to the idle Start screen (`useDraft().returnToStart()`, added
+  post-hoc), distinct from the draft board's "New Draft", which resets in
+  place (`startNewDraft()`) — matching the mockup, which the original plan
+  hadn't called out as a distinction.
+- **Added, not originally planned:** `useFitGrid`/`useHeightFitColumns`.
+  The hero pool and team panels measure their container via
+  `ResizeObserver` and compute the largest card size that fits with no
+  scrollbar, subject to a readability floor (`minCardWidth`) and an
+  aesthetic ceiling (`maxCardWidth`); the pool additionally never wraps to
+  fewer than 4 columns. `useFitGrid` measures width+height (safe for the
+  pool, whose container size is externally driven); `useHeightFitColumns`
+  measures height only (team panels and the results screen's card grids
+  set their own container's width from the computed result, so measuring
+  width too would read back their own output — a real bug hit and fixed
+  during this build, a self-referential `ResizeObserver` feedback loop).
 
 ## Hero Roster Data
 
@@ -110,6 +141,11 @@ id — name — class — source asset (in `specs/Hero Cards/`):
 | vladiator | Vladiator | Barbarian | Vladiator_Barbarian.png |
 
 (plus `card-back.png` from `CardBack.png` for the Start screen)
+
+Each source asset is a full illustrated card, not a plain portrait — see
+the "Deviation from plan" note under Architecture. `data/heroes.ts` also
+exports `getHeroById(id)`, used by `app/page.tsx` to map the hook's
+`HeroId`-only view-model back to displayable `Hero` objects.
 
 ## Milestone Checklist
 
@@ -189,6 +225,15 @@ Hook-level (`lib/useDraft.test.tsx`, RTL `renderHook`):
 23. Valid persisted mid-draft state → correct `phase`/turn/step restored.
 24. Every `pickHero` call triggers a persistence write.
 25. `startNewDraft()` mid-draft immediately persists the fresh state.
+26. A rejected (wrong-turn) `pickHero` call does not persist (added).
+27. `returnToStart()` clears the persisted draft and returns to idle
+    (added, not in the original plan — see Architecture).
+
+Also added: a `selectors.test.ts` case for `getPicksRemainingThisStep`,
+and `app/page.test.tsx` renders `<Home />` and asserts the idle Start
+screen (heading + Start Draft button) — the plan didn't originally call
+out component-level tests, but this one already existed as the M0
+scaffold's placeholder test and was updated in place rather than deleted.
 
 ## localStorage Schema (resolves spec's open item)
 
@@ -216,8 +261,14 @@ Hook-level (`lib/useDraft.test.tsx`, RTL `renderHook`):
 
 ## Follow-ups / Open Items
 
-- **Hosting** — Vercel vs Netlify still open, carried forward as M10.
+- **Hosting** — Vercel vs Netlify still open; M10 is tracked in a separate
+  MR, not this one.
 - **`backend/README.md`** still describes the descoped real-time-sync/
-  backend architecture — flagged as M11, not fixed in this task.
-- **Asset licensing/provenance** for the hero portrait art isn't tracked
+  backend architecture — M11, deliberately skipped for this MR.
+- **Asset licensing/provenance** for the hero card art isn't tracked
   anywhere — worth a note before any public deploy.
+- **`useFitGrid`'s `columnOptions` param** was originally added for
+  `TeamPanel`'s 1-or-2-column choice, but `TeamPanel` later moved to the
+  height-only `useHeightFitColumns` hook instead (see Architecture); the
+  param lives on today as how the hero pool enforces its minimum-4-columns
+  floor, a different caller than the one that motivated it.
