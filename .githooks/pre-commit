@@ -1,0 +1,10 @@
+#!/bin/sh
+# Blocks commits directly on main. See CLAUDE.md "Git workflow".
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+if [ "$branch" = "main" ]; then
+  echo "Refusing to commit directly on 'main'. Create a branch first:" >&2
+  echo "  git checkout -b <branch-name>" >&2
+  exit 1
+fi
