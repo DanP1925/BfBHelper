@@ -10,6 +10,9 @@ const CARD_ASPECT_RATIO = 5 / 7;
 // Below this, the card art's baked-in name/class text stops being readable —
 // prefer letting the pool scroll over shrinking further.
 const MIN_CARD_WIDTH = 150;
+// Purely aesthetic — without a cap, cards balloon to fill the row once few
+// heroes remain late in the draft (as few as 1 in the last step).
+const MAX_CARD_WIDTH = 220;
 
 type HeroPoolProps = {
   heroes: Hero[];
@@ -23,6 +26,7 @@ export function HeroPool({ heroes, onPick }: HeroPoolProps) {
       aspectRatio: CARD_ASPECT_RATIO,
       gap: GAP,
       minCardWidth: MIN_CARD_WIDTH,
+      maxCardWidth: MAX_CARD_WIDTH,
     });
 
   return (
