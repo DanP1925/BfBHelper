@@ -21,9 +21,9 @@ player variant.
 
 ## Proposed Outcome
 A web app that walks two players through the official 2-player draft
-order, letting each side pick from the 19-hero pool in turn, with no
-bans. Each participant can join from their own device and see the
-draft update in real time as others pick.
+order on a single shared device (one browser, passed back and forth or
+viewed by both players at once), letting each side pick from the
+19-hero pool in turn, with no bans.
 
 ## Draft Order (2-player standard, no bans)
 1. Randomly determine initiative; initiative player picks **1** hero.
@@ -34,8 +34,8 @@ draft update in real time as others pick.
 → 4 heroes per team, 8 total drafted.
 
 Initiative (step 1) is determined automatically by the app — a
-coin-flip triggered the moment both players have joined the session —
-not decided manually beforehand.
+coin-flip triggered when the draft starts — not decided manually
+beforehand.
 
 The app enforces this order: only the player whose turn it is can
 pick, only remaining (unpicked) heroes are selectable, and the app
@@ -65,57 +65,45 @@ repos, or infrastructure are affected.
 
 ## Constraints
 - React + TypeScript frontend.
-- Needs a backend to support multi-device real-time sync (draft state
-  must propagate to every connected viewer) and to store the hero
-  roster in a simple database.
+- No backend required for v1 — both players share one browser, so
+  draft state can live entirely in client-side state. The hero roster
+  can be a static data file bundled with the frontend rather than a
+  database.
 - Hero data (names, class/type) is sourced from the official rulebook
   and entered by us — no external game API for v1.
-- No persistence of in-progress draft state is required for v1 — a
-  session's draft state can reset once everyone disconnects or the
-  session ends. Only the hero roster itself (reference data) is
-  persisted.
+- In-progress draft state persists across reloads via `localStorage`
+  (still no backend/database needed for this — it's local to the one
+  device being used).
 
 ## Out of Scope (deferred to later phases)
 - **Life/Level Displayer** feature (HP/level scoreboard during a
-  match) — becomes v2, built on top of v1's session/real-time
-  infrastructure.
+  match) — becomes v2, built on top of v1's foundation.
 - **3-4 player variant** (teams of two, or one team of two + one team
   of one) and its draft/setup differences — becomes a later phase
   after both v1 and v2 (2-player) are done.
 - Base HP and other per-hero combat stats (needed only for the
   Life/Level Displayer, not the Draft Picker).
+- **Multi-device real-time sync** (each player joining from their own
+  device via a shareable link, with draft state propagating live to
+  every connected viewer) — not needed while both players share one
+  device. Not ruled out permanently; may be revisited well after v1 if
+  remote/multi-device play becomes a priority.
 
 ## Session Lifecycle
-- A session starts when a participant creates it (gets a shareable
-  join code/link) and others join with that code.
+No multi-device session concept for v1 — both players use one browser
+tab, so there's nothing to join and no accounts or links involved.
+- A draft starts when the player explicitly starts one from the app
+  (e.g. a "New Draft" action) — not automatically on every page load,
+  since state now persists (see below) and an accidental reload
+  shouldn't silently wipe an in-progress draft.
 - **Normal end**: the draft completes (all 8 picks made per the draft
-  order above) — the session moves to a read-only "done" state showing
-  the final two teams, so participants can review/screenshot the
-  result.
-- No auto-expiry on disconnect/inactivity while at least one
-  participant is still connected. Once **every** participant has
-  disconnected, the session is kept alive for a **5-minute grace
-  period** — long enough to tolerate a closed tab, a laptop lid
-  closing, or a brief network drop — before it's garbage-collected
-  server-side. Reopening the session link in the same browser within
-  that window resumes your seat and the in-progress draft (see
-  "Joining a Session" below); once the grace period elapses, the
-  session and its draft progress are gone.
-
-## Joining a Session
-A session is joined via link only — no code-entry UI. The creator
-starts a session, gets a unique shareable URL (e.g.
-`bfbhelper.app/session/A7X2QK`; codes avoid visually ambiguous
-characters like `0`/`O` and `1`/`I`), and sends that link directly to
-the other player (text, Discord, etc.). Opening the link joins the
-session. No accounts, no login — possession of the link is the only
-access control.
-
-The first two people to open the link take the two player seats, in
-the order they join. Anyone who opens the link after both seats are
-filled joins as a **read-only spectator** — they see the draft update
-live but cannot pick. Because there are no accounts, a seat is tied to
-a specific browser: refreshing or reopening the link in the same
-browser resumes your seat, but opening it in a different browser or an
-incognito window counts as a new participant (and would take the
-spectator role once both seats are filled).
+  order above) — the app shows a read-only "done" view with the final
+  two teams, so players can review/screenshot the result.
+- Reloading or closing the tab does **not** lose progress — draft
+  state (initiative, whose turn it is, picks so far) persists in
+  `localStorage` and resumes automatically when the page is reopened.
+  This matters more now that a full draft involves several picks back
+  and forth, raising the odds of an accidental reload or closed tab
+  mid-draft.
+- Starting a new draft (via the explicit action above) overwrites the
+  persisted state — there's no history of past drafts kept.
