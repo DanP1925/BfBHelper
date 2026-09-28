@@ -89,4 +89,20 @@ describe("useDraft", () => {
     expect(readRawPicks()).toEqual({ p1: [], p2: [] });
     expect(result.current.phase).toBe("drafting");
   });
+
+  it("returnToStart clears the persisted draft and goes back to idle", () => {
+    const { result } = renderHook(() => useDraft());
+
+    act(() => {
+      result.current.startNewDraft();
+    });
+    expect(result.current.phase).toBe("drafting");
+
+    act(() => {
+      result.current.returnToStart();
+    });
+
+    expect(result.current.phase).toBe("idle");
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
 });

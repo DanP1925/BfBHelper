@@ -1,5 +1,10 @@
 import type { DraftState, HeroId, PlayerId } from "./types";
-import { getCurrentStepIndex, getPicksRequiredForStep, isDraftDone } from "./sequence";
+import {
+  getCurrentStepIndex,
+  getPicksRequiredForStep,
+  isDraftDone,
+  STEP_BOUNDARIES,
+} from "./sequence";
 
 /** Number of team slots each player has (fixed roster size). */
 export const TEAM_SIZE = 4;
@@ -21,6 +26,18 @@ export function getCurrentStep(state: DraftState): number {
 /** How many picks are required within the current step. */
 export function getPicksRequiredThisStep(state: DraftState): number {
   return getPicksRequiredForStep(getCurrentStep(state));
+}
+
+/** How many picks have already been made within the current step. */
+export function getPicksMadeThisStep(state: DraftState): number {
+  const step = getCurrentStep(state);
+  const previousBoundary = step === 1 ? 0 : STEP_BOUNDARIES[step - 2];
+  return getTotalPicks(state) - previousBoundary;
+}
+
+/** How many more picks are needed to complete the current step. */
+export function getPicksRemainingThisStep(state: DraftState): number {
+  return getPicksRequiredThisStep(state) - getPicksMadeThisStep(state);
 }
 
 /**

@@ -1,0 +1,16 @@
+.banner {
+  text-align: right;
+}
+
+.stepLabel {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.bannerText {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+}

@@ -1,12 +1,19 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import Home from "./page";
 
+beforeEach(() => {
+  window.localStorage.clear();
+});
+
 describe("Home", () => {
-  it("renders the scaffold placeholder heading", () => {
+  it("renders the Start screen when no draft is in progress", () => {
     render(<Home />);
     expect(
-      screen.getByRole("heading", { name: /hero draft picker/i }),
+      screen.getByRole("heading", { name: /battle for biternia/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /start draft/i }),
     ).toBeInTheDocument();
   });
 });

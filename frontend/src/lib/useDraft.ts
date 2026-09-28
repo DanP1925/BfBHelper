@@ -7,6 +7,7 @@ import { draftReducer } from "./draft/reducer";
 import {
   getCurrentStep,
   getCurrentTurnPlayer,
+  getPicksRemainingThisStep,
   getPicksRequiredThisStep,
   getRemainingPool,
   getTeamSlots,
@@ -19,13 +20,18 @@ export type DraftPhase = "idle" | "drafting" | "done";
 
 export type UseDraftResult = {
   phase: DraftPhase;
+  /** The player who won the coin flip — fixed for the whole draft, unlike currentTurnPlayer. */
+  initiative: PlayerId | null;
   currentStep: number | null;
   currentTurnPlayer: PlayerId | null;
   picksRequiredThisStep: number | null;
+  picksRemainingThisStep: number | null;
   remainingPool: HeroId[];
   teamSlots: Record<PlayerId, Array<HeroId | null>>;
   pickHero: (player: PlayerId, heroId: HeroId) => void;
   startNewDraft: () => void;
+  /** Clears any in-progress/completed draft and returns to the idle Start screen. */
+  returnToStart: () => void;
 };
 
 const EMPTY_SLOTS: Array<HeroId | null> = [null, null, null, null];
@@ -71,6 +77,11 @@ export function useDraft(): UseDraftResult {
     setDraftState(next);
   }, []);
 
+  const returnToStart = useCallback(() => {
+    clearDraft();
+    setDraftState(null);
+  }, []);
+
   const phase: DraftPhase =
     draftState === null
       ? "idle"
@@ -80,10 +91,14 @@ export function useDraft(): UseDraftResult {
 
   return {
     phase,
+    initiative: draftState ? draftState.initiative : null,
     currentStep: draftState ? getCurrentStep(draftState) : null,
     currentTurnPlayer: draftState ? getCurrentTurnPlayer(draftState) : null,
     picksRequiredThisStep: draftState
       ? getPicksRequiredThisStep(draftState)
+      : null,
+    picksRemainingThisStep: draftState
+      ? getPicksRemainingThisStep(draftState)
       : null,
     remainingPool: draftState ? getRemainingPool(draftState, HERO_IDS) : [],
     teamSlots: {
@@ -92,5 +107,6 @@ export function useDraft(): UseDraftResult {
     },
     pickHero,
     startNewDraft,
+    returnToStart,
   };
 }

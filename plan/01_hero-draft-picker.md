@@ -132,11 +132,11 @@ id — name — class — source asset (in `specs/Hero Cards/`):
       corruption/version-mismatch handling — full Vitest suite green.
 - [x] M5. useDraft hook: reducer + persistence effect + view-model. Hook
       tests covering resume-from-storage and end-to-end pick sequences.
-- [ ] M6. Presentational leaf components: HeroCard, TeamPanel, TurnBanner —
+- [x] M6. Presentational leaf components: HeroCard, TeamPanel, TurnBanner —
       styled to match the mockup, checked via dev server.
-- [ ] M7. Screen components: StartScreen, DraftBoardScreen, ResultsScreen —
+- [x] M7. Screen components: StartScreen, DraftBoardScreen, ResultsScreen —
       pure props-in, callbacks-out.
-- [ ] M8. Wire up app/page.tsx: single useDraft() call, phase switch.
+- [x] M8. Wire up app/page.tsx: single useDraft() call, phase switch.
 - [ ] M9. Manual QA: full click-through of all 3 screens; persistence across
       reload at multiple points mid-draft; New Draft overwrites an
       in-progress draft; keyboard focus-visible states; a couple of
