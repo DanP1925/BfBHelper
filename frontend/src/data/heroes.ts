@@ -118,3 +118,13 @@ export const HERO_ROSTER: Hero[] = [
 ];
 
 export const HERO_IDS: HeroId[] = HERO_ROSTER.map((hero) => hero.id);
+
+const HERO_BY_ID = new Map(HERO_ROSTER.map((hero) => [hero.id, hero]));
+
+export function getHeroById(id: HeroId): Hero {
+  const hero = HERO_BY_ID.get(id);
+  if (!hero) {
+    throw new Error(`Unknown hero id: ${id}`);
+  }
+  return hero;
+}

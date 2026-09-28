@@ -1,0 +1,68 @@
+.screen {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 40px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--color-gold);
+}
+
+.subtitle {
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.body {
+  flex-grow: 1;
+  display: flex;
+  gap: 24px;
+  padding: 24px 40px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.footer {
+  padding: 16px 40px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.newDraftButton {
+  background: none;
+  border: 1px solid var(--color-button-border);
+  color: var(--color-muted-strong);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.newDraftButton:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}

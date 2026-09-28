@@ -1,0 +1,64 @@
+/* Source card art is 750x1050 (5:7) with name/class/stats/ability baked
+   into the image itself — every variant just displays the whole image at
+   a different size, no separate text overlay. */
+
+.poolCard {
+  background: none;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid transparent;
+  cursor: pointer;
+  width: 100%;
+  display: block;
+}
+
+.poolCard:hover {
+  border-color: var(--color-gold);
+}
+
+.poolCard:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.poolImage {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  display: block;
+  border-radius: 6px;
+}
+
+.slot {
+  border-radius: 8px;
+  padding: 4px;
+  box-sizing: border-box;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+}
+
+.slotImage {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  display: block;
+  border-radius: 6px;
+}
+
+.resultCard {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.resultImage {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  display: block;
+}

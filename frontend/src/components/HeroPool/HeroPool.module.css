@@ -1,0 +1,15 @@
+.scrollArea {
+  flex-grow: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 16px;
+  justify-content: center;
+}

@@ -3,6 +3,7 @@ import type { DraftState } from "./types";
 import {
   getCurrentStep,
   getCurrentTurnPlayer,
+  getPicksRemainingThisStep,
   getPicksRequiredThisStep,
   getRemainingPool,
   getTeamSlots,
@@ -16,6 +17,20 @@ function freshState(initiative: DraftState["initiative"] = "p1"): DraftState {
 }
 
 describe("selectors", () => {
+  it("counts down remaining picks within a multi-pick step", () => {
+    const state: DraftState = { initiative: "p1", picks: { p1: ["baldwin"], p2: [] } };
+    // Step 2 (p2's turn), 2 required, 0 made yet.
+    expect(getPicksRemainingThisStep(state)).toBe(2);
+
+    const midStep: DraftState = {
+      initiative: "p1",
+      picks: { p1: ["baldwin"], p2: ["cyrus"] },
+    };
+    // Still step 2, 1 of 2 made.
+    expect(getPicksRemainingThisStep(midStep)).toBe(1);
+  });
+
+
   it("computes total picks from both players' picks", () => {
     const state: DraftState = {
       initiative: "p1",
