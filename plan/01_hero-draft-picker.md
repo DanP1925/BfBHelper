@@ -120,15 +120,15 @@ id — name — class — source asset (in `specs/Hero Cards/`):
       "Scaffold TBD". Adopt the `.gitignore` the scaffold generates (verify
       it covers `node_modules/`, `out/`/`.next/`, and `.DS_Store`) rather
       than hand-writing one — see intent's deferred-`.gitignore` decision.
-- [ ] M1. Design tokens & globals.css matching the mockup palette (bg
+- [x] M1. Design tokens & globals.css matching the mockup palette (bg
       #181310, text #f3ead9, gold #c9a24b, P1 #c1665a, P2 #4f9aa0), Cinzel +
       Spectral via next/font/google in layout.tsx.
-- [ ] M2. Copy/rename the 20 PNGs from `specs/Hero Cards/` into
+- [x] M2. Copy/rename the 20 PNGs from `specs/Hero Cards/` into
       `frontend/public/heroes/`; author `src/data/heroes.ts`; add the
       roster sanity test.
-- [ ] M3. Draft logic core (framework-agnostic): types, step sequence, coin
+- [x] M3. Draft logic core (framework-agnostic): types, step sequence, coin
       flip, pure reducer, selectors — full Vitest suite green.
-- [ ] M4. Persistence layer: schema + load/save/clear with validation and
+- [x] M4. Persistence layer: schema + load/save/clear with validation and
       corruption/version-mismatch handling — full Vitest suite green.
 - [ ] M5. useDraft hook: reducer + persistence effect + view-model. Hook
       tests covering resume-from-storage and end-to-end pick sequences.
