@@ -18,3 +18,6 @@
   too (e.g. architecture that no longer matches a simplified scope) — they drift silently.
 - A feature's UI mockup is a Claude design artifact linked from its spec under a
   "UI Design Reference" section; source art assets it uses live in `specs/<Feature Name>/`.
+- `plan/` holds one `NN_feature-name.md` per feature too, same numbering as its
+  intent/spec. It's a living build checklist for the Build phase — written before
+  implementation starts and checked off incrementally in the PR(s) that do that work.
