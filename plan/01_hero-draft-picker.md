@@ -130,7 +130,7 @@ id — name — class — source asset (in `specs/Hero Cards/`):
       flip, pure reducer, selectors — full Vitest suite green.
 - [x] M4. Persistence layer: schema + load/save/clear with validation and
       corruption/version-mismatch handling — full Vitest suite green.
-- [ ] M5. useDraft hook: reducer + persistence effect + view-model. Hook
+- [x] M5. useDraft hook: reducer + persistence effect + view-model. Hook
       tests covering resume-from-storage and end-to-end pick sequences.
 - [ ] M6. Presentational leaf components: HeroCard, TeamPanel, TurnBanner —
       styled to match the mockup, checked via dev server.
