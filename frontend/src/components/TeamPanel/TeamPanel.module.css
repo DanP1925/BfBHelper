@@ -22,8 +22,11 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  grid-auto-rows: min-content;
+  align-content: start;
+  justify-content: center;
   gap: 10px;
 }
 
