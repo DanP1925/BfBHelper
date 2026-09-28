@@ -137,15 +137,17 @@ id — name — class — source asset (in `specs/Hero Cards/`):
 - [x] M7. Screen components: StartScreen, DraftBoardScreen, ResultsScreen —
       pure props-in, callbacks-out.
 - [x] M8. Wire up app/page.tsx: single useDraft() call, phase switch.
-- [ ] M9. Manual QA: full click-through of all 3 screens; persistence across
+- [x] M9. Manual QA: full click-through of all 3 screens; persistence across
       reload at multiple points mid-draft; New Draft overwrites an
       in-progress draft; keyboard focus-visible states; a couple of
       viewport widths; `next build` + smoke-test the static `out/` bundle.
 - [ ] M10. Deployment: resolve Vercel vs Netlify, add corresponding config,
-      first deploy, short deploy note in frontend/README.md.
+      first deploy, short deploy note in frontend/README.md. **Tracked in a
+      separate MR — out of scope here.**
 - [ ] M11. Docs follow-up: update backend/README.md off its stale
       real-time-sync/backend description; note in specs/01_hero-draft-picker.md
       that its open items are now resolved, linking to this plan doc.
+      **Deliberately skipped for this MR.**
 
 ## Test Scenarios
 
