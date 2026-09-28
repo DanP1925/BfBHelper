@@ -2,7 +2,10 @@
 
 ## Git workflow
 - Never commit directly to `main`, even for small doc-only changes. Always create a
-  branch and open a pull request.
+  branch and open a pull request. A `pre-commit` hook enforces this (blocks the
+  commit if run on `main`); it's versioned in `.githooks/` since regular
+  `.git/hooks/` isn't tracked by git. Enable it once per clone with:
+  `git config core.hooksPath .githooks`
 - Use Conventional Commits for commit messages (e.g. `docs:`, `chore:`, `feat:`, `fix:`).
 
 ## Docs
