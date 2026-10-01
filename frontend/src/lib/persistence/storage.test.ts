@@ -158,6 +158,23 @@ describe("loadDraft", () => {
       expect(loadDraft()).toBeNull();
       expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
     });
+
+    it("returns null and clears the key when a pick references an unknown hero id", () => {
+      persistRawPicks({ p1: ["not-a-real-hero"], p2: [] });
+
+      expect(loadDraft()).toBeNull();
+      expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+    });
+
+    it("returns null and clears the key when pick counts don't match the deterministic turn order", () => {
+      // Valid hero ids, valid per-player/overall counts — but step 1 is
+      // always the initiative player's single pick first, so p2 holding 2
+      // picks while p1 (the initiative player) holds 0 can never happen.
+      persistRawPicks({ p1: [], p2: ["agatha-trunch", "baldwin"] });
+
+      expect(loadDraft()).toBeNull();
+      expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+    });
   });
 
   // Scenario 20

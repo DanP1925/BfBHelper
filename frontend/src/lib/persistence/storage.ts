@@ -1,4 +1,6 @@
+import { HERO_IDS } from "../../data/heroes";
 import type { DraftState, HeroId, PlayerId } from "../draft/types";
+import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
   CURRENT_SCHEMA_VERSION,
   STORAGE_KEY,
@@ -7,6 +9,7 @@ import {
 
 const MAX_PICKS_PER_PLAYER = 4;
 const MAX_PICKS_TOTAL = 8;
+const KNOWN_HERO_IDS = new Set<string>(HERO_IDS);
 
 /**
  * Migrations from an older schema version to the current one. Empty for
@@ -21,9 +24,9 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
-/** A loose, roster-agnostic check that a value looks like a HeroId. */
+/** A hero id that actually exists in the current roster. */
 function isHeroIdLike(value: unknown): value is HeroId {
-  return typeof value === "string" && value.length > 0;
+  return typeof value === "string" && KNOWN_HERO_IDS.has(value);
 }
 
 function isPlayerId(value: unknown): value is PlayerId {
@@ -32,10 +35,9 @@ function isPlayerId(value: unknown): value is PlayerId {
 
 /**
  * Validates the structural shape of a parsed payload's `picks`, independent
- * of schema version: known player keys, string-array values, no duplicate
- * ids (within or across players), and the per-player/overall pick-count
- * caps. Does not check hero ids against the roster (this module doesn't
- * import `data/heroes.ts`).
+ * of schema version: known player keys, string-array values of real hero
+ * ids, no duplicate ids (within or across players), and the per-player/
+ * overall pick-count caps.
  */
 function hasValidPicksShape(
   picks: unknown,
@@ -60,6 +62,47 @@ function hasValidPicksShape(
   return true;
 }
 
+/**
+ * Given a total pick count and who had initiative, the split of those
+ * picks between p1/p2 is uniquely determined by the fixed step sequence
+ * (turns alternate by whole step, not by individual pick) — see
+ * `lib/draft/sequence.ts` and `selectors.ts`'s `getCurrentTurnPlayer`.
+ */
+function expectedPicksPerPlayer(
+  totalPicks: number,
+  initiative: PlayerId,
+): Record<PlayerId, number> {
+  const other: PlayerId = initiative === "p1" ? "p2" : "p1";
+  const counts: Record<PlayerId, number> = { p1: 0, p2: 0 };
+
+  let remaining = totalPicks;
+  for (let step = 1; step <= STEP_SEQUENCE.length && remaining > 0; step++) {
+    const required = getPicksRequiredForStep(step);
+    const taken = Math.min(required, remaining);
+    const player = step % 2 === 1 ? initiative : other;
+    counts[player] += taken;
+    remaining -= taken;
+  }
+
+  return counts;
+}
+
+/**
+ * Rejects pick counts that no sequence of real `PICK_HERO` actions could
+ * ever produce — e.g. the second player holding picks while the first
+ * holds none, which the fixed turn order never allows. Guards against a
+ * payload that passes every other structural check (valid ids, within the
+ * per-player/overall caps) but is still internally self-contradictory.
+ */
+function isConsistentWithTurnOrder(
+  initiative: PlayerId,
+  picks: { p1: HeroId[]; p2: HeroId[] },
+): boolean {
+  const totalPicks = picks.p1.length + picks.p2.length;
+  const expected = expectedPicksPerPlayer(totalPicks, initiative);
+  return picks.p1.length === expected.p1 && picks.p2.length === expected.p2;
+}
+
 function isValidPersistedDraft(data: unknown): data is PersistedDraftV1 {
   if (typeof data !== "object" || data === null) return false;
 
@@ -67,6 +110,9 @@ function isValidPersistedDraft(data: unknown): data is PersistedDraftV1 {
 
   if (!isPlayerId(candidate.initiative)) return false;
   if (!hasValidPicksShape(candidate.picks)) return false;
+  if (!isConsistentWithTurnOrder(candidate.initiative, candidate.picks)) {
+    return false;
+  }
 
   return true;
 }
