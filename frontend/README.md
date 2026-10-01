@@ -14,3 +14,11 @@ the build plan and milestone checklist.
 - `npm test` — Vitest (draft logic + persistence)
 - `npm run test:watch` — Vitest in watch mode
 - `npm run lint` — ESLint
+
+## Deployment
+
+Live at **https://bf-b-helper.vercel.app/**. Hosted on Vercel, imported
+from this repo with **Root Directory** set to `frontend`; Vercel
+auto-detects Next.js and handles the static export (`output: 'export'`)
+with no extra config. Every push to `main` redeploys automatically, and
+every PR gets its own preview URL.
