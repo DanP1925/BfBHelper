@@ -6,7 +6,12 @@ import { HeroCard } from "../../HeroCard/HeroCard";
 import styles from "./ResultsScreen.module.css";
 
 const GAP = 12;
-const CARD_ASPECT_RATIO = 5 / 7;
+// The result card is now a cropped 5:4 image (see HeroCard.module.css) plus
+// a fixed-height text caption below it, not a uniform 5:7 shape — so this
+// is an approximation of the combined card's width/height (not the image's
+// own ratio) across the min/max width range below, for useHeightFitColumns'
+// sizing math. The overflow fallback absorbs the resulting small imprecision.
+const CARD_ASPECT_RATIO = 0.9;
 const MIN_CARD_WIDTH = 100;
 const MAX_CARD_WIDTH = 180;
 const COLUMN_OPTIONS = [2] as const;

@@ -1,6 +1,9 @@
 /* Source card art is 750x1050 (5:7) with name/class/stats/ability baked
-   into the image itself — every variant just displays the whole image at
-   a different size, no separate text overlay. */
+   into the image itself. 'pool'/'slot' just display the whole image, no
+   separate text overlay. 'result' crops into the portrait+stats region
+   (name banner ~0-17%, portrait+stats ~17-63%, ability text ~63-100% of
+   the image height, measured from the actual card art) and adds its own
+   caption, since that crop hides the baked-in name/class text. */
 
 .poolCard {
   background: none;
@@ -53,13 +56,41 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.resultImageWrapper {
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  overflow: hidden;
+  position: relative;
 }
 
 .resultImage {
+  position: absolute;
+  top: -37%;
+  left: 0;
   width: 100%;
-  height: auto;
-  aspect-ratio: 5 / 7;
+  height: 220%;
   object-fit: cover;
   display: block;
-  border-radius: 6px;
+}
+
+.resultInfo {
+  padding: 8px;
+}
+
+.resultName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resultClass {
+  font-size: 11px;
+  color: var(--color-muted);
 }
