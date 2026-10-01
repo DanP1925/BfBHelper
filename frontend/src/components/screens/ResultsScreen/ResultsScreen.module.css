@@ -67,6 +67,7 @@
 .grid {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   display: grid;
   grid-auto-rows: min-content;
   align-content: start;

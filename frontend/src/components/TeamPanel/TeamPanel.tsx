@@ -22,7 +22,7 @@ type TeamPanelProps = {
 };
 
 export function TeamPanel({ label, side, active, slots }: TeamPanelProps) {
-  const { containerRef, columns, cardWidth } = useHeightFitColumns<HTMLDivElement>({
+  const { containerRef, columns, cardWidth, overflows } = useHeightFitColumns<HTMLDivElement>({
     itemCount: slots.length,
     aspectRatio: CARD_ASPECT_RATIO,
     gap: GAP,
@@ -53,6 +53,7 @@ export function TeamPanel({ label, side, active, slots }: TeamPanelProps) {
         ref={containerRef}
         className={styles.slotList}
         style={{
+          overflowY: overflows ? "auto" : "hidden",
           gridTemplateColumns:
             cardWidth > 0 ? `repeat(${columns}, ${cardWidth}px)` : undefined,
         }}
