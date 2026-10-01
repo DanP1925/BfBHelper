@@ -13,7 +13,7 @@ const CARD_ASPECT_RATIO = 5 / 7;
 const MIN_CARD_WIDTH = 150;
 // Purely aesthetic — without a cap, cards balloon to fill the row once few
 // heroes remain late in the draft (as few as 1 in the last step).
-const MAX_CARD_WIDTH = 220;
+const MAX_CARD_WIDTH = 260;
 // However small the window, never wrap to fewer columns than this — the
 // pool scrolls vertically instead once 4-wide no longer fits comfortably.
 const MIN_COLUMNS = 4;
