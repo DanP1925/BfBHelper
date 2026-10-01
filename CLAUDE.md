@@ -21,3 +21,9 @@
 - `plan/` holds one `NN_feature-name.md` per feature too, same numbering as its
   intent/spec. It's a living build checklist for the Build phase — written before
   implementation starts and checked off incrementally in the PR(s) that do that work.
+
+## Testing
+- Manual QA and responsive/viewport-sensitive work is primarily checked against two
+  screens: a 13.3" laptop display (2560x1600) and a 24" monitor (2560x1440). Treat
+  these as the reference sizes for anything that depends on available width/height
+  (e.g. fit-to-viewport layouts) — no sign-off on other sizes is assumed by default.
