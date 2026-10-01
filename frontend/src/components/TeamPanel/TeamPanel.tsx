@@ -12,7 +12,10 @@ const GAP = 10;
 // min/max width range below, matching ResultsScreen's same approximation
 // (kept in sync with TeamPanel.module.css's .emptySlot aspect-ratio).
 const CARD_ASPECT_RATIO = 0.9;
-const MAX_CARD_WIDTH = 200;
+// Lower than before (was 200): at the new, wider 0.9 aspect ratio, panels
+// otherwise grow noticeably wider than the old 5:7 full-card cap did,
+// squeezing the hero pool's available width more than intended.
+const MAX_CARD_WIDTH = 150;
 const MIN_CARD_WIDTH = 110;
 const COLUMN_OPTIONS = [1, 2] as const;
 
