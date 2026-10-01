@@ -1,8 +1,14 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { pickBestColumnLayout } from "./gridFit";
 
-type Layout = { columns: number; cardWidth: number };
+type Layout = {
+  columns: number;
+  cardWidth: number;
+  /** True when no candidate reaches minCardWidth within the available height — the caller should allow scrolling to reveal full-size (minCardWidth) cards instead of shrinking past readability. */
+  overflows: boolean;
+};
 
 type UseHeightFitColumnsOptions = {
   itemCount: number;
@@ -25,6 +31,11 @@ type UseHeightFitColumnsOptions = {
  * does, via its column-track sizing) would otherwise create a
  * self-referential ResizeObserver feedback loop: the measured "available
  * width" would really just be reading back the previous output.
+ *
+ * When no candidate's height-derived width reaches `minCardWidth`, falls
+ * back to `minCardWidth` directly (`overflows: true`) rather than
+ * shrinking cards past readability — the container is expected to scroll
+ * in that case, since the resulting layout may be taller than available.
  */
 export function useHeightFitColumns<T extends HTMLElement>({
   itemCount,
@@ -38,42 +49,68 @@ export function useHeightFitColumns<T extends HTMLElement>({
   const [layout, setLayout] = useState<Layout>({
     columns: columnOptions[0] ?? 1,
     cardWidth: 0,
+    overflows: false,
   });
 
+  // Kept current via the effect just below (not assigned during render —
+  // React disallows writing a ref outside an effect/event handler), so the
+  // mount-only observer effect can always call the latest version without
+  // itself depending on itemCount/aspectRatio/etc.
+  const computeRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el || itemCount === 0) return;
+    computeRef.current = () => {
+      const el = containerRef.current;
+      if (!el || itemCount === 0) return;
 
-    const compute = () => {
       const height = el.clientHeight;
       if (height <= 0) return;
 
-      let best: Layout | null = null;
-      let bestMeetsMin: Layout | null = null;
-      for (const columns of columnOptions) {
-        const rows = Math.ceil(itemCount / columns);
-        const cardHeight = (height - gap * (rows - 1)) / rows;
-        const cardWidth = Math.min(cardHeight * aspectRatio, maxCardWidth);
-        if (cardWidth <= 0) continue;
-        if (!best || cardWidth > best.cardWidth) {
-          best = { columns, cardWidth };
-        }
-        if (
-          cardWidth >= minCardWidth &&
-          (!bestMeetsMin || cardWidth > bestMeetsMin.cardWidth)
-        ) {
-          bestMeetsMin = { columns, cardWidth };
-        }
+      const fitting = pickBestColumnLayout(
+        columnOptions,
+        (columns) => {
+          const rows = Math.ceil(itemCount / columns);
+          const cardHeight = (height - gap * (rows - 1)) / rows;
+          return Math.min(cardHeight * aspectRatio, maxCardWidth);
+        },
+        minCardWidth,
+      );
+
+      if (fitting?.meetsMin) {
+        setLayout({ ...fitting.layout, overflows: false });
+        return;
       }
 
-      const next = bestMeetsMin ?? best;
-      if (next) setLayout(next);
+      // Nothing reaches minCardWidth within the available height — use
+      // minCardWidth directly (ignoring height) so the caller can scroll
+      // to reveal full-size cards, instead of silently shrinking past
+      // readability.
+      const relaxed = pickBestColumnLayout(
+        columnOptions,
+        () => Math.min(minCardWidth, maxCardWidth),
+        minCardWidth,
+      );
+      if (relaxed) {
+        setLayout({ ...relaxed.layout, overflows: true });
+      }
     };
+  });
 
-    compute();
-    const observer = new ResizeObserver(compute);
+  // Mount-only: the observer's identity shouldn't depend on itemCount/etc,
+  // just on the container existing (see doc comment above).
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    computeRef.current();
+    const observer = new ResizeObserver(() => computeRef.current());
     observer.observe(el);
     return () => observer.disconnect();
+  }, []);
+
+  // Recompute (without touching the observer) whenever the logical inputs
+  // change — e.g. itemCount changing as picks are made/cleared.
+  useLayoutEffect(() => {
+    computeRef.current();
   }, [itemCount, aspectRatio, gap, columnOptions, minCardWidth, maxCardWidth]);
 
   return { containerRef, ...layout };

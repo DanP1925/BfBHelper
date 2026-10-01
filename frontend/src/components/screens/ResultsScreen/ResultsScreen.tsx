@@ -18,14 +18,15 @@ type TeamResultsProps = {
 };
 
 function TeamResults({ label, side, picks }: TeamResultsProps) {
-  const { containerRef, columns, cardWidth } = useHeightFitColumns<HTMLDivElement>({
-    itemCount: picks.length,
-    aspectRatio: CARD_ASPECT_RATIO,
-    gap: GAP,
-    columnOptions: COLUMN_OPTIONS,
-    minCardWidth: MIN_CARD_WIDTH,
-    maxCardWidth: MAX_CARD_WIDTH,
-  });
+  const { containerRef, columns, cardWidth, overflows } =
+    useHeightFitColumns<HTMLDivElement>({
+      itemCount: picks.length,
+      aspectRatio: CARD_ASPECT_RATIO,
+      gap: GAP,
+      columnOptions: COLUMN_OPTIONS,
+      minCardWidth: MIN_CARD_WIDTH,
+      maxCardWidth: MAX_CARD_WIDTH,
+    });
 
   return (
     <div className={styles.team}>
@@ -38,11 +39,11 @@ function TeamResults({ label, side, picks }: TeamResultsProps) {
       <div
         ref={containerRef}
         className={styles.grid}
-        style={
-          cardWidth > 0
-            ? { gridTemplateColumns: `repeat(${columns}, ${cardWidth}px)` }
-            : undefined
-        }
+        style={{
+          overflowY: overflows ? "auto" : "hidden",
+          gridTemplateColumns:
+            cardWidth > 0 ? `repeat(${columns}, ${cardWidth}px)` : undefined,
+        }}
       >
         {picks.map((hero) => (
           <HeroCard key={hero.id} hero={hero} variant="result" />

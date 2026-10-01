@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { pickBestColumnLayout } from "./gridFit";
 
 type FitResult = {
   columns: number;
@@ -28,9 +29,17 @@ type UseFitGridOptions = {
  * ratio inside the container's current width AND height with no overflow,
  * while never going below `minCardWidth`. Only when no configuration can
  * satisfy both constraints does it fall back to the widest minCardWidth-
- * respecting option available, which may overflow the container's height
- * (`overflows: true`), so the caller can allow scrolling in that fallback
- * case rather than shrinking text past readability.
+ * respecting option available (ignoring height), which may overflow the
+ * container's height (`overflows: true`), so the caller can allow
+ * scrolling in that fallback case rather than shrinking text past
+ * readability. Only drops below `minCardWidth` if truly nothing else fits.
+ *
+ * The `ResizeObserver` itself is created once per container and never
+ * torn down just because `itemCount` (etc.) changed — e.g. HeroPool's
+ * `itemCount` changes on every single pick, which previously re-subscribed
+ * the observer on every pick for no behavioral benefit. A separate,
+ * dependency-driven effect just re-runs the same (ref-stable) compute
+ * function instead.
  */
 export function useFitGrid<T extends HTMLElement>({
   itemCount,
@@ -47,63 +56,81 @@ export function useFitGrid<T extends HTMLElement>({
     overflows: false,
   });
 
+  // Kept current via the effect just below (not assigned during render —
+  // React disallows writing a ref outside an effect/event handler), so the
+  // mount-only observer effect can always call the latest version without
+  // itself depending on itemCount/aspectRatio/etc.
+  const computeRef = useRef<() => void>(() => {});
   useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el || itemCount === 0) return;
+    computeRef.current = () => {
+      const el = containerRef.current;
+      if (!el || itemCount === 0) return;
 
-    // Descending, so that when two column counts tie on cardWidth (e.g. both
-    // hit maxCardWidth), the denser one (more columns, fewer rows) wins
-    // instead of an arbitrary single column with wasted horizontal space.
-    const candidates = (
-      columnOptions ?? Array.from({ length: itemCount }, (_, i) => i + 1)
-    )
-      .slice()
-      .sort((a, b) => b - a);
-
-    const compute = () => {
       const width = el.clientWidth;
       const height = el.clientHeight;
       if (width <= 0 || height <= 0) return;
 
-      let best: FitResult | null = null;
-      for (const columns of candidates) {
-        const rows = Math.ceil(itemCount / columns);
-        const cardWidth = Math.min(
-          (width - gap * (columns - 1)) / columns,
-          maxCardWidth,
-        );
-        if (cardWidth < minCardWidth) continue;
-        const cardHeight = cardWidth / aspectRatio;
-        const totalHeight = cardHeight * rows + gap * (rows - 1);
-        if (totalHeight <= height && (!best || cardWidth > best.cardWidth)) {
-          best = { columns, cardWidth, overflows: false };
-        }
+      // Descending, so that when two column counts tie on cardWidth (e.g.
+      // both hit maxCardWidth), the denser one (more columns, fewer rows)
+      // wins instead of an arbitrary single column with wasted width.
+      const candidates = (
+        columnOptions ?? Array.from({ length: itemCount }, (_, i) => i + 1)
+      )
+        .slice()
+        .sort((a, b) => b - a);
+
+      const cardWidthForColumns = (columns: number) =>
+        Math.min((width - gap * (columns - 1)) / columns, maxCardWidth);
+
+      const fitting = pickBestColumnLayout(
+        candidates,
+        (columns) => {
+          const cardWidth = cardWidthForColumns(columns);
+          if (cardWidth <= 0) return null;
+          const rows = Math.ceil(itemCount / columns);
+          const cardHeight = cardWidth / aspectRatio;
+          const totalHeight = cardHeight * rows + gap * (rows - 1);
+          return totalHeight <= height ? cardWidth : null;
+        },
+        minCardWidth,
+      );
+
+      if (fitting?.meetsMin) {
+        setResult({ ...fitting.layout, overflows: false });
+        return;
       }
 
-      if (!best) {
-        // No candidate keeps every card >= minCardWidth AND fits the
-        // available height — pick whichever candidate yields the widest
-        // card (ignoring height) and accept vertical overflow (the caller
-        // scrolls) rather than shrinking cards below readability.
-        for (const columns of candidates) {
-          const cardWidth = Math.min(
-            (width - gap * (columns - 1)) / columns,
-            maxCardWidth,
-          );
-          if (cardWidth <= 0) continue;
-          if (!best || cardWidth > best.cardWidth) {
-            best = { columns, cardWidth, overflows: true };
-          }
-        }
+      // No height-fitting candidate reaches minCardWidth — ignore height
+      // and pick the widest minCardWidth-respecting candidate instead
+      // (falling back further, below minCardWidth, only if nothing else
+      // is feasible).
+      const relaxed = pickBestColumnLayout(
+        candidates,
+        (columns) => cardWidthForColumns(columns),
+        minCardWidth,
+      );
+      if (relaxed) {
+        setResult({ ...relaxed.layout, overflows: true });
       }
-
-      if (best) setResult(best);
     };
+  });
 
-    compute();
-    const observer = new ResizeObserver(compute);
+  // Mount-only: the observer's identity shouldn't depend on itemCount/etc
+  // (see doc comment above), just on the container existing.
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    computeRef.current();
+    const observer = new ResizeObserver(() => computeRef.current());
     observer.observe(el);
     return () => observer.disconnect();
+  }, []);
+
+  // Recompute (without touching the observer) whenever the logical inputs
+  // change — e.g. itemCount shrinking as picks are made.
+  useLayoutEffect(() => {
+    computeRef.current();
   }, [itemCount, aspectRatio, gap, columnOptions, maxCardWidth, minCardWidth]);
 
   return { containerRef, ...result };
