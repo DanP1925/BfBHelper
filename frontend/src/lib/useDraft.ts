@@ -55,14 +55,21 @@ export function useDraft(): UseDraftResult {
     setDraftState(loadDraft());
   }, []);
 
+  // Persisting is a real side effect (localStorage), so it belongs in a
+  // committed effect reacting to the final state, not inside the setState
+  // updater below — React can invoke an updater more than once per commit
+  // (Strict Mode's dev-only double-invoke, or a discarded concurrent
+  // render), which would otherwise fire extra, out-of-band writes.
+  useEffect(() => {
+    if (draftState !== null) {
+      saveDraft(draftState);
+    }
+  }, [draftState]);
+
   const pickHero = useCallback((player: PlayerId, heroId: HeroId) => {
     setDraftState((prev) => {
       if (prev === null) return prev;
-      const next = draftReducer(prev, { type: "PICK_HERO", player, heroId });
-      if (next !== prev) {
-        saveDraft(next);
-      }
-      return next;
+      return draftReducer(prev, { type: "PICK_HERO", player, heroId });
     });
   }, []);
 
@@ -73,7 +80,6 @@ export function useDraft(): UseDraftResult {
       { type: "NEW_DRAFT", initiative },
     );
     clearDraft();
-    saveDraft(next);
     setDraftState(next);
   }, []);
 
