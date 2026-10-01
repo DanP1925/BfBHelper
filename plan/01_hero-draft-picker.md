@@ -3,11 +3,10 @@
 > **Living checklist.** This is the Build-phase plan for the feature scoped
 > in [../intent/01_hero-draft-picker.md](../intent/01_hero-draft-picker.md)
 > and [../specs/01_hero-draft-picker.md](../specs/01_hero-draft-picker.md).
-> M0–M9 are implemented (see the Milestone Checklist); this doc has been
+> M0–M10 are implemented (see the Milestone Checklist); this doc has been
 > updated to reflect what was actually built, including a few deviations
-> from the original plan discovered along the way. M10 (deployment) is
-> tracked in a separate MR; M11 (docs follow-up) is deliberately skipped
-> for now.
+> from the original plan discovered along the way. M11 (docs follow-up) is
+> deliberately skipped for now.
 
 ## Context
 
@@ -177,9 +176,13 @@ exports `getHeroById(id)`, used by `app/page.tsx` to map the hook's
       reload at multiple points mid-draft; New Draft overwrites an
       in-progress draft; keyboard focus-visible states; a couple of
       viewport widths; `next build` + smoke-test the static `out/` bundle.
-- [ ] M10. Deployment: resolve Vercel vs Netlify, add corresponding config,
-      first deploy, short deploy note in frontend/README.md. **Tracked in a
-      separate MR — out of scope here.**
+- [x] M10. Deployment: resolved Vercel over Netlify (no server features in
+      use today, but keeps the door open for the `backend/` stub's
+      originally-considered real-time-sync idea without a platform switch).
+      No extra config needed — Vercel auto-detects Next.js and the static
+      export; Root Directory set to `frontend` in the Vercel project
+      import. Live at https://bf-b-helper.vercel.app/, deploy note added to
+      frontend/README.md.
 - [ ] M11. Docs follow-up: update backend/README.md off its stale
       real-time-sync/backend description; note in specs/01_hero-draft-picker.md
       that its open items are now resolved, linking to this plan doc.
@@ -261,8 +264,7 @@ scaffold's placeholder test and was updated in place rather than deleted.
 
 ## Follow-ups / Open Items
 
-- **Hosting** — Vercel vs Netlify still open; M10 is tracked in a separate
-  MR, not this one.
+- **Hosting** — resolved: Vercel, see M10.
 - **`backend/README.md`** still describes the descoped real-time-sync/
   backend architecture — M11, deliberately skipped for this MR.
 - **Asset licensing/provenance** for the hero card art isn't tracked
