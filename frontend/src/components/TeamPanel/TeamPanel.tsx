@@ -6,7 +6,12 @@ import { HeroCard } from "../HeroCard/HeroCard";
 import styles from "./TeamPanel.module.css";
 
 const GAP = 10;
-const CARD_ASPECT_RATIO = 5 / 7; // width / height
+// The slot card is a cropped 5:4 image (see HeroCard.module.css) plus a
+// fixed-height text caption below it, not a uniform 5:7 shape — so this
+// is an approximation of the combined card's width/height across the
+// min/max width range below, matching ResultsScreen's same approximation
+// (kept in sync with TeamPanel.module.css's .emptySlot aspect-ratio).
+const CARD_ASPECT_RATIO = 0.9;
 const MAX_CARD_WIDTH = 200;
 const MIN_CARD_WIDTH = 110;
 const COLUMN_OPTIONS = [1, 2] as const;
