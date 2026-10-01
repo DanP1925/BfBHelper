@@ -32,7 +32,9 @@
 
 .emptySlot {
   width: 100%;
-  aspect-ratio: 5 / 7;
+  /* Matches TeamPanel.tsx's CARD_ASPECT_RATIO approximation for a filled
+     slot's combined image+caption height, so empty/filled slots align. */
+  aspect-ratio: 0.9;
   border-radius: 8px;
   display: flex;
   align-items: center;
