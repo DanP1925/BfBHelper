@@ -4,6 +4,7 @@ import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
   CURRENT_SCHEMA_VERSION,
   STORAGE_KEY,
+  VIEW_STORAGE_KEY,
   type PersistedDraftV1,
 } from "./schema";
 
@@ -223,4 +224,28 @@ export function loadDraft(): DraftState | null {
 export function clearDraft(): void {
   if (!isBrowser()) return;
   removeRaw();
+}
+
+/** True if the persisted view was "battle"; absence/anything else means "results". */
+export function loadBattleView(): boolean {
+  if (!isBrowser()) return false;
+  try {
+    return window.localStorage.getItem(VIEW_STORAGE_KEY) === "battle";
+  } catch {
+    return false;
+  }
+}
+
+/** Persists which screen is showing once a draft is done; "results" just clears the key. */
+export function saveBattleView(view: "results" | "battle"): void {
+  if (!isBrowser()) return;
+  try {
+    if (view === "battle") {
+      window.localStorage.setItem(VIEW_STORAGE_KEY, "battle");
+    } else {
+      window.localStorage.removeItem(VIEW_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore write failures (e.g. quota exceeded, storage disabled).
+  }
 }

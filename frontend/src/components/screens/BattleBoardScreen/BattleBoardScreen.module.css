@@ -1,0 +1,56 @@
+.screen {
+  flex-grow: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  /* 'safe center': centers when content fits, falls back to start
+     alignment when it overflows — plain 'center' on a scrollable flex
+     axis clips whatever overflows past the container, unreachable by
+     scrolling (the browser can't scroll to a negative offset). Without
+     this, each panel's header and gold row (top/bottom of the overflow)
+     disappear entirely instead of becoming scrollable. */
+  align-items: safe center;
+  justify-content: safe center;
+  padding: 32px 40px;
+  gap: 24px;
+}
+
+.teams {
+  width: 100%;
+  max-width: 1180px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: 16px 40px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: center;
+}
+
+.newDraftLink {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-muted-strong);
+  background: none;
+  border: 1px solid var(--color-button-border);
+  padding: 10px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.newDraftLink:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}

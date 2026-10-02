@@ -6,6 +6,14 @@ import type { HeroId } from "../draft/types";
  */
 export const STORAGE_KEY = "bfbhelper:hero-draft";
 
+/**
+ * Separate key for which screen (Results vs Battle Board) is showing once a
+ * draft is done. Kept out of `PersistedDraftV1` since it's UI navigation
+ * state, not draft data — only "battle" is ever written; absence means
+ * "results" (see `storage.ts`'s `loadBattleView`/`saveBattleView`).
+ */
+export const VIEW_STORAGE_KEY = "bfbhelper:battle-view";
+
 /** The current schema version this build reads and writes. */
 export const CURRENT_SCHEMA_VERSION = 1 as const;
 
