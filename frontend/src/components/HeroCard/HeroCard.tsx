@@ -1,5 +1,6 @@
 import type { Hero } from "../../lib/draft/types";
-import { HERO_MAX_LEVEL } from "../../lib/battle/constants";
+import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "../../lib/battle/constants";
+import { NumberStepper } from "../NumberStepper/NumberStepper";
 import styles from "./HeroCard.module.css";
 
 type HeroCardCommonProps = {
@@ -15,12 +16,22 @@ type HeroCardCommonProps = {
  * baked-in name/class text. 'battle' (Battle Board) uses the separate
  * map-token art (`hero.battleToken`, no card chrome) instead, with its
  * own explicit HP badge and level meter — HP weighted above level, per
- * the Battle Board mockup. `level` is a discriminated-union member (not a
- * plain optional prop) so a `"battle"` card can't compile without one.
+ * the Battle Board mockup. `hp`/`level` are discriminated-union members
+ * (not plain optional props) so a `"battle"` card can't compile without
+ * them. `onHpChange`/`onLevelChange` are optional: when provided (the
+ * Battle Board), the HP badge/level meter render a `NumberStepper`; when
+ * omitted (the Win Screen), they stay the existing read-only text/pips.
+ * `hp === 0` always shows "defeated" styling, in either mode.
  */
 type HeroCardProps =
   | (HeroCardCommonProps & { variant: "pool" | "slot" | "result" })
-  | (HeroCardCommonProps & { variant: "battle"; level: number });
+  | (HeroCardCommonProps & {
+      variant: "battle";
+      hp: number;
+      level: number;
+      onHpChange?: (value: number) => void;
+      onLevelChange?: (value: number) => void;
+    });
 
 export function HeroCard(props: HeroCardProps) {
   const { hero, variant, onClick } = props;
@@ -41,19 +52,24 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { level } = props;
+    const { hp, level, onHpChange, onLevelChange } = props;
+    const isDefeated = hp === 0;
     return (
       <div className={styles.battleCard}>
         <div className={styles.battleTokenWrapper}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
-          <img src={hero.battleToken} alt="" className={styles.battleToken} />
+          <img
+            src={hero.battleToken}
+            alt=""
+            className={isDefeated ? `${styles.battleToken} ${styles.tokenDefeated}` : styles.battleToken}
+          />
         </div>
         <div className={styles.battleInfo}>
           <div>
             <div className={styles.battleName}>{hero.name}</div>
             <div className={styles.battleClass}>{hero.className}</div>
           </div>
-          <div className={styles.hpBadge} aria-label={`${hero.baseHp} HP`}>
+          <div className={styles.hpBadge} aria-label={onHpChange ? undefined : `${hp} HP`}>
             <svg
               width="16"
               height="16"
@@ -63,22 +79,49 @@ export function HeroCard(props: HeroCardProps) {
             >
               <path d="M12 21s-6.716-4.35-9.428-8.106C.414 9.967 1.5 6 5.1 6c2.1 0 3.6 1.2 4.5 2.7C10.5 7.2 12 6 14.1 6c3.6 0 4.686 3.967 2.528 6.894C18.716 16.65 12 21 12 21z" />
             </svg>
-            <span className={styles.hpValue}>{hero.baseHp}</span>
-            <span className={styles.hpUnit}>HP</span>
+            {onHpChange ? (
+              <NumberStepper
+                value={hp}
+                min={0}
+                max={HERO_HP_CEILING}
+                onChange={onHpChange}
+                label={`${hero.name} HP`}
+              />
+            ) : (
+              <>
+                <span className={styles.hpValue}>{hp}</span>
+                <span className={styles.hpUnit}>HP</span>
+              </>
+            )}
           </div>
-          <div className={styles.levelRow} aria-label={`Level ${level} of ${HERO_MAX_LEVEL}`}>
+          <div
+            className={styles.levelRow}
+            aria-label={onLevelChange ? undefined : `Level ${level} of ${HERO_MAX_LEVEL}`}
+          >
             <span className={styles.levelLabel}>Lv</span>
-            <div className={styles.levelPips}>
-              {Array.from({ length: HERO_MAX_LEVEL }, (_, index) => (
-                <span
-                  key={index}
-                  className={index < level ? styles.levelPipFilled : styles.levelPip}
-                />
-              ))}
-            </div>
-            <span className={styles.levelValue}>
-              {level}/{HERO_MAX_LEVEL}
-            </span>
+            {onLevelChange ? (
+              <NumberStepper
+                value={level}
+                min={HERO_STARTING_LEVEL}
+                max={HERO_MAX_LEVEL}
+                onChange={onLevelChange}
+                label={`${hero.name} level`}
+              />
+            ) : (
+              <>
+                <div className={styles.levelPips}>
+                  {Array.from({ length: HERO_MAX_LEVEL }, (_, index) => (
+                    <span
+                      key={index}
+                      className={index < level ? styles.levelPipFilled : styles.levelPip}
+                    />
+                  ))}
+                </div>
+                <span className={styles.levelValue}>
+                  {level}/{HERO_MAX_LEVEL}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>

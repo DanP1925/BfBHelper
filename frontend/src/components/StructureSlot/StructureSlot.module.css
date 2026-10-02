@@ -30,3 +30,9 @@
   font-weight: 700;
   color: var(--color-text);
 }
+
+/* Reactive to `hp === 0` (intent/03) — clears automatically the instant
+   HP is raised above 0 again. */
+.iconDestroyed {
+  filter: grayscale(1) brightness(0.6);
+}

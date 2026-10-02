@@ -153,6 +153,13 @@
   display: block;
 }
 
+/* Reactive to `hp === 0` (intent/03) — clears automatically the instant
+   HP is raised above 0 again, since it's purely a function of the live
+   value, not a separate tracked flag. */
+.tokenDefeated {
+  filter: grayscale(1) brightness(0.6);
+}
+
 .battleInfo {
   flex: 1;
   min-width: 0;
