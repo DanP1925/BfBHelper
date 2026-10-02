@@ -23,7 +23,9 @@
   implementation starts and checked off incrementally in the PR(s) that do that work.
 
 ## Testing
-- Manual QA and responsive/viewport-sensitive work is primarily checked against two
-  screens: a 13.3" laptop display (2560x1600) and a 24" monitor (2560x1440). Treat
-  these as the reference sizes for anything that depends on available width/height
-  (e.g. fit-to-viewport layouts) — no sign-off on other sizes is assumed by default.
+- Manual QA and responsive/viewport-sensitive work is checked against two screens,
+  given here as physical resolution (logical/CSS px in parentheses): a 13.3" laptop
+  display, 2560x1600 (1280x800 at 2x scaling), and a 24" monitor, 2560x1440 (no
+  scaling assumed). The 13.3" laptop is the hard baseline — anything that depends on
+  available width/height (e.g. fit-to-viewport layouts) must work there; the 24"
+  monitor is secondary. No sign-off on other sizes is assumed by default.
