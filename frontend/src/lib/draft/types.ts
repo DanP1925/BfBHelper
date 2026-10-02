@@ -26,6 +26,14 @@ export type Hero = {
   name: string;
   className: string;
   portrait: string;
+  /**
+   * The standalone map-token art (no card chrome, no baked-in stats) used on
+   * the Battle Board, distinct from `portrait`'s cropped trading-card art —
+   * see specs/02_battle-board.md's UI Design Reference.
+   */
+  battleToken: string;
+  /** Fixed per-hero HP printed on the card (heart icon) — never changes. */
+  baseHp: number;
 };
 
 /**

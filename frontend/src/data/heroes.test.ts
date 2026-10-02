@@ -26,7 +26,24 @@ describe("HERO_ROSTER", () => {
     }
   });
 
+  it("has a battle-token file on disk for every hero", () => {
+    for (const hero of HERO_ROSTER) {
+      const relativePath = hero.battleToken.replace(/^\//, "");
+      const absolutePath = path.join(PUBLIC_DIR, relativePath);
+      expect(
+        existsSync(absolutePath),
+        `missing battleToken for ${hero.id}: ${absolutePath}`,
+      ).toBe(true);
+    }
+  });
+
   it("has a card-back asset", () => {
     expect(existsSync(path.join(PUBLIC_DIR, "heroes", "card-back.png"))).toBe(true);
+  });
+
+  it("has a positive baseHp for every hero", () => {
+    for (const hero of HERO_ROSTER) {
+      expect(hero.baseHp, `missing baseHp for ${hero.id}`).toBeGreaterThan(0);
+    }
   });
 });

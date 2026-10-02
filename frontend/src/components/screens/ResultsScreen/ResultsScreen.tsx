@@ -62,12 +62,14 @@ type ResultsScreenProps = {
   p1Picks: Hero[];
   p2Picks: Hero[];
   onNewDraft: () => void;
+  onStartBattle: () => void;
 };
 
 export function ResultsScreen({
   p1Picks,
   p2Picks,
   onNewDraft,
+  onStartBattle,
 }: ResultsScreenProps) {
   return (
     <div className={styles.screen}>
@@ -86,6 +88,9 @@ export function ResultsScreen({
       <div className={styles.footer}>
         <button type="button" className={styles.newDraftLink} onClick={onNewDraft}>
           ← New Draft
+        </button>
+        <button type="button" className={styles.startBattleButton} onClick={onStartBattle}>
+          Start Battle →
         </button>
       </div>
     </div>

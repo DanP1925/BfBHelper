@@ -122,3 +122,120 @@
   font-size: 11px;
   color: var(--color-muted);
 }
+
+/* 'battle' variant (Battle Board) — mirrors the design artifact's
+   BattleBoard artboard exactly: a fixed 80x120 map-token (see
+   battleToken below, not the 'slot'/'result' trading-card crop) beside a
+   text column (name/class, HP badge, level meter), not stacked. */
+
+.battleCard {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.battleTokenWrapper {
+  width: 80px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.battleToken {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.battleInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.battleName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.battleClass {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.hpBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  background: color-mix(in srgb, var(--color-hp) 14%, transparent);
+  border: 1px solid var(--color-hp);
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+.hpValue {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--color-hp);
+  line-height: 1;
+}
+
+.hpUnit {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-hp);
+}
+
+.levelRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 2px;
+}
+
+.levelLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.levelPips {
+  display: flex;
+  gap: 2px;
+}
+
+.levelValue {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-muted-strong);
+}
+
+.levelPip,
+.levelPipFilled {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.levelPipFilled {
+  background: var(--color-gold);
+}

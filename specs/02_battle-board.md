@@ -2,9 +2,8 @@
 
 > **DRAFT.** This reflects architecture decisions for the current,
 > simplified v2 scope (same-device, 2-player, static/read-only, no
-> backend). Nothing described here has been built yet, and details
-> (especially under "Open items for implementation") are expected to
-> change once build-out begins. See
+> backend). Build-out is in progress (`feat/battle-board`); details may
+> still change. See
 > [../intent/02_battle-board.md](../intent/02_battle-board.md) for the
 > product-level problem, scope, and behavior this spec exists to
 > satisfy.
@@ -18,22 +17,30 @@
   in `frontend/src/components/screens/`.
 
 ## State Management
-- **No new persisted state.** The Battle Board renders entirely from:
+- The Battle Board's own content renders entirely from:
   - The already-completed `DraftState` (`initiative` + `picks`)
     persisted under the existing `bfbhelper:hero-draft` key
     (`frontend/src/lib/persistence/schema.ts`) — unchanged by this
     intent.
   - Static constants for everything else (Tower/Bit starting HP, hero
     starting level, team starting gold) — see Data Model below.
-- Which screen is showing (Results vs. Battle Board) is **local,
-  non-persisted UI state**, e.g. a `view: "results" | "battle"` flag
-  in `frontend/src/app/page.tsx` that defaults to `"results"` once
-  `draft.phase === "done"`, and flips to `"battle"` when the player
-  clicks a "Start Battle" action on the Results screen.
-  - This matches intent/02's Session Lifecycle: nothing is lost on
-    reload, because nothing on the Battle Board can change yet — a
-    reload simply lands back on the Results screen, from which "Start
-    Battle" is available again.
+- Which screen is showing (Results vs. Battle Board) is a
+  `view: "results" | "battle"` flag in `frontend/src/app/page.tsx`
+  (plain `useState`, not folded into `useDraft`'s phase model), that
+  flips to `"battle"` when the player clicks "Start Battle" on the
+  Results screen.
+  - **This is persisted**, under its own `bfbhelper:battle-view` key
+    (`frontend/src/lib/persistence/schema.ts`,
+    `loadBattleView`/`saveBattleView` in
+    `frontend/src/lib/persistence/storage.ts`) — separate from
+    `PersistedDraftV1` since it's UI navigation, not draft data. Only
+    `"battle"` is ever written; the key's absence means `"results"`.
+    Reloading while on the Battle Board stays there; "← New Draft"
+    (from either screen) and starting a fresh draft both reset it back
+    to `"results"`.
+  - Revises intent/02's Session Lifecycle note that a reload "lands
+    back on the Results screen" — that was the v1 behavior before this
+    was made to persist.
 
 ## Data Model
 - Extend the existing `Hero` type
@@ -42,6 +49,13 @@
   (`frontend/src/data/heroes.ts`) with each hero's Base HP from the
   roster table in intent/02 (sourced from the card art in
   `frontend/public/heroes/`).
+- Also extend `Hero` with `battleToken: string` — the standalone
+  map-token art (no card chrome, no baked-in stats), distinct from
+  `portrait`'s cropped trading-card art. All 19 tokens are copied into
+  `frontend/public/heroes-tokens/` from `specs/Battle Board/`
+  (originally the Map Assets set) — see UI Design Reference below for
+  why: the mockup intentionally avoided the cropped card art, and the
+  Battle Board's `HeroCard` `"battle"` variant follows that.
 - New static constants, e.g. in `frontend/src/lib/battle/constants.ts`:
   - `TOWER_STARTING_HP = 11`
   - `BIT_STARTING_HP = 16`
@@ -65,17 +79,33 @@
   win-condition check. All of that is intent 03.
 
 ## Layout
+This section mirrors the design artifact's BattleBoard artboard
+pixel-for-pixel (structure, spacing, colors), not just in spirit — see
+UI Design Reference below.
 - New `BattleBoardScreen` component
-  (`frontend/src/components/screens/BattleBoardScreen/`), mirroring
-  `ResultsScreen`'s two-column team layout.
+  (`frontend/src/components/screens/BattleBoardScreen/`): both team
+  panels in a 2-column CSS grid (`repeat(2, minmax(0, 1fr))`, 32px
+  gap, 1180px max-width, centered), not `ResultsScreen`'s fixed-width
+  flex layout.
 - New `BattleTeamPanel` component — distinct from the existing
-  draft-time `TeamPanel` (which only renders 4 hero slots) — that
-  renders, per team: the 4 `HeroCard`s (extended with level/Base HP
-  captions), the 3 Tower slots, the Bit, and the gold total, per
-  intent/02's "mirrored side panels" layout.
-- Reuses `HeroCard` where possible. Towers/Bit have no existing card
-  art, so they likely need a new small presentational component (e.g.
-  `StructureSlot`) showing just a name + HP.
+  draft-time `TeamPanel` (which only renders 4 hero slots). Per team:
+  - Header: team label + a gold pill badge (icon + "N Gold") on the
+    same row, not a separate row.
+  - A 2×2 grid of `HeroCard`s (`"battle"` variant) — each card is
+    **horizontal**: the hero's `battleToken` art fixed at 80×120 on
+    the left, name/class + HP badge + level meter stacked in a column
+    to its right (not stacked vertically like `"slot"`/`"result"`).
+  - A "Structures" section: heading, then a 4-column grid of
+    `StructureSlot`s (Top/Middle/Bottom Tower, Bit) with short labels
+    ("Top", not "Top Tower" — "Structures" already gives context). The
+    Bit slot's border uses the team's accent color
+    (`var(--color-p1)`/`var(--color-p2)`) to call out that it's the
+    team's most vulnerable structure.
+- Tower/Bit icons and the Gold icon use the pixel-art assets copied
+  into `frontend/public/structures/` from `specs/Battle Board/`
+  (originally the Map Assets set) — not text-only.
+- The mockup's static-preview caption below both panels is not carried
+  into the real screen — removed per user request.
 
 ## UI Design Reference
 - A first-pass visual mockup of the Battle Board is tracked as the
@@ -98,12 +128,7 @@
 - No change from v1 — same static Vercel deployment, no new infra.
 
 ## Open Items for Implementation (not yet decided)
-- UI Design Reference mockup (see above).
-- Exact visual treatment for Tower/Bit slots (icon/art vs. text-only),
-  since they have no existing card art the way heroes do.
-- Whether `view: "results" | "battle"` lives as raw `useState` in
-  `page.tsx` or is folded into `useDraft`'s own phase model (e.g. a
-  new `"battle"` phase) — functionally equivalent, implementation
-  detail.
-- Exact gold display treatment (plain number vs. a capped meter/bar
-  hinting at the ~10 soft ceiling from intent/02).
+- None remaining — Tower/Bit visual treatment, the `view` persistence
+  model, and gold display (icon + plain number, no meter/bar) were all
+  decided during implementation; see Layout and State Management
+  above.
