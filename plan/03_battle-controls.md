@@ -101,24 +101,24 @@ surface them at all):
 
 ## Milestone Checklist
 
-- [ ] M0. `lib/battle/types.ts` (new): `StructuresState`, `BattleTeamState`,
+- [x] M0. `lib/battle/types.ts` (new): `StructuresState`, `BattleTeamState`,
       `BattleState`. `lib/battle/constants.ts`: add `HERO_HP_CEILING = 15`.
-- [ ] M1. `lib/battle/bounds.ts` (new): `clamp`, `clampGold`,
+- [x] M1. `lib/battle/bounds.ts` (new): `clamp`, `clampGold`,
       `clampHeroHp`, `clampHeroLevel`, `clampStructureHp(value, ceiling)` —
       every mutator and every direct-entry field funnels through these;
       non-finite input falls back to `min`.
-- [ ] M2. `lib/battle/selectors.ts` (new): `getBattleWinner(state)` —
+- [x] M2. `lib/battle/selectors.ts` (new): `getBattleWinner(state)` —
       `null` unless a side's Bit is at 0, `"draw"` if both are, else the
       side whose Bit is not at 0.
-- [ ] M3. `lib/battle/reducer.ts` (new): `BattleAction` union
+- [x] M3. `lib/battle/reducer.ts` (new): `BattleAction` union
       (`SET_GOLD`/`SET_HERO_HP`/`SET_HERO_LEVEL`/`SET_STRUCTURE_HP`),
       `battleReducer` (clamp-and-replace, no-op on unchanged/unknown
       `heroId`), `createInitialBattleState(p1Heroes, p2Heroes)` (seeds
       each hero's `hp` from `baseHp`, not a flat default).
-- [ ] M4. `lib/persistence/schema.ts`: add `BATTLE_STATE_STORAGE_KEY`,
+- [x] M4. `lib/persistence/schema.ts`: add `BATTLE_STATE_STORAGE_KEY`,
       `PersistedBattleStateV1`, and the generalized `View = "results" |
       "battle" | "win"` type.
-- [ ] M5. `lib/persistence/storage.ts`: `saveBattleState`/
+- [x] M5. `lib/persistence/storage.ts`: `saveBattleState`/
       `loadBattleState` (same parse -> schemaVersion check -> migrate-or-
       reject -> structural-validate -> clear-on-failure pipeline as
       `loadDraft`/`saveDraft`; generic validation only, no hero-id-*set*
@@ -127,58 +127,58 @@ surface them at all):
       additionally removes `BATTLE_STATE_STORAGE_KEY`; replace
       `loadBattleView`/`saveBattleView` with `loadView`/`saveView`
       (3-way, same absence-means-default mechanics).
-- [ ] M6. `lib/useBattle.ts` (new): hook mirroring `useDraft` — hydrate-
+- [x] M6. `lib/useBattle.ts` (new): hook mirroring `useDraft` — hydrate-
       on-mount/reset-on-empty effect (keyed on derived hero-id-key
       strings, not array references; `eslint-disable-next-line
       react-hooks/exhaustive-deps` with an explanatory comment),
       persist-on-change effect, four mutators (`setGold`/`setHeroHp`/
       `setHeroLevel`/`setStructureHp`), derived `winner`, and a
       standalone exported `heroIdSetsMatch` helper.
-- [ ] M7. `components/NumberStepper/` (new): `-`/`+` buttons (disable at
+- [x] M7. `components/NumberStepper/` (new): `-`/`+` buttons (disable at
       `min`/`max`) + always-editable `<input type="number">` (commit on
       blur/Enter, clamp valid input, revert invalid/empty input without
       calling `onChange`).
-- [ ] M8. `components/ConfirmDialog/` (new): framework-free modal
+- [x] M8. `components/ConfirmDialog/` (new): framework-free modal
       (`role="dialog"` + `aria-modal`), Escape + backdrop-click both act
       as Cancel, default focus on Cancel.
-- [ ] M9. `components/OverflowMenu/` (new): generic `{label, onSelect,
+- [x] M9. `components/OverflowMenu/` (new): generic `{label, onSelect,
       disabled?}[]` dropdown behind a ⋯ trigger; closes on Escape,
       outside click, or item selection (closing before firing `onSelect`).
-- [ ] M10. `components/HeroCard/` `"battle"` variant: `hp`/`onHpChange?`/
+- [x] M10. `components/HeroCard/` `"battle"` variant: `hp`/`onHpChange?`/
       `onLevelChange?` props replace the direct `hero.baseHp` read;
       renders `NumberStepper`s when handlers are present, static
       text/pips otherwise; `hp === 0` always adds "defeated" styling
       (desaturated token + tag).
-- [ ] M11. `components/StructureSlot/`: `onHpChange?`/`max?`/
+- [x] M11. `components/StructureSlot/`: `onHpChange?`/`max?`/
       `reactiveStyling?` props; `NumberStepper` when `onHpChange` is
       present; "destroyed" styling (desaturated icon + tag) when
       `reactiveStyling && hp === 0`.
-- [ ] M12. `components/BattleTeamPanel/`: static-constant props replaced
+- [x] M12. `components/BattleTeamPanel/`: static-constant props replaced
       with a `team: BattleTeamState` prop + 4 change callbacks
       (`onGoldChange`, `onHeroHpChange`, `onHeroLevelChange`,
       `onStructureHpChange`); gold badge becomes a `NumberStepper`; Tower
       slots get `reactiveStyling`, the Bit slot doesn't (its zero-HP
       state drives the win condition, not a cosmetic class).
-- [ ] M13. `components/screens/BattleBoardScreen/`: props grow to include
+- [x] M13. `components/screens/BattleBoardScreen/`: props grow to include
       `battleState`/`winner`/the four mutators/`onEndBattle`; **footer
       removed entirely**, replaced with a corner `OverflowMenu`
       ("New Draft" always, "End Battle" only when `winner !== null`,
       opening a `ConfirmDialog` that calls `onEndBattle` on confirm).
-- [ ] M14. `components/screens/WinScreen/` (new): two-panel layout
+- [x] M14. `components/screens/WinScreen/` (new): two-panel layout
       reusing `BattleBoardScreen`'s grid (not `ResultsScreen`'s
       equal-weight one); read-only `HeroCard`s (no change handlers), no
       Structures section; winning panel gets a gold-glow + "Winner"
       ribbon, losing panel dimmed, neither on a draw; footer has only
       "← New Draft".
-- [ ] M15. Wire into `app/page.tsx`: move `p1Picks`/`p2Picks` computation
+- [x] M15. Wire into `app/page.tsx`: move `p1Picks`/`p2Picks` computation
       to unconditional (before any early return); call `useBattle` gated
       on `draft.phase === "done"` (see Context); widen `view` to the new
       3-way `View` type via `loadView`/`saveView`; add the `view ===
       "win"` render branch for `WinScreen`; `BattleBoardScreen`'s
       `onEndBattle` sets+persists `view = "win"`.
-- [ ] M16. `tsc --noEmit`, `eslint --max-warnings=0`, and the full Vitest
+- [x] M16. `tsc --noEmit`, `eslint --max-warnings=0`, and the full Vitest
       suite green.
-- [ ] M17. Update `e2e/draft-to-battle.spec.ts` (the `"0 Gold"` text
+- [x] M17. Update `e2e/draft-to-battle.spec.ts` (the `"0 Gold"` text
       assertion and the "← New Draft" location both break under this
       feature regardless of anything else — required, not optional) and
       add `e2e/battle-controls.spec.ts` (drive a Bit to 0 via its
@@ -244,8 +244,16 @@ changes must not break any already-passing assertion.
 
 ## Follow-ups / Open Items
 
-- **M18 above** — final manual QA + user sign-off against the mockup, not
-  yet done as of this doc being written (implementation hasn't started).
+- **M0–M17 done.** `tsc --noEmit`, `eslint --max-warnings=0`, the full
+  Vitest suite (144 tests), `next build`'s production typecheck/export,
+  and both `e2e/draft-to-battle.spec.ts` (fixed) and the new
+  `e2e/battle-controls.spec.ts` all pass.
+- **M18 — still open.** Final manual click-through at the 13.3" baseline
+  and visual sign-off against the mockup needs a human (or a
+  screenshot-capable agent) in an actual browser; not done from this
+  session. e2e coverage exercises the same user-facing path
+  (draft → battle → drive a Bit to 0 → End Battle → Win Screen) but isn't
+  a substitute for eyeballing the real layout/visual treatment.
 - **No new deploy step.** Same Vercel static export as v1/v2.
 - Per intent 03's own Out of Scope section: no automation beyond the win
   condition (no gold-on-level-up, no HP-from-level, no Tower-to-Bit chip

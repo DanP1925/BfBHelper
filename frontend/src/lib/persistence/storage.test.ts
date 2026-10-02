@@ -1,7 +1,23 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { DraftState } from "../draft/types";
-import { CURRENT_SCHEMA_VERSION, STORAGE_KEY, VIEW_STORAGE_KEY } from "./schema";
-import { clearDraft, loadBattleView, loadDraft, saveBattleView, saveDraft } from "./storage";
+import { createInitialBattleState } from "../battle/reducer";
+import { BIT_STARTING_HP, TOWER_STARTING_HP } from "../battle/constants";
+import type { BattleState } from "../battle/types";
+import {
+  BATTLE_STATE_STORAGE_KEY,
+  CURRENT_SCHEMA_VERSION,
+  STORAGE_KEY,
+  VIEW_STORAGE_KEY,
+} from "./schema";
+import {
+  clearDraft,
+  loadBattleState,
+  loadDraft,
+  loadView,
+  saveBattleState,
+  saveDraft,
+  saveView,
+} from "./storage";
 
 const midDraftState: DraftState = {
   initiative: "p1",
@@ -10,6 +26,29 @@ const midDraftState: DraftState = {
     p2: ["baldwin", "boreas"],
   },
 };
+
+const sampleBattleState: BattleState = createInitialBattleState(
+  [
+    {
+      id: "agatha-trunch",
+      name: "Agatha Trunch",
+      className: "Minotaur",
+      portrait: "/heroes/agatha-trunch.png",
+      battleToken: "/heroes-tokens/agatha-trunch.png",
+      baseHp: 10,
+    },
+  ],
+  [
+    {
+      id: "baldwin",
+      name: "Baldwin",
+      className: "Bard",
+      portrait: "/heroes/baldwin.png",
+      battleToken: "/heroes-tokens/baldwin.png",
+      baseHp: 9,
+    },
+  ],
+);
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -191,6 +230,106 @@ describe("loadDraft", () => {
   });
 });
 
+describe("saveBattleState / loadBattleState", () => {
+  it("returns null with no persisted key", () => {
+    expect(loadBattleState()).toBeNull();
+  });
+
+  it("round-trips a battle state through save -> load exactly", () => {
+    saveBattleState(sampleBattleState);
+
+    expect(loadBattleState()).toEqual(sampleBattleState);
+  });
+
+  it("returns null and clears the key on corrupt/invalid JSON", () => {
+    window.localStorage.setItem(BATTLE_STATE_STORAGE_KEY, "{not valid json");
+
+    expect(loadBattleState()).toBeNull();
+    expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+  });
+
+  it("returns null and clears the key when schemaVersion is missing", () => {
+    window.localStorage.setItem(
+      BATTLE_STATE_STORAGE_KEY,
+      JSON.stringify({ p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
+    );
+
+    expect(loadBattleState()).toBeNull();
+    expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+  });
+
+  it("returns null and clears the key when schemaVersion is newer than current", () => {
+    window.localStorage.setItem(
+      BATTLE_STATE_STORAGE_KEY,
+      JSON.stringify({ schemaVersion: 2, p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
+    );
+
+    expect(loadBattleState()).toBeNull();
+    expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+  });
+
+  it("returns null and clears the key when a hero id is outside the known roster", () => {
+    const corrupted: BattleState = {
+      ...sampleBattleState,
+      p1: {
+        ...sampleBattleState.p1,
+        heroes: { "not-a-real-hero": { hp: 5, level: 1 } } as unknown as BattleState["p1"]["heroes"],
+      },
+    };
+    window.localStorage.setItem(
+      BATTLE_STATE_STORAGE_KEY,
+      JSON.stringify({ ...corrupted, updatedAt: new Date().toISOString() }),
+    );
+
+    expect(loadBattleState()).toBeNull();
+    expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+  });
+
+  it("returns null and clears the key when a structure's HP is above its ceiling", () => {
+    const corrupted: BattleState = {
+      ...sampleBattleState,
+      p1: {
+        ...sampleBattleState.p1,
+        structures: { ...sampleBattleState.p1.structures, top: TOWER_STARTING_HP + 1 },
+      },
+    };
+    window.localStorage.setItem(
+      BATTLE_STATE_STORAGE_KEY,
+      JSON.stringify({ ...corrupted, updatedAt: new Date().toISOString() }),
+    );
+
+    expect(loadBattleState()).toBeNull();
+    expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+  });
+
+  it("returns null and clears the key when gold is negative", () => {
+    const corrupted: BattleState = {
+      ...sampleBattleState,
+      p1: { ...sampleBattleState.p1, gold: -1 },
+    };
+    window.localStorage.setItem(
+      BATTLE_STATE_STORAGE_KEY,
+      JSON.stringify({ ...corrupted, updatedAt: new Date().toISOString() }),
+    );
+
+    expect(loadBattleState()).toBeNull();
+    expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+  });
+
+  it("the Bit's ceiling (16) is independent of a Tower's (11)", () => {
+    const state: BattleState = {
+      ...sampleBattleState,
+      p1: {
+        ...sampleBattleState.p1,
+        structures: { ...sampleBattleState.p1.structures, bit: BIT_STARTING_HP },
+      },
+    };
+    saveBattleState(state);
+
+    expect(loadBattleState()).toEqual(state);
+  });
+});
+
 describe("clearDraft", () => {
   // Scenario 21
   it("removes the persisted key so a subsequent loadDraft() returns null", () => {
@@ -202,32 +341,54 @@ describe("clearDraft", () => {
     expect(loadDraft()).toBeNull();
   });
 
-  it("also clears the persisted battle-view flag, since it's meaningless without a draft", () => {
+  it("also clears the persisted view flag, since it's meaningless without a draft", () => {
     saveDraft(midDraftState);
-    saveBattleView("battle");
+    saveView("battle");
 
     clearDraft();
 
     expect(window.localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
-    expect(loadBattleView()).toBe(false);
+    expect(loadView()).toBe("results");
+  });
+
+  it("also clears the persisted battle state, since it's meaningless without a draft", () => {
+    saveDraft(midDraftState);
+    saveBattleState(sampleBattleState);
+
+    clearDraft();
+
+    expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    expect(loadBattleState()).toBeNull();
   });
 });
 
-describe("loadBattleView / saveBattleView", () => {
-  it("defaults to false when nothing is persisted", () => {
-    expect(loadBattleView()).toBe(false);
+describe("loadView / saveView", () => {
+  it("defaults to 'results' when nothing is persisted", () => {
+    expect(loadView()).toBe("results");
   });
 
-  it("round-trips \"battle\"", () => {
-    saveBattleView("battle");
-    expect(loadBattleView()).toBe(true);
+  it("round-trips 'battle'", () => {
+    saveView("battle");
+    expect(loadView()).toBe("battle");
   });
 
-  it("saving \"results\" clears the key rather than storing it", () => {
-    saveBattleView("battle");
-    saveBattleView("results");
+  it("round-trips 'win'", () => {
+    saveView("win");
+    expect(loadView()).toBe("win");
+  });
+
+  it("saving 'results' clears the key rather than storing it", () => {
+    saveView("battle");
+    saveView("results");
 
     expect(window.localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
-    expect(loadBattleView()).toBe(false);
+    expect(loadView()).toBe("results");
+  });
+
+  it("defaults to 'results' and clears a stale/unrecognized value instead of leaving it behind", () => {
+    window.localStorage.setItem(VIEW_STORAGE_KEY, "some-future-view");
+
+    expect(loadView()).toBe("results");
+    expect(window.localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
   });
 });

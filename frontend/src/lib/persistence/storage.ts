@@ -2,10 +2,21 @@ import { HERO_IDS } from "../../data/heroes";
 import type { DraftState, HeroId, PlayerId } from "../draft/types";
 import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
+  BIT_STARTING_HP,
+  HERO_HP_CEILING,
+  HERO_MAX_LEVEL,
+  HERO_STARTING_LEVEL,
+  TOWER_STARTING_HP,
+} from "../battle/constants";
+import type { BattleState, BattleTeamState } from "../battle/types";
+import {
+  BATTLE_STATE_STORAGE_KEY,
   CURRENT_SCHEMA_VERSION,
   STORAGE_KEY,
   VIEW_STORAGE_KEY,
+  type PersistedBattleStateV1,
   type PersistedDraftV1,
+  type View,
 } from "./schema";
 
 const MAX_PICKS_PER_PLAYER = 4;
@@ -21,6 +32,10 @@ const KNOWN_HERO_IDS = new Set<string>(HERO_IDS);
 const migrations: Record<number, (data: unknown) => PersistedDraftV1 | null> =
   {};
 
+/** Same idea as `migrations` above, for the battle-state payload. */
+const battleMigrations: Record<number, (data: unknown) => PersistedBattleStateV1 | null> =
+  {};
+
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
@@ -32,6 +47,10 @@ function isHeroIdLike(value: unknown): value is HeroId {
 
 function isPlayerId(value: unknown): value is PlayerId {
   return value === "p1" || value === "p2";
+}
+
+function isNumberInRange(value: unknown, min: number, max: number): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max;
 }
 
 /**
@@ -119,10 +138,61 @@ function isValidPersistedDraft(data: unknown): data is PersistedDraftV1 {
 }
 
 /**
+ * Validates one side's `BattleTeamState` shape, independent of schema
+ * version and independent of any specific draft's hero-id set (that
+ * belongs to `useBattle`'s `heroIdSetsMatch`, which has the draft to
+ * compare against): gold is non-negative, each structure is within its
+ * own floor/ceiling, and every `heroes` entry has a real hero id with
+ * hp/level each within bounds.
+ */
+function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
+  if (typeof data !== "object" || data === null) return false;
+
+  const candidate = data as Record<string, unknown>;
+
+  if (typeof candidate.gold !== "number" || !Number.isFinite(candidate.gold)) {
+    return false;
+  }
+  if (candidate.gold < 0) return false;
+
+  const structures = candidate.structures;
+  if (typeof structures !== "object" || structures === null) return false;
+  const s = structures as Record<string, unknown>;
+  if (!isNumberInRange(s.top, 0, TOWER_STARTING_HP)) return false;
+  if (!isNumberInRange(s.middle, 0, TOWER_STARTING_HP)) return false;
+  if (!isNumberInRange(s.bottom, 0, TOWER_STARTING_HP)) return false;
+  if (!isNumberInRange(s.bit, 0, BIT_STARTING_HP)) return false;
+
+  const heroes = candidate.heroes;
+  if (typeof heroes !== "object" || heroes === null) return false;
+  const heroEntries = Object.entries(heroes as Record<string, unknown>);
+  for (const [heroId, heroValue] of heroEntries) {
+    if (!isHeroIdLike(heroId)) return false;
+    if (typeof heroValue !== "object" || heroValue === null) return false;
+    const hv = heroValue as Record<string, unknown>;
+    if (!isNumberInRange(hv.hp, 0, HERO_HP_CEILING)) return false;
+    if (!isNumberInRange(hv.level, HERO_STARTING_LEVEL, HERO_MAX_LEVEL)) return false;
+  }
+
+  return true;
+}
+
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV1 {
+  if (typeof data !== "object" || data === null) return false;
+
+  const candidate = data as Record<string, unknown>;
+
+  if (!hasValidBattleTeamShape(candidate.p1)) return false;
+  if (!hasValidBattleTeamShape(candidate.p2)) return false;
+
+  return true;
+}
+
+/**
  * Shared try/catch-and-swallow wrappers around `window.localStorage` —
  * callers must check `isBrowser()` first, since these assume `window`
- * exists. Every localStorage access in this module (draft + battle-view)
- * goes through these rather than each hand-rolling its own try/catch.
+ * exists. Every localStorage access in this module goes through these
+ * rather than each hand-rolling its own try/catch.
  */
 function safeGetItem(key: string): string | null {
   try {
@@ -148,17 +218,79 @@ function safeRemoveItem(key: string): void {
   }
 }
 
-function readRaw(): string | null {
-  return safeGetItem(STORAGE_KEY);
+function readRaw(key: string): string | null {
+  return safeGetItem(key);
 }
 
-function removeRaw(): void {
-  safeRemoveItem(STORAGE_KEY);
+function removeRaw(key: string): void {
+  safeRemoveItem(key);
 }
 
-function clearAndReturnNull(): null {
-  removeRaw();
+function clearAndReturnNull(key: string): null {
+  removeRaw(key);
   return null;
+}
+
+/**
+ * Shared parse -> schemaVersion-check -> migrate-or-reject ->
+ * structural-validate -> clear-on-failure pipeline, used by both
+ * `loadDraft` and `loadBattleState` (previously duplicated almost
+ * verbatim between them, differing only in the key/migrations/validator).
+ * Never throws — any failure along the way clears `key` and returns
+ * `null`. Returns the validated payload as-is; callers do their own small
+ * mapping into the final domain shape (e.g. copying arrays).
+ */
+function loadPersisted<T>(
+  key: string,
+  migrations: Record<number, (data: unknown) => T | null>,
+  isValid: (data: unknown) => data is T,
+): T | null {
+  if (!isBrowser()) return null;
+
+  const raw = readRaw(key);
+  if (raw === null) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return clearAndReturnNull(key);
+  }
+
+  if (typeof parsed !== "object" || parsed === null) {
+    return clearAndReturnNull(key);
+  }
+
+  const schemaVersion = (parsed as Record<string, unknown>).schemaVersion;
+  if (typeof schemaVersion !== "number") {
+    return clearAndReturnNull(key);
+  }
+
+  let data: unknown = parsed;
+  if (schemaVersion !== CURRENT_SCHEMA_VERSION) {
+    if (schemaVersion > CURRENT_SCHEMA_VERSION) {
+      // Newer version than this build understands — no downgrade path.
+      return clearAndReturnNull(key);
+    }
+
+    const migrate = migrations[schemaVersion];
+    if (!migrate) {
+      // Older version with no migration path available — treat as corrupt.
+      return clearAndReturnNull(key);
+    }
+
+    const migrated = migrate(parsed);
+    if (migrated === null) {
+      return clearAndReturnNull(key);
+    }
+    data = migrated;
+  }
+
+  if (!isValid(data)) {
+    return clearAndReturnNull(key);
+  }
+
+  return data;
 }
 
 /** Persists the given draft state, overwriting any previously saved draft. */
@@ -184,50 +316,8 @@ export function saveDraft(state: DraftState): void {
  * caller.
  */
 export function loadDraft(): DraftState | null {
-  if (!isBrowser()) return null;
-
-  const raw = readRaw();
-  if (raw === null) return null;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return clearAndReturnNull();
-  }
-
-  if (typeof parsed !== "object" || parsed === null) {
-    return clearAndReturnNull();
-  }
-
-  const schemaVersion = (parsed as Record<string, unknown>).schemaVersion;
-  if (typeof schemaVersion !== "number") {
-    return clearAndReturnNull();
-  }
-
-  let data = parsed;
-  if (schemaVersion !== CURRENT_SCHEMA_VERSION) {
-    if (schemaVersion > CURRENT_SCHEMA_VERSION) {
-      // Newer version than this build understands — no downgrade path.
-      return clearAndReturnNull();
-    }
-
-    const migrate = migrations[schemaVersion];
-    if (!migrate) {
-      // Older version with no migration path available — treat as corrupt.
-      return clearAndReturnNull();
-    }
-
-    const migrated = migrate(parsed);
-    if (migrated === null) {
-      return clearAndReturnNull();
-    }
-    data = migrated;
-  }
-
-  if (!isValidPersistedDraft(data)) {
-    return clearAndReturnNull();
-  }
+  const data = loadPersisted(STORAGE_KEY, migrations, isValidPersistedDraft);
+  if (data === null) return null;
 
   return {
     initiative: data.initiative,
@@ -238,33 +328,77 @@ export function loadDraft(): DraftState | null {
   };
 }
 
+/** Persists the given battle state, overwriting any previously saved one. */
+export function saveBattleState(state: BattleState): void {
+  if (!isBrowser()) return;
+
+  const payload: PersistedBattleStateV1 = {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    p1: state.p1,
+    p2: state.p2,
+    updatedAt: new Date().toISOString(),
+  };
+
+  safeSetItem(BATTLE_STATE_STORAGE_KEY, JSON.stringify(payload));
+}
+
 /**
- * Removes any persisted draft, *and* the persisted battle-view flag (see
- * `saveBattleView` below) — structurally, not by convention: whichever
- * screen was showing only ever makes sense relative to a specific
- * completed draft, so any draft reset (new draft, return to start)
- * invalidates it too. Keeping this here (rather than relying on every UI
- * call site that resets a draft to separately remember to reset the view)
- * means a future reset path can't forget it.
+ * Loads a persisted battle state, validating it thoroughly. Any failure
+ * along the way clears the stored key and returns `null` — this never
+ * throws to the caller. This validation is generic (doesn't know about a
+ * specific draft's picks) — the hero-id-*set*-match check against the
+ * current draft's heroes happens in `useBattle`.
+ */
+export function loadBattleState(): BattleState | null {
+  const data = loadPersisted(BATTLE_STATE_STORAGE_KEY, battleMigrations, isValidPersistedBattleState);
+  if (data === null) return null;
+
+  return {
+    schemaVersion: 1,
+    p1: data.p1,
+    p2: data.p2,
+  };
+}
+
+/**
+ * Removes any persisted draft, the persisted view flag, and the persisted
+ * battle state — structurally, not by convention: whichever screen was
+ * showing, and whatever battle progress existed, only ever makes sense
+ * relative to a specific completed draft, so any draft reset (new draft,
+ * return to start) invalidates all three. Keeping this here (rather than
+ * relying on every UI call site that resets a draft to separately
+ * remember to reset the others) means a future reset path can't forget it.
  */
 export function clearDraft(): void {
   if (!isBrowser()) return;
-  removeRaw();
+  removeRaw(STORAGE_KEY);
   safeRemoveItem(VIEW_STORAGE_KEY);
+  safeRemoveItem(BATTLE_STATE_STORAGE_KEY);
 }
 
-/** True if the persisted view was "battle"; absence/anything else means "results". */
-export function loadBattleView(): boolean {
-  if (!isBrowser()) return false;
-  return safeGetItem(VIEW_STORAGE_KEY) === "battle";
-}
-
-/** Persists which screen is showing once a draft is done; "results" just clears the key. */
-export function saveBattleView(view: "results" | "battle"): void {
-  if (!isBrowser()) return;
-  if (view === "battle") {
-    safeSetItem(VIEW_STORAGE_KEY, "battle");
-  } else {
+/** The persisted view, defaulting to "results" when nothing (or something
+ * other than a known `View` value) is stored. */
+export function loadView(): View {
+  if (!isBrowser()) return "results";
+  const raw = safeGetItem(VIEW_STORAGE_KEY);
+  if (raw === "battle" || raw === "win") return raw;
+  if (raw !== null) {
+    // A stale/corrupt value (a future build's new View literal, or a
+    // hand-edited key) — clear it rather than silently defaulting to
+    // "results" forever, matching loadDraft/loadBattleState's
+    // clear-on-invalid convention instead of leaving bad data behind.
     safeRemoveItem(VIEW_STORAGE_KEY);
+  }
+  return "results";
+}
+
+/** Persists which screen is showing once a draft is done; "results" just
+ * clears the key (it's the default, nothing to store). */
+export function saveView(view: View): void {
+  if (!isBrowser()) return;
+  if (view === "results") {
+    safeRemoveItem(VIEW_STORAGE_KEY);
+  } else {
+    safeSetItem(VIEW_STORAGE_KEY, view);
   }
 }

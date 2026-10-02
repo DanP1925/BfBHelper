@@ -18,5 +18,6 @@ test("completing a draft and starting battle renders the Battle Board", async ({
   await page.getByRole("button", { name: "Start Battle →" }).click();
 
   await expect(page.getByText("Structures")).toHaveCount(2);
-  await expect(page.getByText("0 Gold")).toHaveCount(2);
+  await expect(page.getByRole("spinbutton", { name: "Player 1 gold" })).toHaveValue("0");
+  await expect(page.getByRole("spinbutton", { name: "Player 2 gold" })).toHaveValue("0");
 });

@@ -1,0 +1,127 @@
+.screen {
+  flex-grow: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  /* 'safe center': see BattleBoardScreen.module.css — centers when content
+     fits, falls back to start alignment when it overflows, so overflowing
+     content stays reachable by scrolling instead of being clipped. */
+  align-items: safe center;
+  justify-content: safe center;
+  padding: 32px 40px;
+  gap: 24px;
+}
+
+.titleBlock {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.eyebrow {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--color-gold);
+  margin-top: 6px;
+}
+
+.teams {
+  width: 100%;
+  max-width: 1180px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.panelWinner {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 24px rgba(201, 162, 75, 0.45);
+}
+
+.panelLoser {
+  opacity: 0.6;
+}
+
+.winnerRibbon {
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  background: var(--color-gold);
+  color: var(--color-bg);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.header {
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.headerLabel {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: 16px 40px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: center;
+}
+
+.newDraftLink {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-muted-strong);
+  background: none;
+  border: 1px solid var(--color-button-border);
+  padding: 10px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.newDraftLink:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}

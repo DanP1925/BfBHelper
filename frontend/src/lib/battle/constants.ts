@@ -8,3 +8,8 @@ export const TEAM_STARTING_GOLD = 0;
 export const TOWER_SLOTS = ["top", "middle", "bottom"] as const;
 
 export type TowerSlot = (typeof TOWER_SLOTS)[number];
+
+/** Flat HP ceiling for every hero, regardless of base HP or level
+ * (intent/03) — level and HP stay independently adjustable; this ceiling
+ * doesn't recalculate off either. */
+export const HERO_HP_CEILING = 15;
