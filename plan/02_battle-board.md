@@ -158,8 +158,8 @@ can draft any of the 19) needed full coverage.
 - [x] M7. Wire into `app/page.tsx`: `view: "results" | "battle"` state,
       persisted via `loadBattleView`/`saveBattleView`
       (`bfbhelper:battle-view`); `ResultsScreen` gets a "Start Battle"
-      button; starting a new draft or leaving the Battle Board both reset
-      `view` back to `"results"`.
+      button. (See M11 for how the reset-back-to-`"results"` responsibility
+      moved since this was first written.)
 - [x] M8. Visual QA against the mockup, several corrective rounds after
       user review of running screenshots:
       1. Fixed a `justify-content: center` + `overflow: auto` clipping
@@ -182,7 +182,38 @@ can draft any of the 19) needed full coverage.
       6. Dropped the mockup's static-preview caption below the panels —
          removed per user request, not carried into the real screen.
 - [x] M9. `tsc --noEmit`, `eslint --max-warnings=0`, and the full Vitest
-      suite (61 tests) all green after each round above.
+      suite all green after each round above (65 tests as of M11).
+- [x] M11. Code review (`/code-review 16`) fixes:
+      1. **Reload-flash fix:** `view` no longer defaults to `"results"`
+         before hydration — `page.tsx` renders nothing for the one
+         instant `view === null`, instead of flashing the wrong screen
+         (and paying for its image fetch + layout pass) before correcting
+         itself.
+      2. **Structural invariant, not call-site convention:** `view` is
+         now re-derived from storage every time `draft.phase` transitions
+         *into* `"done"`, and reset to `null` whenever it leaves `"done"`
+         — so every path back to `"drafting"`/`"idle"` forgets which
+         screen was showing, not just the ones a call site remembered to
+         wrap. `clearDraft()` itself now also clears
+         `bfbhelper:battle-view` (it's meaningless without the draft it
+         refers to), closing the gap where a reset path could leave a
+         stale flag behind — this also removes the cross-tab footgun
+         where one tab starting a fresh draft could silently overwrite
+         another tab's persisted Battle Board view.
+      3. `HeroCard`'s `level` prop moved from a plain optional field to a
+         discriminated union member, so `<HeroCard variant="battle" />`
+         without a `level` is now a compile error instead of silently
+         rendering "undefined/4".
+      4. `BattleTeamPanel`'s `TOWER_ICON`/`BIT_ICON` lookup tables
+         collapsed into one `structureIcon(name, side)` helper.
+      5. `BattleBoardScreen`'s two copy-pasted `<BattleTeamPanel>` blocks
+         replaced with a `teams.map(...)`.
+      6. `storage.ts`'s four hand-rolled try/catch-and-swallow
+         localStorage blocks collapsed into shared
+         `safeGetItem`/`safeSetItem`/`safeRemoveItem` helpers.
+      Not fixed: the plan doc being written after the build (process note
+      only, no code to change — it was written at the user's explicit
+      mid-build request).
 - [ ] M10. Manual click-through on the deployed (not just local dev)
       build, and a final visual sign-off from the user against the
       mockup. **Not yet done — pending user review of the current
@@ -199,6 +230,12 @@ Roster (`data/heroes.test.ts`):
 1. Every hero has a positive `baseHp` (added).
 2. Every hero has a `battleToken` file on disk under
    `frontend/public/` (added, mirrors the existing portrait-file check).
+
+Battle-view persistence (`lib/persistence/storage.test.ts`, added in M11):
+3. `loadBattleView()` defaults to `false` with nothing persisted.
+4. `saveBattleView("battle")` → `loadBattleView()` round-trips `true`.
+5. `saveBattleView("results")` clears the key rather than storing it.
+6. `clearDraft()` also clears the persisted battle-view flag.
 
 Existing v1 suites (draft logic, persistence, `useDraft`, `page.test.tsx`)
 are unaffected and still pass — this feature only adds fields/files, it

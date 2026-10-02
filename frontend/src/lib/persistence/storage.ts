@@ -118,20 +118,42 @@ function isValidPersistedDraft(data: unknown): data is PersistedDraftV1 {
   return true;
 }
 
-function readRaw(): string | null {
+/**
+ * Shared try/catch-and-swallow wrappers around `window.localStorage` —
+ * callers must check `isBrowser()` first, since these assume `window`
+ * exists. Every localStorage access in this module (draft + battle-view)
+ * goes through these rather than each hand-rolling its own try/catch.
+ */
+function safeGetItem(key: string): string | null {
   try {
-    return window.localStorage.getItem(STORAGE_KEY);
+    return window.localStorage.getItem(key);
   } catch {
     return null;
   }
 }
 
-function removeRaw(): void {
+function safeSetItem(key: string, value: string): void {
   try {
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore write failures (e.g. quota exceeded, storage disabled).
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
   } catch {
     // Ignore — nothing more we can do if localStorage is unavailable.
   }
+}
+
+function readRaw(): string | null {
+  return safeGetItem(STORAGE_KEY);
+}
+
+function removeRaw(): void {
+  safeRemoveItem(STORAGE_KEY);
 }
 
 function clearAndReturnNull(): null {
@@ -153,11 +175,7 @@ export function saveDraft(state: DraftState): void {
     updatedAt: new Date().toISOString(),
   };
 
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch {
-    // Ignore write failures (e.g. quota exceeded, storage disabled).
-  }
+  safeSetItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
 /**
@@ -220,32 +238,33 @@ export function loadDraft(): DraftState | null {
   };
 }
 
-/** Removes any persisted draft. */
+/**
+ * Removes any persisted draft, *and* the persisted battle-view flag (see
+ * `saveBattleView` below) — structurally, not by convention: whichever
+ * screen was showing only ever makes sense relative to a specific
+ * completed draft, so any draft reset (new draft, return to start)
+ * invalidates it too. Keeping this here (rather than relying on every UI
+ * call site that resets a draft to separately remember to reset the view)
+ * means a future reset path can't forget it.
+ */
 export function clearDraft(): void {
   if (!isBrowser()) return;
   removeRaw();
+  safeRemoveItem(VIEW_STORAGE_KEY);
 }
 
 /** True if the persisted view was "battle"; absence/anything else means "results". */
 export function loadBattleView(): boolean {
   if (!isBrowser()) return false;
-  try {
-    return window.localStorage.getItem(VIEW_STORAGE_KEY) === "battle";
-  } catch {
-    return false;
-  }
+  return safeGetItem(VIEW_STORAGE_KEY) === "battle";
 }
 
 /** Persists which screen is showing once a draft is done; "results" just clears the key. */
 export function saveBattleView(view: "results" | "battle"): void {
   if (!isBrowser()) return;
-  try {
-    if (view === "battle") {
-      window.localStorage.setItem(VIEW_STORAGE_KEY, "battle");
-    } else {
-      window.localStorage.removeItem(VIEW_STORAGE_KEY);
-    }
-  } catch {
-    // Ignore write failures (e.g. quota exceeded, storage disabled).
+  if (view === "battle") {
+    safeSetItem(VIEW_STORAGE_KEY, "battle");
+  } else {
+    safeRemoveItem(VIEW_STORAGE_KEY);
   }
 }

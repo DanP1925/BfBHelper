@@ -9,15 +9,15 @@ import { HeroCard } from "../HeroCard/HeroCard";
 import { StructureSlot } from "../StructureSlot/StructureSlot";
 import styles from "./BattleTeamPanel.module.css";
 
-const TOWER_ICON: Record<PlayerId, string> = {
-  p1: "/structures/tower-red.png",
-  p2: "/structures/tower-blue.png",
+/** Structure icon art comes in a red/blue pair per side — see specs/Battle Board/. */
+const SIDE_ICON_SUFFIX: Record<PlayerId, string> = {
+  p1: "red",
+  p2: "blue",
 };
 
-const BIT_ICON: Record<PlayerId, string> = {
-  p1: "/structures/bit-red.png",
-  p2: "/structures/bit-blue.png",
-};
+function structureIcon(name: "tower" | "bit", side: PlayerId): string {
+  return `/structures/${name}-${SIDE_ICON_SUFFIX[side]}.png`;
+}
 
 const TOWER_LABEL: Record<(typeof TOWER_SLOTS)[number], string> = {
   top: "Top",
@@ -61,13 +61,13 @@ export function BattleTeamPanel({ label, side, heroes, gold }: BattleTeamPanelPr
               key={slot}
               label={TOWER_LABEL[slot]}
               hp={TOWER_STARTING_HP}
-              icon={TOWER_ICON[side]}
+              icon={structureIcon("tower", side)}
             />
           ))}
           <StructureSlot
             label="Bit"
             hp={BIT_STARTING_HP}
-            icon={BIT_ICON[side]}
+            icon={structureIcon("bit", side)}
             accent={`var(--color-${side})`}
           />
         </div>

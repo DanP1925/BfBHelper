@@ -35,9 +35,16 @@
     `frontend/src/lib/persistence/storage.ts`) — separate from
     `PersistedDraftV1` since it's UI navigation, not draft data. Only
     `"battle"` is ever written; the key's absence means `"results"`.
-    Reloading while on the Battle Board stays there; "← New Draft"
-    (from either screen) and starting a fresh draft both reset it back
-    to `"results"`.
+    Reloading while on the Battle Board stays there.
+  - In `page.tsx`, `view` is re-derived from storage every time
+    `draft.phase` transitions *into* `"done"`, and reset to a
+    not-yet-hydrated `null` whenever it leaves `"done"` — so it's never
+    stale, driven by `draft.phase` rather than needing every "New
+    Draft"/"Start Draft" call site to separately remember to reset it.
+    `clearDraft()` (called by both `startNewDraft` and `returnToStart`)
+    also clears `bfbhelper:battle-view`, since it's meaningless without
+    the draft it refers to — this is what actually resets it back to
+    `"results"`, structurally rather than by UI convention.
   - Revises intent/02's Session Lifecycle note that a reload "lands
     back on the Results screen" — that was the v1 behavior before this
     was made to persist.
