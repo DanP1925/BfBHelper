@@ -2,25 +2,28 @@ import type { Hero } from "../../lib/draft/types";
 import { HERO_MAX_LEVEL } from "../../lib/battle/constants";
 import styles from "./HeroCard.module.css";
 
-type HeroCardProps = {
+type HeroCardCommonProps = {
   hero: Hero;
-  /**
-   * 'pool' = clickable grid card (draft pool) — shows the whole card, name/
-   * class baked into the art. 'slot' (team panel) and 'result' (results
-   * screen) both crop into the portrait+stats region only (per the
-   * mockup) and add their own text caption below, since that crop hides
-   * the baked-in name/class text. 'battle' (Battle Board) uses the
-   * separate map-token art (`hero.battleToken`, no card chrome) instead,
-   * with its own explicit HP badge and level meter — HP weighted above
-   * level, per the Battle Board mockup.
-   */
-  variant: "pool" | "slot" | "result" | "battle";
-  /** Required when variant === 'battle'. */
-  level?: number;
   onClick?: () => void;
 };
 
-export function HeroCard({ hero, variant, level, onClick }: HeroCardProps) {
+/**
+ * 'pool' = clickable grid card (draft pool) — shows the whole card, name/
+ * class baked into the art. 'slot' (team panel) and 'result' (results
+ * screen) both crop into the portrait+stats region only (per the mockup)
+ * and add their own text caption below, since that crop hides the
+ * baked-in name/class text. 'battle' (Battle Board) uses the separate
+ * map-token art (`hero.battleToken`, no card chrome) instead, with its
+ * own explicit HP badge and level meter — HP weighted above level, per
+ * the Battle Board mockup. `level` is a discriminated-union member (not a
+ * plain optional prop) so a `"battle"` card can't compile without one.
+ */
+type HeroCardProps =
+  | (HeroCardCommonProps & { variant: "pool" | "slot" | "result" })
+  | (HeroCardCommonProps & { variant: "battle"; level: number });
+
+export function HeroCard(props: HeroCardProps) {
+  const { hero, variant, onClick } = props;
   const altText = `${hero.name}, ${hero.className}`;
 
   if (variant === "pool") {
@@ -38,6 +41,7 @@ export function HeroCard({ hero, variant, level, onClick }: HeroCardProps) {
   }
 
   if (variant === "battle") {
+    const { level } = props;
     return (
       <div className={styles.battleCard}>
         <div className={styles.battleTokenWrapper}>
@@ -68,9 +72,7 @@ export function HeroCard({ hero, variant, level, onClick }: HeroCardProps) {
               {Array.from({ length: HERO_MAX_LEVEL }, (_, index) => (
                 <span
                   key={index}
-                  className={
-                    index < (level ?? 0) ? styles.levelPipFilled : styles.levelPip
-                  }
+                  className={index < level ? styles.levelPipFilled : styles.levelPip}
                 />
               ))}
             </div>

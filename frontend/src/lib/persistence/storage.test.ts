@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { DraftState } from "../draft/types";
-import { CURRENT_SCHEMA_VERSION, STORAGE_KEY } from "./schema";
-import { clearDraft, loadDraft, saveDraft } from "./storage";
+import { CURRENT_SCHEMA_VERSION, STORAGE_KEY, VIEW_STORAGE_KEY } from "./schema";
+import { clearDraft, loadBattleView, loadDraft, saveBattleView, saveDraft } from "./storage";
 
 const midDraftState: DraftState = {
   initiative: "p1",
@@ -200,5 +200,34 @@ describe("clearDraft", () => {
 
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
     expect(loadDraft()).toBeNull();
+  });
+
+  it("also clears the persisted battle-view flag, since it's meaningless without a draft", () => {
+    saveDraft(midDraftState);
+    saveBattleView("battle");
+
+    clearDraft();
+
+    expect(window.localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
+    expect(loadBattleView()).toBe(false);
+  });
+});
+
+describe("loadBattleView / saveBattleView", () => {
+  it("defaults to false when nothing is persisted", () => {
+    expect(loadBattleView()).toBe(false);
+  });
+
+  it("round-trips \"battle\"", () => {
+    saveBattleView("battle");
+    expect(loadBattleView()).toBe(true);
+  });
+
+  it("saving \"results\" clears the key rather than storing it", () => {
+    saveBattleView("battle");
+    saveBattleView("results");
+
+    expect(window.localStorage.getItem(VIEW_STORAGE_KEY)).toBeNull();
+    expect(loadBattleView()).toBe(false);
   });
 });
