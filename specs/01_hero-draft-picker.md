@@ -49,6 +49,10 @@
   interactive draft board, and the read-only results screen) is
   tracked as a Claude design artifact:
   https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
+- This artifact ("BfbHelper — App Flow") is shared across intents — it
+  also holds intent 02's Battle Board artboard (see
+  [02_battle-board.md](02_battle-board.md)), so the whole v1→v2 screen
+  flow lives on one canvas.
 - This is a prototype for visual direction only — not implemented
   code — and is expected to evolve once build-out begins.
 
