@@ -81,6 +81,15 @@ purely tracking numbers:
   it only exposes the action. This avoids a misclick (overshooting a
   -1 tap, or a stray number typed into the Bit's direct-entry field)
   instantly ending the match with no way back.
+- "End Battle" lives in a small overflow menu (a corner icon, not an
+  inline footer button) alongside "New Draft" — both are exceptional,
+  rarely-tapped actions next to the constant HP/level/gold adjustments
+  this intent adds, and don't deserve equal visual weight with them on
+  the main battle view. This also moves "New Draft" out of intent 02's
+  always-visible footer link, into the same menu, for the same reason:
+  it's no more a moment-to-moment action than ending the battle is.
+  "End Battle" only appears in the menu once a Bit is at 0; "New Draft"
+  is always there.
 - Confirming "End Battle" navigates to a new **Win Screen**:
   - Both teams' heroes are shown, in a two-panel layout mirroring the
     Battle Board/Results screen — not just the winner's.
