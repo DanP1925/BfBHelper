@@ -84,7 +84,8 @@ frontend/
     app/
       page.tsx                                            # view += "map" branch
   public/
-    map/board.png                                           # new: staged board art
+    map/board.jpg                                           # new: staged board art (downscaled/
+                                                             #   re-encoded from the 11MB source PNG)
 e2e/
   battle-map.spec.ts                                          # new (widen phase)
 intent/04_battle-map.md                                         # "holding area" -> "respawn area"
@@ -172,37 +173,41 @@ resolve them):
 
 ### PR C — Tracer bullet: thin end-to-end Map slice
 
-- [ ] M9. Stage the asset:
+- [x] M9. Stage the asset:
       `~/Documents/Playground/BattleForBiternia/Map Assets/Map.png` →
-      `specs/Battle Map/Map.png` → `frontend/public/map/board.png`.
-- [ ] M10. `lib/map/dragPayload.ts` (new): `serializeHeroDragPayload`/
+      `specs/Battle Map/Map.png` (full-resolution source, 2502×2500,
+      ~11MB) → `frontend/public/map/board.jpg` (downscaled to 1400px wide,
+      re-encoded as JPEG quality 85, ~1.2MB — the source PNG was ~1400x
+      larger than every other asset this app serves; no other repo asset
+      is anywhere near that size).
+- [x] M10. `lib/map/dragPayload.ts` (new): `serializeHeroDragPayload`/
       `parseHeroDragPayload` — shared HTML5 DnD payload helpers used by
       `MapToken` and every drop target.
-- [ ] M11. `components/ViewToggle/` (new): `{ active, onSwitchView }`,
+- [x] M11. `components/ViewToggle/` (new): `{ active, onSwitchView }`,
       two buttons, clicking the inactive one calls `onSwitchView`.
-- [ ] M12. `components/MapToken/` (new): hero art in a colored p1/p2 ring +
+- [x] M12. `components/MapToken/` (new): hero art in a colored p1/p2 ring +
       a plain text label; `draggable`, layout-agnostic (positioning is the
       caller's job). Name-tag visual polish deferred to M18.
-- [ ] M13. `components/RespawnAreaStrip/` (new): `{ side, label, heroes,
+- [x] M13. `components/RespawnAreaStrip/` (new): `{ side, label, heroes,
       onDrop }` — vertical column of that side's `heroPositions === null`
       heroes; drop target that rejects a drop whose payload's `side`
       doesn't match.
-- [ ] M14. `components/screens/BattleMapScreen/` (new), minimal slice:
+- [x] M14. `components/screens/BattleMapScreen/` (new), minimal slice:
       top bar (`OverflowMenu` + `ViewToggle active="map"`); a static
       `position:relative; aspect-ratio:1/1` board wrapper around
-      `/map/board.png`; a screen-local `MapSpace` subcomponent per
+      `/map/board.jpg`; a screen-local `MapSpace` subcomponent per
       `MAP_SPACES` entry (all 15, real coordinates from M1) that is the
       native-DnD drop target and renders a structure icon (hidden at HP 0)
       plus any hero tokens on that space (no fan-out yet — centered,
       overlapping if more than one); a `RespawnAreaStrip` flanking each
       side (no status panel yet); `ConfirmDialog` for "End Battle", same
       as `BattleBoardScreen`.
-- [ ] M15. `BattleBoardScreen` += `onSwitchView` prop + `ViewToggle
+- [x] M15. `BattleBoardScreen` += `onSwitchView` prop + `ViewToggle
       active="battle"` next to its `OverflowMenu`. `app/page.tsx` += a
       `view === "map"` branch rendering `BattleMapScreen` with the same
       props `BattleBoardScreen` gets plus `setHeroPosition`; `onSwitchView`
       passed into both screens.
-- [ ] M16. `npm test` green for this slice's new files
+- [x] M16. `npm test` green for this slice's new files
       (`ViewToggle.test.tsx`, `BattleMapScreen.test.tsx` — minimal: a
       hero's token renders on its assigned space, an unplaced hero renders
       in its side's respawn strip, "End Battle" gated on `winner !== null`).

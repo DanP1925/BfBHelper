@@ -1,0 +1,28 @@
+.toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+}
+
+.option {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.option:not(:disabled):hover {
+  color: var(--color-text);
+}
+
+.option[aria-pressed="true"] {
+  background: var(--color-gold);
+  color: var(--color-bg);
+  cursor: default;
+}

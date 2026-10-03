@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { getHeroById } from "../data/heroes";
 import { BattleBoardScreen } from "../components/screens/BattleBoardScreen/BattleBoardScreen";
+import { BattleMapScreen } from "../components/screens/BattleMapScreen/BattleMapScreen";
 import { DraftBoardScreen } from "../components/screens/DraftBoardScreen/DraftBoardScreen";
 import { ResultsScreen } from "../components/screens/ResultsScreen/ResultsScreen";
 import { StartScreen } from "../components/screens/StartScreen/StartScreen";
 import { WinScreen } from "../components/screens/WinScreen/WinScreen";
+import type { BattleView } from "../components/ViewToggle/ViewToggle";
 import type { Hero } from "../lib/draft/types";
 import type { View } from "../lib/persistence/schema";
 import { loadView, saveView } from "../lib/persistence/storage";
@@ -60,6 +62,13 @@ export default function Home() {
     }
   }, [draft.phase]);
 
+  // Shared by BattleBoardScreen's and BattleMapScreen's ViewToggle — the
+  // only way to move between "battle" and "map" once a battle is underway.
+  function switchView(target: BattleView) {
+    setView(target);
+    saveView(target);
+  }
+
   if (draft.phase === "idle") {
     return <StartScreen onStartDraft={draft.startNewDraft} />;
   }
@@ -87,6 +96,25 @@ export default function Home() {
             setView("win");
             saveView("win");
           }}
+          onSwitchView={switchView}
+        />
+      );
+    }
+
+    if (view === "map") {
+      return (
+        <BattleMapScreen
+          p1Heroes={p1Picks}
+          p2Heroes={p2Picks}
+          battleState={battle.state}
+          winner={battle.winner}
+          setHeroPosition={battle.setHeroPosition}
+          onNewDraft={draft.returnToStart}
+          onEndBattle={() => {
+            setView("win");
+            saveView("win");
+          }}
+          onSwitchView={switchView}
         />
       );
     }

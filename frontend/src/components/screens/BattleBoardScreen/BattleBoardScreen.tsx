@@ -6,6 +6,7 @@ import type { BattleState, StructuresState } from "../../../lib/battle/types";
 import { BattleTeamPanel } from "../../BattleTeamPanel/BattleTeamPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
+import { ViewToggle, type BattleView } from "../../ViewToggle/ViewToggle";
 import styles from "./BattleBoardScreen.module.css";
 
 type BattleBoardScreenProps = {
@@ -21,6 +22,7 @@ type BattleBoardScreenProps = {
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
   onEndBattle: () => void;
+  onSwitchView: (target: BattleView) => void;
 };
 
 export function BattleBoardScreen({
@@ -34,6 +36,7 @@ export function BattleBoardScreen({
   setStructureHp,
   onNewDraft,
   onEndBattle,
+  onSwitchView,
 }: BattleBoardScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -54,6 +57,7 @@ export function BattleBoardScreen({
   return (
     <div className={styles.screen}>
       <div className={styles.topBar}>
+        <ViewToggle active="battle" onSwitchView={onSwitchView} />
         <OverflowMenu items={menuItems} />
       </div>
 
