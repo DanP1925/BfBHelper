@@ -26,7 +26,7 @@ export type MapSpaceDef =
  * there is no separate gold-only space anywhere else on the board.
  *
  * `xPct`/`yPct` are percent coordinates (0-100) of each space's center on
- * the board art (`/map/board.png`), measured against the full-resolution
+ * the board art (`/map/board.jpg`), measured against the full-resolution
  * source.
  */
 export const MAP_SPACES = [

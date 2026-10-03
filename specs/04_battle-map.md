@@ -210,7 +210,7 @@
     menu items/logic — "New Draft" always, "End Battle" when
     `winner !== null`), plus the new `ViewToggle` (below).
   - The board itself: a single `position: relative` wrapper around the
-    board art (`/map/board.png`, `aspect-ratio: 1 / 1` to match
+    board art (`/map/board.jpg`, `aspect-ratio: 1 / 1` to match
     `Map.png`'s native square dimensions so percent-based coordinates
     stay accurate at any rendered width), with one absolutely-positioned
     layer per space kind:
@@ -333,8 +333,12 @@
   art assets it uses live in `specs/<Feature Name>/`" convention —
   distinct from the existing `specs/Battle Board/` folder intents 02-03
   already populated, which this intent also reuses hero tokens and
-  structure icons from, unchanged), then copied into
-  `frontend/public/map/board.png` for the app to serve.
+  structure icons from, unchanged), then downscaled (2502px → 1400px) and
+  re-encoded as `frontend/public/map/board.jpg` (quality 85) for the app to
+  serve — the source PNG is ~11MB, ~1400x larger than every other asset
+  this app serves, and compresses losslessly-enough as a JPEG (this is a
+  painted background, not pixel art needing crisp transparency) to ~1.2MB
+  without a visible quality loss.
 - No other new art: hero tokens, Tower/Bit icons, and the gold icon are
   all already in `frontend/public/heroes-tokens/` and
   `frontend/public/structures/` from intent 02, reused as-is per

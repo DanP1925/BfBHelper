@@ -1,0 +1,34 @@
+.token {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: grab;
+  user-select: none;
+}
+
+.ring {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  overflow: hidden;
+  background: var(--color-bg);
+  flex-shrink: 0;
+}
+
+.art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.label {
+  font-size: 0.65rem;
+  color: var(--color-text);
+  background: var(--color-panel-bg);
+  padding: 1px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
