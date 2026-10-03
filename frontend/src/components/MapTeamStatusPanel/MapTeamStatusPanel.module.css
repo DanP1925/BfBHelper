@@ -1,0 +1,79 @@
+.panel {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 10px;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.headerLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.goldBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.goldIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sectionLabel {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.heroRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.heroRow.dimmed {
+  opacity: 0.5;
+}
+
+.heroName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heroHp {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.structuresList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

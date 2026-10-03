@@ -218,37 +218,37 @@ resolve them):
 
 ### PR D — Widen to the full spec
 
-- [ ] M18. `lib/map/fanOut.ts` (new): `fanOffset(index, total)` — rings N
+- [x] M18. `lib/map/fanOut.ts` (new): `fanOffset(index, total)` — rings N
       tokens sharing one space evenly around it (radius grows mildly past
       4). Wire into `MapSpace`, replacing M14's overlap-if-shared
       rendering; `MapToken` gains its name-tag polish (own out-of-flow
       element, same centering technique as structure HP tags).
-- [ ] M19. `components/MapTeamStatusPanel/` (new): read-only gold total
+- [x] M19. `components/MapTeamStatusPanel/` (new): read-only gold total
       (icon + plain number), a "Heroes" section (name + HP, dimmed at 0),
       a "Structures" section (reuses `StructureSlot` read-only with
       `reactiveStyling` on Towers only) — slotted above each side's
       `RespawnAreaStrip`.
-- [ ] M20. `components/GoldPilesBar/` (new): 3 real `NumberStepper`s
+- [x] M20. `components/GoldPilesBar/` (new): 3 real `NumberStepper`s
       (`min:0, max:GOLD_PILE_STARTING_COUNT`) labeled "NE"/"Mid"/"SW" from
       each gold id, centered below the board row; `MapSpace`'s gold
       markers become real (read-only icon+count, hidden at 0, topmost
       z-index among the three pin kinds) in place of M14's absence.
-- [ ] M21. Zoom/pan: board + pin layers wrapped in a CSS transform driven
+- [x] M21. Zoom/pan: board + pin layers wrapped in a CSS transform driven
       by `BattleMapScreen`'s own `useState<{zoom,panX,panY}>` (never
       persisted); fixed zoom steps (100/150/200/250%) via buttons, bonus
       scroll-wheel zoom, click-drag panning clamped to the board's edges.
-- [ ] M22. `intent/04_battle-map.md`: rename "holding area" → "respawn
+- [x] M22. `intent/04_battle-map.md`: rename "holding area" → "respawn
       area" throughout (component name, on-screen label, prose), per its
       own staleness note in specs/04.
-- [ ] M23. Full test suite: `bounds`/`reducer`/`storage`/`useBattle` tests
+- [x] M23. Full test suite: `bounds`/`reducer`/`storage`/`useBattle` tests
       from the Test Scenarios list below (whichever weren't already added
       in PR B); `RespawnAreaStrip` cross-team drop rejection;
       `BattleMapScreen.test.tsx` extended for a destroyed structure's icon
       being absent, an emptied gold pile's marker being absent, and a 4+
       hero fan-out not overlapping illegibly.
-- [ ] M24. `tsc --noEmit`, `eslint --max-warnings=0`, full Vitest suite
+- [x] M24. `tsc --noEmit`, `eslint --max-warnings=0`, full Vitest suite
       green.
-- [ ] M25. `e2e/battle-map.spec.ts` (new): draft → battle → switch to Map
+- [x] M25. `e2e/battle-map.spec.ts` (new): draft → battle → switch to Map
       → drag a hero from the respawn strip onto a board space (Playwright
       `dragTo`) → switch back to Board, confirm HP edits still work →
       switch to Map again, confirm the position persisted. `npm run
@@ -261,6 +261,19 @@ resolve them):
       feature) saved battle and confirm it upgrades instead of resetting;
       4+ heroes fanned onto one node stay legible. Final visual sign-off
       against the mockup.
+      - **Partially done already, from this session**: a Playwright
+        script (not committed — scratch-only) drove the real flow in a
+        live Chromium browser at 1400×900 — draft → battle → Map →
+        drag 3 heroes onto the shared "Mid" gold node → verified visible
+        fan-out legibility (and caught/fixed two real bugs this way: the
+        fan-out radius was too small for 46px rings + name labels, and
+        decorative `<img>`s on the board defaulted to native-draggable,
+        which could trigger the browser's own image-drag gesture) →
+        decremented a gold pile via `GoldPilesBar` → reloaded → confirmed
+        both the hero positions and the gold-pile count persisted.
+        Still worth a human pass at the exact 13.3"/1280×800 baseline
+        (not 1400×900) and a real mouse/trackpad drag, which automation
+        doesn't fully stand in for.
 
 ## Test Scenarios
 

@@ -24,10 +24,23 @@
   padding: 24px 40px;
 }
 
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
 .row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 20px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .board {
@@ -36,8 +49,24 @@
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
   border-radius: 8px;
+  /* The pan/zoom viewport — overflow:hidden clips .boardTransform's
+     transform to this fixed box, so zooming/panning only ever affects
+     what's visible, never the board's own coordinate space (every
+     MapSpace's xPct/yPct stays relative to .boardTransform, unaffected
+     by zoom level). */
   overflow: hidden;
   border: 1px solid var(--color-border);
+  cursor: grab;
+}
+
+.board:active {
+  cursor: grabbing;
+}
+
+.boardTransform {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
 }
 
 .boardArt {
@@ -45,6 +74,35 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  pointer-events: none;
+}
+
+.zoomControls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  /* Sits outside .boardTransform (a sibling, not a child) so it never
+     moves or scales itself along with the board. */
+}
+
+.zoomButton {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-panel-bg);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.zoomButton:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .space {
@@ -66,4 +124,27 @@
   object-fit: contain;
   image-rendering: pixelated;
   pointer-events: none;
+}
+
+.goldMarker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-gold);
+  font-size: 0.65rem;
+  color: var(--color-gold);
+  pointer-events: none;
+}
+
+.goldMarkerIcon {
+  width: 12px;
+  height: 12px;
 }

@@ -109,6 +109,7 @@ export default function Home() {
           battleState={battle.state}
           winner={battle.winner}
           setHeroPosition={battle.setHeroPosition}
+          setGoldPile={battle.setGoldPile}
           onNewDraft={draft.returnToStart}
           onEndBattle={() => {
             setView("win");
