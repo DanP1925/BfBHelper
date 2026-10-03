@@ -1,18 +1,23 @@
 import type { Hero, HeroId, PlayerId } from "../draft/types";
-import { clampGold, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
+import { clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
 import {
   BIT_STARTING_HP,
   HERO_STARTING_LEVEL,
   TEAM_STARTING_GOLD,
   TOWER_STARTING_HP,
 } from "./constants";
+import { GOLD_PILE_SPACE_IDS } from "../../data/mapSpaces";
+import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
+import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import type { BattleState, BattleTeamState, StructuresState } from "./types";
 
 export type BattleAction =
   | { type: "SET_GOLD"; side: PlayerId; value: number }
   | { type: "SET_HERO_HP"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_HERO_LEVEL"; side: PlayerId; heroId: HeroId; value: number }
-  | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number };
+  | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
+  | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: MapSpaceId | null }
+  | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number };
 
 function structureCeiling(slot: keyof StructuresState): number {
   return slot === "bit" ? BIT_STARTING_HP : TOWER_STARTING_HP;
@@ -79,6 +84,25 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
       };
     }
 
+    case "SET_HERO_POSITION": {
+      const team = state[action.side];
+      if (!(action.heroId in team.heroes)) return state;
+      if (team.heroPositions[action.heroId] === action.spaceId) return state;
+      return {
+        ...state,
+        [action.side]: {
+          ...team,
+          heroPositions: { ...team.heroPositions, [action.heroId]: action.spaceId },
+        },
+      };
+    }
+
+    case "SET_GOLD_PILE": {
+      const nextValue = clampGoldPile(action.value);
+      if (nextValue === state.goldPiles[action.pileId]) return state;
+      return { ...state, goldPiles: { ...state.goldPiles, [action.pileId]: nextValue } };
+    }
+
     default:
       return state;
   }
@@ -103,15 +127,23 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
       bottom: TOWER_STARTING_HP,
       bit: BIT_STARTING_HP,
     },
+    heroPositions: Object.fromEntries(
+      heroEntries.map(([id]) => [id, null]),
+    ) as Record<HeroId, MapSpaceId | null>,
   };
 }
 
 /** Builds a fresh `BattleState` from each side's drafted heroes — each
- * hero's starting HP comes from their own `baseHp`, not a flat default. */
+ * hero's starting HP comes from their own `baseHp`, not a flat default;
+ * every hero starts in its team's respawn area, and every gold pile
+ * starts full. */
 export function createInitialBattleState(p1Heroes: Hero[], p2Heroes: Hero[]): BattleState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
+    goldPiles: Object.fromEntries(
+      GOLD_PILE_SPACE_IDS.map((id) => [id, GOLD_PILE_STARTING_COUNT]),
+    ) as Record<GoldPileSpaceId, number>,
   };
 }

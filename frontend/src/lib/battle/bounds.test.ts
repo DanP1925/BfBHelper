@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { clamp, clampGold, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
+import { clamp, clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
 import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "./constants";
+import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 
 describe("clamp", () => {
   it.each([
@@ -65,5 +66,21 @@ describe("clampStructureHp", () => {
     expect(clampStructureHp(11, 11)).toBe(11);
     expect(clampStructureHp(99, 11)).toBe(11);
     expect(clampStructureHp(99, 16)).toBe(16);
+  });
+});
+
+describe("clampGoldPile", () => {
+  it.each([
+    [-1, 0],
+    [0, 0],
+    [2, 2],
+    [GOLD_PILE_STARTING_COUNT, GOLD_PILE_STARTING_COUNT],
+    [GOLD_PILE_STARTING_COUNT + 1, GOLD_PILE_STARTING_COUNT],
+  ])("clampGoldPile(%d) -> %d", (value, expected) => {
+    expect(clampGoldPile(value)).toBe(expected);
+  });
+
+  it("NaN falls back to the floor", () => {
+    expect(clampGoldPile(Number.NaN)).toBe(0);
   });
 });

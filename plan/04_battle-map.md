@@ -127,25 +127,30 @@ resolve them):
 
 ### PR B — Data & state layer
 
-- [ ] M1. `data/mapSpaces.ts` (new): `MapSpaceKind`, `MapSpaceDef`, the
+- [x] M1. `data/mapSpaces.ts` (new): `MapSpaceKind`, `MapSpaceDef`, the
       15-entry `MAP_SPACES` array with real, measured `xPct`/`yPct` for
       every node (`p1-bit`, `p2-bit`, `p1-tower-{top,middle,bottom}`,
       `p2-tower-{top,middle,bottom}`, `p1-plain-{1,2}`, `p2-plain-{1,2}`,
       `gold-ne`, `gold-mid`, `gold-sw`), `MapSpaceId`/`GoldPileSpaceId`
       derived types (mirroring `TowerSlot`'s `as const` +
-      `(typeof X)[number]` pattern), plus runtime `MAP_SPACE_IDS`/
-      `GOLD_PILE_SPACE_IDS` arrays for storage validation.
-- [ ] M2. `lib/map/constants.ts` (new): `GOLD_PILE_STARTING_COUNT = 3`.
-- [ ] M3. `lib/battle/bounds.ts`: `clampGoldPile(value) =>
+      `(typeof X)[number]` pattern — declared via `as const satisfies
+      readonly MapSpaceDef[]` so each entry keeps its literal `kind`/`id`
+      type instead of widening to `MapSpaceDef[]`, which is what the
+      derived types need to narrow correctly), plus runtime
+      `MAP_SPACE_IDS`/`GOLD_PILE_SPACE_IDS` arrays for storage validation.
+- [x] M2. `lib/map/constants.ts` (new): `GOLD_PILE_STARTING_COUNT = 3`.
+- [x] M3. `lib/battle/bounds.ts`: `clampGoldPile(value) =>
       clamp(value, 0, GOLD_PILE_STARTING_COUNT)`.
-- [ ] M4. `lib/battle/types.ts`: `BattleTeamState` += `heroPositions:
+- [x] M4. `lib/battle/types.ts`: `BattleTeamState` += `heroPositions:
       Record<HeroId, MapSpaceId | null>`; `BattleState` becomes
       `schemaVersion: 2` += `goldPiles: Record<GoldPileSpaceId, number>`.
-- [ ] M5. `lib/persistence/schema.ts`: split `CURRENT_SCHEMA_VERSION` into
+- [x] M5. `lib/persistence/schema.ts`: split `CURRENT_SCHEMA_VERSION` into
       `CURRENT_DRAFT_SCHEMA_VERSION = 1` / `CURRENT_BATTLE_SCHEMA_VERSION =
       2`; add `PersistedBattleStateV2`; widen `View` to `"results" |
-      "battle" | "map" | "win"`.
-- [ ] M6. `lib/persistence/storage.ts`: `loadPersisted<T>` gains an
+      "battle" | "map" | "win"`. Also added `LegacyBattleTeamStateV1` — the
+      pre-intent-04 on-disk team shape, since `BattleTeamState` itself is
+      now the schema-2 shape and no longer describes a raw schema-1 payload.
+- [x] M6. `lib/persistence/storage.ts`: `loadPersisted<T>` gains an
       explicit `currentVersion: number` param (both call sites pass their
       own constant — this is the fix that keeps bumping the battle schema
       from also breaking `loadDraft`); `battleMigrations[1]` upgrades a
@@ -154,13 +159,13 @@ resolve them):
       gold ids); `hasValidBattleTeamShape`/`isValidPersistedBattleState`
       extended to validate the two new fields (clear-on-failure, same
       convention as every existing check); `loadView` accepts `"map"`.
-- [ ] M7. `lib/battle/reducer.ts`: `BattleAction` += `SET_HERO_POSITION`
+- [x] M7. `lib/battle/reducer.ts`: `BattleAction` += `SET_HERO_POSITION`
       (`side`, `heroId`, `spaceId: MapSpaceId | null`) and `SET_GOLD_PILE`
       (`pileId: GoldPileSpaceId`, `value`), both clamp-and-replace with the
       existing no-op-on-unchanged-value convention; `createInitialTeamState`/
       `createInitialBattleState` seed `heroPositions` (all `null`) and
       `goldPiles` (all `GOLD_PILE_STARTING_COUNT`).
-- [ ] M8. `lib/useBattle.ts`: += `setHeroPosition`/`setGoldPile` mutators
+- [x] M8. `lib/useBattle.ts`: += `setHeroPosition`/`setGoldPile` mutators
       (same `useCallback` shape as the existing four); `setHeroHp` composes
       a second `SET_HERO_POSITION(side, heroId, null)` dispatch in the same
       update whenever the clamped result is exactly 0 (see Architecture).

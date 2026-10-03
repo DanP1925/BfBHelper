@@ -7,11 +7,17 @@ function team(bitHp: number): BattleTeamState {
     gold: 0,
     heroes: {} as BattleTeamState["heroes"],
     structures: { top: 11, middle: 11, bottom: 11, bit: bitHp },
+    heroPositions: {} as BattleTeamState["heroPositions"],
   };
 }
 
 function state(p1BitHp: number, p2BitHp: number): BattleState {
-  return { schemaVersion: 1, p1: team(p1BitHp), p2: team(p2BitHp) };
+  return {
+    schemaVersion: 2,
+    p1: team(p1BitHp),
+    p2: team(p2BitHp),
+    goldPiles: {} as BattleState["goldPiles"],
+  };
 }
 
 describe("getBattleWinner", () => {

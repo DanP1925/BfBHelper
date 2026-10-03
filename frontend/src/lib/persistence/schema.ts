@@ -1,5 +1,6 @@
 import type { HeroId } from "../draft/types";
-import type { BattleTeamState } from "../battle/types";
+import type { BattleTeamState, StructuresState } from "../battle/types";
+import type { GoldPileSpaceId } from "../../data/mapSpaces";
 
 /**
  * The single stable key drafts are persisted under. Versioning lives inside
@@ -20,8 +21,14 @@ export const VIEW_STORAGE_KEY = "bfbhelper:battle-view";
  * versioned payload. */
 export const BATTLE_STATE_STORAGE_KEY = "bfbhelper:battle-state";
 
-/** The current schema version this build reads and writes. */
-export const CURRENT_SCHEMA_VERSION = 1 as const;
+/** The current schema version `loadDraft`/`saveDraft` reads and writes. */
+export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
+
+/** The current schema version `loadBattleState`/`saveBattleState` reads
+ * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
+ * bumping the battle-state schema must never make `loadDraft` also expect
+ * a migration that doesn't exist for drafts. */
+export const CURRENT_BATTLE_SCHEMA_VERSION = 2 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -37,15 +44,37 @@ export type PersistedDraftV1 = {
   updatedAt: string;
 };
 
-/** The on-disk (localStorage) shape of a persisted battle state, version 1. */
+/** The pre-intent-04 on-disk shape of one side's battle-team state — the
+ * migration source shape `battleMigrations[1]` upgrades from. Deliberately
+ * not `BattleTeamState` (which is schema-2 and already has
+ * `heroPositions`) — a genuine schema-1 payload never has that field. */
+export type LegacyBattleTeamStateV1 = {
+  gold: number;
+  heroes: Record<HeroId, { hp: number; level: number }>;
+  structures: StructuresState;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 1
+ * — kept only as the migration source type for `battleMigrations[1]`. */
 export type PersistedBattleStateV1 = {
   schemaVersion: 1;
+  p1: LegacyBattleTeamStateV1;
+  p2: LegacyBattleTeamStateV1;
+  /** Informational only — not used for any load-time logic. */
+  updatedAt: string;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 2
+ * (intent/04: `heroPositions` per side, top-level `goldPiles`). */
+export type PersistedBattleStateV2 = {
+  schemaVersion: 2;
   p1: BattleTeamState;
   p2: BattleTeamState;
+  goldPiles: Record<GoldPileSpaceId, number>;
   /** Informational only — not used for any load-time logic. */
   updatedAt: string;
 };
 
 /** Which screen is showing once a draft is done. Only a non-`"results"`
  * value is ever written to `VIEW_STORAGE_KEY`; absence means `"results"`. */
-export type View = "results" | "battle" | "win";
+export type View = "results" | "battle" | "map" | "win";
