@@ -211,7 +211,7 @@ resolve them):
       (`ViewToggle.test.tsx`, `BattleMapScreen.test.tsx` — minimal: a
       hero's token renders on its assigned space, an unplaced hero renders
       in its side's respawn strip, "End Battle" gated on `winner !== null`).
-- [ ] M17. **Manual end-to-end click-through** (the actual point of a
+- [x] M17. **Manual end-to-end click-through** (the actual point of a
       tracer bullet): navigate Board → Map, drag a hero out of its respawn
       area onto a node, reload the page, confirm the position survived.
       Do this before starting the widen phase below.
