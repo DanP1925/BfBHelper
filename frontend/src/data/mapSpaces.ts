@@ -1,22 +1,20 @@
-import type { PlayerId } from "../lib/draft/types";
+import type { HeroId, PlayerId } from "../lib/draft/types";
 import type { TowerSlot } from "../lib/battle/constants";
+import { GOLD_PILE_STARTING_COUNT } from "../lib/map/constants";
 
 export type MapSpaceKind = "plain" | "tower" | "bit" | "gold";
 
-export type MapSpaceDef = {
-  id: string;
-  kind: MapSpaceKind;
-  /** Percent coordinates (0-100) of this space's center on the board art
-   * (`/map/board.png`), measured against the full-resolution source. */
-  xPct: number;
-  yPct: number;
-  /** "tower"/"bit", and the 4 exclusive "plain" front-line nodes (2 per
-   * side): which team this belongs to. The 3 "gold" nodes are always
-   * shared/neutral and leave this `undefined`. */
-  side?: PlayerId;
-  /** Only present for "tower" — which of the 3 slots. */
-  slot?: TowerSlot;
-};
+/**
+ * A discriminated union (keyed on `kind`) rather than one object type with
+ * independently-optional `side`/`slot` fields — lets the compiler enforce
+ * that only `"tower"` carries `slot`, and that `"gold"` never carries
+ * `side`, instead of relying on a comment.
+ */
+export type MapSpaceDef =
+  | { id: string; kind: "bit"; side: PlayerId; xPct: number; yPct: number }
+  | { id: string; kind: "tower"; side: PlayerId; slot: TowerSlot; xPct: number; yPct: number }
+  | { id: string; kind: "plain"; side: PlayerId; xPct: number; yPct: number }
+  | { id: string; kind: "gold"; xPct: number; yPct: number };
 
 /**
  * The board's full hero-placement graph — 15 nodes total, confirmed
@@ -26,6 +24,10 @@ export type MapSpaceDef = {
  *
  * The 3 `"gold"` nodes are the board's only shared front-line spaces —
  * there is no separate gold-only space anywhere else on the board.
+ *
+ * `xPct`/`yPct` are percent coordinates (0-100) of each space's center on
+ * the board art (`/map/board.png`), measured against the full-resolution
+ * source.
  */
 export const MAP_SPACES = [
   { id: "p1-bit", kind: "bit", side: "p1", xPct: 87.7, yPct: 88.3 },
@@ -58,3 +60,21 @@ export const MAP_SPACE_IDS: MapSpaceId[] = MAP_SPACES.map((space) => space.id);
 export const GOLD_PILE_SPACE_IDS: GoldPileSpaceId[] = MAP_SPACES.filter(
   (space): space is Extract<(typeof MAP_SPACES)[number], { kind: "gold" }> => space.kind === "gold",
 ).map((space) => space.id);
+
+/** Every gold pile at its starting/ceiling value — the shape a brand-new
+ * battle and an upgraded (schema-1 -> 2) one both seed identically. Shared
+ * by `createInitialBattleState` (reducer.ts) and `battleMigrations[1]`
+ * (persistence/storage.ts) so the seeding rule only lives in one place. */
+export function createFreshGoldPiles(): Record<GoldPileSpaceId, number> {
+  return Object.fromEntries(
+    GOLD_PILE_SPACE_IDS.map((id) => [id, GOLD_PILE_STARTING_COUNT]),
+  ) as Record<GoldPileSpaceId, number>;
+}
+
+/** Every given hero id mapped to `null` (its team's respawn area) — the
+ * shape a brand-new battle and an upgraded one both seed identically.
+ * Shared by `createInitialTeamState` (reducer.ts) and
+ * `battleMigrations[1]` (persistence/storage.ts). */
+export function seedHeroPositions(heroIds: HeroId[]): Record<HeroId, MapSpaceId | null> {
+  return Object.fromEntries(heroIds.map((id) => [id, null])) as Record<HeroId, MapSpaceId | null>;
+}

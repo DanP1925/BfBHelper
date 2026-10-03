@@ -6,9 +6,8 @@ import {
   TEAM_STARTING_GOLD,
   TOWER_STARTING_HP,
 } from "./constants";
-import { GOLD_PILE_SPACE_IDS } from "../../data/mapSpaces";
+import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
-import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import type { BattleState, BattleTeamState, StructuresState } from "./types";
 
 export type BattleAction =
@@ -86,7 +85,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
     case "SET_HERO_POSITION": {
       const team = state[action.side];
-      if (!(action.heroId in team.heroes)) return state;
+      if (!team.heroes[action.heroId]) return state;
       if (team.heroPositions[action.heroId] === action.spaceId) return state;
       return {
         ...state,
@@ -127,9 +126,10 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
       bottom: TOWER_STARTING_HP,
       bit: BIT_STARTING_HP,
     },
-    heroPositions: Object.fromEntries(
-      heroEntries.map(([id]) => [id, null]),
-    ) as Record<HeroId, MapSpaceId | null>,
+    heroPositions: seedHeroPositions(heroEntries.map(([id]) => id)) as Record<
+      HeroId,
+      MapSpaceId | null
+    >,
   };
 }
 
@@ -142,8 +142,6 @@ export function createInitialBattleState(p1Heroes: Hero[], p2Heroes: Hero[]): Ba
     schemaVersion: 2,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
-    goldPiles: Object.fromEntries(
-      GOLD_PILE_SPACE_IDS.map((id) => [id, GOLD_PILE_STARTING_COUNT]),
-    ) as Record<GoldPileSpaceId, number>,
+    goldPiles: createFreshGoldPiles(),
   };
 }

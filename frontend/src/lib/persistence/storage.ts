@@ -1,6 +1,6 @@
 import { HERO_IDS } from "../../data/heroes";
-import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
-import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
+import { createFreshGoldPiles, GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS, seedHeroPositions } from "../../data/mapSpaces";
+import type { MapSpaceId } from "../../data/mapSpaces";
 import type { DraftState, HeroId, PlayerId } from "../draft/types";
 import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
@@ -59,18 +59,17 @@ const battleMigrations: Record<number, (data: unknown) => PersistedBattleStateV2
 
     const upgradeTeam = (team: LegacyBattleTeamStateV1): BattleTeamState => ({
       ...team,
-      heroPositions: Object.fromEntries(
-        Object.keys(team.heroes).map((heroId) => [heroId, null]),
-      ) as Record<HeroId, MapSpaceId | null>,
+      heroPositions: seedHeroPositions(Object.keys(team.heroes) as HeroId[]) as Record<
+        HeroId,
+        MapSpaceId | null
+      >,
     });
 
     return {
       schemaVersion: 2,
       p1: upgradeTeam(candidate.p1),
       p2: upgradeTeam(candidate.p2),
-      goldPiles: Object.fromEntries(
-        GOLD_PILE_SPACE_IDS.map((id) => [id, GOLD_PILE_STARTING_COUNT]),
-      ) as Record<GoldPileSpaceId, number>,
+      goldPiles: createFreshGoldPiles(),
       updatedAt: new Date().toISOString(),
     };
   },
