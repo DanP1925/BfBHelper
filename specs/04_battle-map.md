@@ -253,9 +253,9 @@
     the board — left/right columns rather than above/below it, so the
     board itself can run larger — each renders that side's `MapToken`s
     whose `heroPositions` entry is `null`. This renames intent 04's
-    "holding area" to "respawn area" throughout the UI (component name,
-    on-screen label, code comments); intent 04's own wording still says
-    "holding area" and should be updated to match when next touched.
+    original "holding area" to "respawn area" throughout the UI
+    (component name, on-screen label, code comments) and in
+    `intent/04_battle-map.md` itself.
   - **New `MapTeamStatusPanel` component** (new,
     `frontend/src/components/MapTeamStatusPanel/`), one per side, sitting
     above that side's `RespawnAreaStrip` in the same flanking column — a
@@ -424,7 +424,3 @@ No change from v1-v3 — same static Vercel deployment, no new infra.
   normal mid-battle play. The mockup only ever demonstrates 2 heroes
   sharing a space; the offset math needs to hold up at 4+ before this
   ships.
-- **Intent 04 itself still says "holding area"** throughout — this spec
-  and the mockup have already moved to "respawn area" (Layout, above),
-  so `intent/04_battle-map.md` needs the same rename next time it's
-  touched, per CLAUDE.md's intent/spec staleness check.

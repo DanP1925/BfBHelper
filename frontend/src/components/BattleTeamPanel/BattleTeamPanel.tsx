@@ -5,27 +5,12 @@ import {
   TOWER_SLOTS,
   TOWER_STARTING_HP,
 } from "../../lib/battle/constants";
+import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, StructuresState } from "../../lib/battle/types";
 import { HeroCard } from "../HeroCard/HeroCard";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { StructureSlot } from "../StructureSlot/StructureSlot";
 import styles from "./BattleTeamPanel.module.css";
-
-/** Structure icon art comes in a red/blue pair per side — see specs/Battle Board/. */
-const SIDE_ICON_SUFFIX: Record<PlayerId, string> = {
-  p1: "red",
-  p2: "blue",
-};
-
-function structureIcon(name: "tower" | "bit", side: PlayerId): string {
-  return `/structures/${name}-${SIDE_ICON_SUFFIX[side]}.png`;
-}
-
-const TOWER_LABEL: Record<(typeof TOWER_SLOTS)[number], string> = {
-  top: "Top",
-  middle: "Middle",
-  bottom: "Bottom",
-};
 
 type BattleTeamPanelProps = {
   label: string;

@@ -48,13 +48,17 @@ describe("BattleMapScreen", () => {
         battleState={makeBattleState()}
         winner={null}
         setHeroPosition={() => {}}
+        setGoldPile={() => {}}
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
       />,
     );
 
-    expect(screen.getByText("Boreas")).toBeInTheDocument();
+    // getByAltText, not getByText — MapTeamStatusPanel also shows every
+    // hero's name as plain text, so a deployed hero's name is on the page
+    // twice; its MapToken (an <img alt={hero.name}>) renders exactly once.
+    expect(screen.getByAltText("Boreas")).toBeInTheDocument();
   });
 
   it("renders an undeployed/defeated hero in its side's respawn area", () => {
@@ -65,14 +69,15 @@ describe("BattleMapScreen", () => {
         battleState={makeBattleState()}
         winner={null}
         setHeroPosition={() => {}}
+        setGoldPile={() => {}}
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
       />,
     );
 
-    expect(screen.getByText("Caligar")).toBeInTheDocument();
-    expect(screen.getByText("Sterling")).toBeInTheDocument();
+    expect(screen.getByAltText("Caligar")).toBeInTheDocument();
+    expect(screen.getByAltText("Sterling")).toBeInTheDocument();
   });
 
   it('shows "End Battle" in the menu only once a winner exists', () => {
@@ -83,6 +88,7 @@ describe("BattleMapScreen", () => {
         battleState={makeBattleState()}
         winner={null}
         setHeroPosition={() => {}}
+        setGoldPile={() => {}}
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
@@ -100,6 +106,7 @@ describe("BattleMapScreen", () => {
         battleState={makeBattleState()}
         winner="p1"
         setHeroPosition={() => {}}
+        setGoldPile={() => {}}
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
@@ -117,6 +124,7 @@ describe("BattleMapScreen", () => {
         battleState={makeBattleState()}
         winner={null}
         setHeroPosition={() => {}}
+        setGoldPile={() => {}}
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={onSwitchView}
@@ -126,5 +134,103 @@ describe("BattleMapScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Board" }));
 
     expect(onSwitchView).toHaveBeenCalledWith("battle");
+  });
+
+  it("doesn't render a destroyed structure's icon", () => {
+    // makeBattleState's p1.structures.bottom is already 0.
+    const { container } = render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={makeBattleState()}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+      />,
+    );
+
+    // Scoped to the board itself (a sibling of its background art, inside
+    // .boardTransform) — MapTeamStatusPanel also renders this same icon
+    // path for its (dimmed, not hidden) Structures row, which would
+    // otherwise inflate this count independent of what's on the board.
+    const boardLayer = container.querySelector('img[src="/map/board.jpg"]')?.parentElement;
+    // 3 p1 Tower slots total (top/middle/bottom) share this one icon path;
+    // "bottom" is destroyed (hp 0, see makeBattleState) and MapSpace hides
+    // a destroyed structure's icon entirely, so only the other 2 (top,
+    // middle) should render on the board.
+    expect(boardLayer?.querySelectorAll('img[src="/structures/tower-red.png"]').length).toBe(2);
+  });
+
+  it("doesn't render an emptied gold pile's on-board marker", () => {
+    const goldPiles = createFreshGoldPiles();
+    const emptiedId = Object.keys(goldPiles)[0] as keyof typeof goldPiles;
+    goldPiles[emptiedId] = 0;
+
+    const { container } = render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={makeBattleState({ goldPiles })}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+      />,
+    );
+
+    // 3 gold spaces total; 1 emptied -> only 2 on-board markers, not 3.
+    // (Scoped to div, not img: GoldPilesBar's own gold icons share a
+    // similarly-named class and render regardless of count.)
+    expect(container.querySelectorAll('div[class*="goldMarker"]').length).toBe(2);
+  });
+
+  it("fans out 4+ heroes sharing one space instead of collapsing to a point", () => {
+    const crowdedHeroes = [
+      makeHero("boreas", "Boreas"),
+      makeHero("caligar", "Caligar"),
+      makeHero("ceralin", "Ceralin"),
+      makeHero("cynthia", "Cynthia"),
+    ];
+    const sharedSpace = MAP_SPACE_IDS[0];
+    const battleState: BattleState = {
+      schemaVersion: 2,
+      p1: {
+        gold: 0,
+        heroes: Object.fromEntries(crowdedHeroes.map((h) => [h.id, { hp: 10, level: 1 }])),
+        structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
+        heroPositions: Object.fromEntries(crowdedHeroes.map((h) => [h.id, sharedSpace])),
+      },
+      p2: { gold: 0, heroes: {}, structures: { top: 11, middle: 11, bottom: 11, bit: 16 }, heroPositions: {} },
+      goldPiles: createFreshGoldPiles(),
+    } as BattleState;
+
+    const { container } = render(
+      <BattleMapScreen
+        p1Heroes={crowdedHeroes}
+        p2Heroes={[]}
+        battleState={battleState}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+      />,
+    );
+
+    // Only MapToken renders draggable divs — and with every hero already
+    // placed (no one in a respawn area), these 4 are the whole result.
+    const offsets = Array.from(container.querySelectorAll('div[draggable="true"]')).map(
+      (el) => (el as HTMLElement).style.transform,
+    );
+    expect(offsets).toHaveLength(4);
+    // No two tokens in the group land on the exact same transform (which
+    // would mean the fan-out collapsed them on top of each other).
+    expect(new Set(offsets).size).toBe(4);
   });
 });

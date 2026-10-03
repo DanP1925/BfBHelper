@@ -39,13 +39,13 @@ This phase covers only:
   purely visual (see Free hero placement, below, for why it doesn't
   need to be rules-accurate) but this intent catalogs the board
   faithfully rather than simplifying it.
-- **A per-team holding area for heroes with no board position.** Every
+- **A per-team respawn area for heroes with no board position.** Every
   hero starts here — before its first deployment, and again any time
   it's defeated (0 HP) — rather than defaulting onto a board space. A
-  player drags a hero out of their team's holding area onto a board
+  player drags a hero out of their team's respawn area onto a board
   space to deploy or respawn it; nothing picks a space on the player's
-  behalf, and a defeated hero returns to its holding area automatically.
-  The holding area sits outside the board art itself and is never
+  behalf, and a defeated hero returns to its respawn area automatically.
+  The respawn area sits outside the board art itself and is never
   shared between teams.
 - **Free hero placement, no movement-rule enforcement.** A player drags
   a hero's token to whichever space matches where that hero actually is
@@ -76,10 +76,10 @@ While a battle is in progress, a persistent toggle lets players flip
 between the Battle Board and a new Battle Map at any time. The Battle
 Map shows one shared board with both teams' hero tokens, Towers, Bit,
 and the 3 neutral gold piles, each sitting on a named space. Players
-drag a hero's token out of its team's holding area onto a space to
+drag a hero's token out of its team's respawn area onto a space to
 deploy it, and between spaces afterward to reflect moves made in the
 physical game's Movement Phase — a defeated hero returns to its team's
-holding area until it's dragged back out to respawn. Gold piles tick
+respawn area until it's dragged back out to respawn. Gold piles tick
 down as tokens are taken off the physical board. Neither screen blocks
 the other — a player can check who's standing where on the Map, then
 flip back to the Board to adjust HP after an attack, as often as the
@@ -105,19 +105,19 @@ From the rulebook (`battle-for-biternia_rules_web.pdf`):
   Out of Scope below).
 
 ## Heroes on the Map
-- **Holding area, not a default space.** A hero with no board position
+- **Respawn area, not a default space.** A hero with no board position
   yet — not deployed, or defeated and waiting to respawn — sits in its
-  team's holding area rather than appearing somewhere on the board by
+  team's respawn area rather than appearing somewhere on the board by
   default. A player drags it out onto a board space to deploy or
   respawn it; nothing picks a space on the player's behalf.
-- **Deployment** follows from the holding area: per the rulebook, a
+- **Deployment** follows from the respawn area: per the rulebook, a
   hero's first board space must be one of its own team's Tower spaces.
   This intent doesn't enforce that rule either (see Out of Scope) — the
-  holding area just gives the hero somewhere to start before a player
+  respawn area just gives the hero somewhere to start before a player
   places it, matching the physical game's deploy step without
   validating where it lands.
 - **Defeat (0 HP)** pulls a hero's token off its current space and
-  returns it to its team's holding area — not the desaturated
+  returns it to its team's respawn area — not the desaturated
   "defeated" style the Battle Board leaves in place, and not
   disappearing outright either. This mirrors the physical rule (the
   standee is removed from the board) while keeping the hero visible and
@@ -131,7 +131,7 @@ From the rulebook (`battle-for-biternia_rules_web.pdf`):
   one shared board (unlike the Battle Board's two separate panels),
   every hero token gets a colored ring/badge — red or blue, matching
   that team's existing Tower/Bit colors — so it's clear at a glance
-  whose hero is whose, in the holding areas and on the board alike.
+  whose hero is whose, in the respawn areas and on the board alike.
 
 ## Layout
 - A single shared board (the `Map.png` board art), not two mirrored
@@ -141,7 +141,7 @@ From the rulebook (`battle-for-biternia_rules_web.pdf`):
   used on the Battle Board) sit on top of the board art at their
   current space, fanned out where several share one space (see Heroes
   on the Map above).
-- Two holding-area strips, one per team, outside the board art itself
+- Two respawn-area strips, one per team, outside the board art itself
   (e.g. above/below or beside the board) — where every undeployed or
   defeated hero on that team sits until a player drags it onto a board
   space.
@@ -182,7 +182,7 @@ specs/02 already set for that folder.
   to real users. Adding hero position and gold-pile state is a schema
   change — an existing saved battle **upgrades in place** rather than
   resetting: the new fields get invented defaults (every hero starts in
-  its team's holding area, each gold pile at 3), so a mid-battle reload
+  its team's respawn area, each gold pile at 3), so a mid-battle reload
   right after this ships keeps the battle's real HP/level/gold progress
   instead of losing it.
 
@@ -191,7 +191,7 @@ specs/02 already set for that folder.
   blocking movement or ranged attacks to the space behind it, one move
   per Hero per Movement Phase, deployment limits (max 2 heroes per
   space during initial deployment), and which space a hero leaves its
-  holding area onto (a deploying/respawning hero should land on its own
+  respawn area onto (a deploying/respawning hero should land on its own
   team's Tower or Bit per the rulebook, but the app doesn't check this
   either). The app only records where a player says a hero is — same
   manual-tracking-only philosophy as intent 03's HP/gold controls.
@@ -210,14 +210,14 @@ specs/02 already set for that folder.
   not a replacement for any of its controls.
 
 ## Session Lifecycle
-- Each hero's current space (or holding-area status, if undeployed or
+- Each hero's current space (or respawn-area status, if undeployed or
   defeated) and the 3 gold-pile counts are new fields on the same
   persisted battle state intent 03 already reloads from — reloading the
   Map mid-battle must preserve them exactly like HP/level/gold already
   are.
 - Starting a new draft resets this state the same way it already resets
   the rest of battle state (intent 03) — a fresh battle's heroes return
-  to their team's holding area (not a default board space) and the gold
+  to their team's respawn area (not a default board space) and the gold
   piles reset to 3.
 - Switching between the Map and Battle Board screens doesn't persist
   separately from the rest of the view state — same `view` mechanism
