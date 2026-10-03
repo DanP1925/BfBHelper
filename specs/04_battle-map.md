@@ -36,7 +36,7 @@
     — `null` means "in that team's respawn area." Dragging a hero out of
     its respawn area, onto another space, or back into its respawn area
     (on defeat, or a manual correction) all resolve to one call.
-  - `setGoldPile(pileId: MapSpaceId, value: number) => void` — the 3
+  - `setGoldPile(pileId: GoldPileSpaceId, value: number) => void` — the 3
     neutral gold piles aren't per-side, so this mutator takes no `side`
     argument, unlike every other mutator on this hook.
   - Both are plain `useCallback`s dispatching into `battleReducer`, same
@@ -175,7 +175,7 @@
     that `spaceId` is reachable from the hero's previous space, no
     deployment-tower check — per intent's Out of Scope, the app only
     records where a player says a hero is.
-  - `SET_GOLD_PILE` (`pileId: MapSpaceId`, `value: number`) — clamps
+  - `SET_GOLD_PILE` (`pileId: GoldPileSpaceId`, `value: number`) — clamps
     through `clampGoldPile` and replaces that one entry in the top-level
     `goldPiles` map. Never touches either team's `gold` — per intent,
     these are deliberately unlinked.

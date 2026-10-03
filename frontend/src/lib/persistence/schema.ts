@@ -54,16 +54,6 @@ export type LegacyBattleTeamStateV1 = {
   structures: StructuresState;
 };
 
-/** The on-disk (localStorage) shape of a persisted battle state, version 1
- * — kept only as the migration source type for `battleMigrations[1]`. */
-export type PersistedBattleStateV1 = {
-  schemaVersion: 1;
-  p1: LegacyBattleTeamStateV1;
-  p2: LegacyBattleTeamStateV1;
-  /** Informational only — not used for any load-time logic. */
-  updatedAt: string;
-};
-
 /** The on-disk (localStorage) shape of a persisted battle state, version 2
  * (intent/04: `heroPositions` per side, top-level `goldPiles`). */
 export type PersistedBattleStateV2 = {
