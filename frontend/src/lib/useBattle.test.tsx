@@ -4,6 +4,8 @@ import type { Hero } from "./draft/types";
 import { BATTLE_STATE_STORAGE_KEY } from "./persistence/schema";
 import { saveBattleState } from "./persistence/storage";
 import { createInitialBattleState } from "./battle/reducer";
+import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../data/mapSpaces";
+import { GOLD_PILE_STARTING_COUNT } from "./map/constants";
 import { heroIdSetsMatch, useBattle } from "./useBattle";
 
 const HERO_A: Hero = {
@@ -139,5 +141,69 @@ describe("useBattle", () => {
       result.current.setStructureHp("p1", "bit", 5);
     });
     expect(result.current.winner).toBeNull();
+  });
+
+  it("setHeroPosition persists the replaced result", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const spaceId = MAP_SPACE_IDS[0];
+
+    act(() => {
+      result.current.setHeroPosition("p1", HERO_A.id, spaceId);
+    });
+
+    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(spaceId);
+    expect(readRawState().p1.heroPositions[HERO_A.id]).toBe(spaceId);
+  });
+
+  it("setGoldPile persists the clamped result", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const pileId = GOLD_PILE_SPACE_IDS[0];
+
+    act(() => {
+      result.current.setGoldPile(pileId, 1);
+    });
+    expect(result.current.state?.goldPiles[pileId]).toBe(1);
+
+    act(() => {
+      result.current.setGoldPile(pileId, 99);
+    });
+    expect(result.current.state?.goldPiles[pileId]).toBe(GOLD_PILE_STARTING_COUNT);
+    expect(readRawState().goldPiles[pileId]).toBe(GOLD_PILE_STARTING_COUNT);
+  });
+
+  it("setHeroHp to 0 also moves the hero to its respawn area, in one update", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const spaceId = MAP_SPACE_IDS[0];
+
+    act(() => {
+      result.current.setHeroPosition("p1", HERO_A.id, spaceId);
+    });
+    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(spaceId);
+
+    act(() => {
+      result.current.setHeroHp("p1", HERO_A.id, 0);
+    });
+
+    expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(0);
+    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
+    expect(readRawState().p1.heroPositions[HERO_A.id]).toBeNull();
+  });
+
+  it("raising HP back above 0 does not restore a prior position", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const spaceId = MAP_SPACE_IDS[0];
+
+    act(() => {
+      result.current.setHeroPosition("p1", HERO_A.id, spaceId);
+      result.current.setHeroHp("p1", HERO_A.id, 0);
+    });
+    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
+
+    act(() => {
+      result.current.setHeroHp("p1", HERO_A.id, 5);
+    });
+
+    expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(5);
+    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
   });
 });

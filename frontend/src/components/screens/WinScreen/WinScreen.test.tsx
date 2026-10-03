@@ -20,7 +20,7 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling"), makeHero("felix", "F
 
 function makeBattleState(): BattleState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     p1: {
       gold: 5,
       heroes: {
@@ -28,6 +28,7 @@ function makeBattleState(): BattleState {
         caligar: { hp: 0, level: 1 },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
+      heroPositions: { boreas: null, caligar: null },
     },
     p2: {
       gold: 3,
@@ -36,8 +37,10 @@ function makeBattleState(): BattleState {
         felix: { hp: 9, level: 1 },
       },
       structures: { top: 11, middle: 0, bottom: 11, bit: 0 },
+      heroPositions: { sterling: null, felix: null },
     },
-  } as BattleState;
+    goldPiles: { "gold-ne": 3, "gold-mid": 3, "gold-sw": 3 },
+  } as unknown as BattleState;
 }
 
 describe("WinScreen", () => {

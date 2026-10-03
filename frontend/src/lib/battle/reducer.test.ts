@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Hero } from "../draft/types";
 import { BIT_STARTING_HP, HERO_HP_CEILING, TOWER_STARTING_HP } from "./constants";
+import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
+import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import { battleReducer, createInitialBattleState } from "./reducer";
 import type { BattleState } from "./types";
 
@@ -41,6 +43,20 @@ describe("createInitialBattleState", () => {
       bottom: TOWER_STARTING_HP,
       bit: BIT_STARTING_HP,
     });
+  });
+
+  it("seeds every hero's heroPositions as null (its team's respawn area)", () => {
+    const state = baseState();
+    expect(state.p1.heroPositions).toEqual({ [HERO_A.id]: null });
+    expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
+  });
+
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 2", () => {
+    const state = baseState();
+    expect(state.schemaVersion).toBe(2);
+    for (const id of GOLD_PILE_SPACE_IDS) {
+      expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
+    }
   });
 });
 
@@ -149,5 +165,106 @@ describe("battleReducer", () => {
     const state = baseState();
     const next = battleReducer(state, { type: "SET_GOLD", side: "p1", value: 5 });
     expect(next.p2).toBe(state.p2);
+  });
+
+  describe("SET_HERO_POSITION", () => {
+    it("moves a hero from the respawn area (null) onto a real space", () => {
+      const state = baseState();
+      const spaceId = MAP_SPACE_IDS[0];
+      const next = battleReducer(state, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId,
+      });
+      expect(next.p1.heroPositions[HERO_A.id]).toBe(spaceId);
+      expect(next).not.toBe(state);
+    });
+
+    it("moves a hero from a real space back to the respawn area (null)", () => {
+      const placed = battleReducer(baseState(), {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: MAP_SPACE_IDS[0],
+      });
+      const next = battleReducer(placed, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: null,
+      });
+      expect(next.p1.heroPositions[HERO_A.id]).toBeNull();
+      expect(next).not.toBe(placed);
+    });
+
+    it("is a no-op (same reference) when the target spaceId is unchanged", () => {
+      const state = baseState();
+      const next = battleReducer(state, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: null,
+      });
+      expect(next).toBe(state);
+    });
+
+    it("is a no-op for an unknown heroId", () => {
+      const state = baseState();
+      const next = battleReducer(state, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: "sterling",
+        spaceId: MAP_SPACE_IDS[0],
+      });
+      expect(next).toBe(state);
+    });
+
+    it("never mutates the other side", () => {
+      const state = baseState();
+      const next = battleReducer(state, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: MAP_SPACE_IDS[0],
+      });
+      expect(next.p2).toBe(state.p2);
+    });
+  });
+
+  describe("SET_GOLD_PILE", () => {
+    it("clamps and replaces", () => {
+      const state = baseState();
+      const pileId = GOLD_PILE_SPACE_IDS[0];
+      const next = battleReducer(state, { type: "SET_GOLD_PILE", pileId, value: 1 });
+      expect(next.goldPiles[pileId]).toBe(1);
+      expect(next).not.toBe(state);
+    });
+
+    it("clamps an out-of-range value to the ceiling", () => {
+      const state = baseState();
+      const pileId = GOLD_PILE_SPACE_IDS[0];
+      const next = battleReducer(state, { type: "SET_GOLD_PILE", pileId, value: 99 });
+      expect(next.goldPiles[pileId]).toBe(GOLD_PILE_STARTING_COUNT);
+    });
+
+    it("is a no-op (same reference) when the clamped value is unchanged", () => {
+      const state = baseState();
+      const pileId = GOLD_PILE_SPACE_IDS[0];
+      const next = battleReducer(state, {
+        type: "SET_GOLD_PILE",
+        pileId,
+        value: GOLD_PILE_STARTING_COUNT,
+      });
+      expect(next).toBe(state);
+    });
+
+    it("never touches either team's own gold", () => {
+      const state = baseState();
+      const pileId = GOLD_PILE_SPACE_IDS[0];
+      const next = battleReducer(state, { type: "SET_GOLD_PILE", pileId, value: 0 });
+      expect(next.p1.gold).toBe(state.p1.gold);
+      expect(next.p2.gold).toBe(state.p2.gold);
+    });
   });
 });

@@ -2,10 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { DraftState } from "../draft/types";
 import { createInitialBattleState } from "../battle/reducer";
 import { BIT_STARTING_HP, TOWER_STARTING_HP } from "../battle/constants";
+import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
+import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
 import type { BattleState } from "../battle/types";
 import {
   BATTLE_STATE_STORAGE_KEY,
-  CURRENT_SCHEMA_VERSION,
+  CURRENT_BATTLE_SCHEMA_VERSION,
+  CURRENT_DRAFT_SCHEMA_VERSION,
   STORAGE_KEY,
   VIEW_STORAGE_KEY,
 } from "./schema";
@@ -56,14 +59,14 @@ beforeEach(() => {
 
 describe("saveDraft", () => {
   // Scenario 14
-  it("writes JSON with schemaVersion === CURRENT_SCHEMA_VERSION", () => {
+  it("writes JSON with schemaVersion === CURRENT_DRAFT_SCHEMA_VERSION", () => {
     saveDraft(midDraftState);
 
     const raw = window.localStorage.getItem(STORAGE_KEY);
     expect(raw).not.toBeNull();
 
     const parsed = JSON.parse(raw as string);
-    expect(parsed.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(parsed.schemaVersion).toBe(CURRENT_DRAFT_SCHEMA_VERSION);
   });
 });
 
@@ -156,7 +159,7 @@ describe("loadDraft", () => {
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
-          schemaVersion: CURRENT_SCHEMA_VERSION,
+          schemaVersion: CURRENT_DRAFT_SCHEMA_VERSION,
           initiative: "p1",
           picks,
           updatedAt: new Date().toISOString(),
@@ -261,7 +264,7 @@ describe("saveBattleState / loadBattleState", () => {
   it("returns null and clears the key when schemaVersion is newer than current", () => {
     window.localStorage.setItem(
       BATTLE_STATE_STORAGE_KEY,
-      JSON.stringify({ schemaVersion: 2, p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
+      JSON.stringify({ schemaVersion: 3, p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
     );
 
     expect(loadBattleState()).toBeNull();
@@ -327,6 +330,150 @@ describe("saveBattleState / loadBattleState", () => {
     saveBattleState(state);
 
     expect(loadBattleState()).toEqual(state);
+  });
+
+  describe("schema-1 -> 2 migration (intent/04)", () => {
+    function persistRawSchema1(p1Heroes: Record<string, { hp: number; level: number }>, p2Heroes: Record<string, { hp: number; level: number }>) {
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({
+          schemaVersion: 1,
+          p1: {
+            gold: 0,
+            heroes: p1Heroes,
+            structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
+          },
+          p2: {
+            gold: 0,
+            heroes: p2Heroes,
+            structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
+          },
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+    }
+
+    it("upgrades a schema-1 payload instead of rejecting it as corrupt", () => {
+      persistRawSchema1(
+        { "agatha-trunch": { hp: 10, level: 1 } },
+        { baldwin: { hp: 9, level: 1 } },
+      );
+
+      const loaded = loadBattleState();
+
+      expect(loaded).not.toBeNull();
+      expect(loaded?.schemaVersion).toBe(2);
+      expect(loaded?.p1.heroPositions).toEqual({ "agatha-trunch": null });
+      expect(loaded?.p2.heroPositions).toEqual({ baldwin: null });
+      expect(loaded?.goldPiles).toEqual(
+        Object.fromEntries(GOLD_PILE_SPACE_IDS.map((id) => [id, GOLD_PILE_STARTING_COUNT])),
+      );
+    });
+
+    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 2 on disk", () => {
+      persistRawSchema1({ "agatha-trunch": { hp: 10, level: 1 } }, { baldwin: { hp: 9, level: 1 } });
+      const migrated = loadBattleState();
+      expect(migrated).not.toBeNull();
+
+      saveBattleState(migrated as BattleState);
+
+      const raw = window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY);
+      const parsed = JSON.parse(raw as string);
+      expect(parsed.schemaVersion).toBe(2);
+      expect(parsed.p1.heroPositions["agatha-trunch"]).toBeNull();
+    });
+  });
+
+  describe("heroPositions / goldPiles validation (intent/04)", () => {
+    it("returns null and clears the key when a hero is missing its heroPositions entry", () => {
+      const corrupted = {
+        ...sampleBattleState,
+        p1: {
+          ...sampleBattleState.p1,
+          heroPositions: {},
+        },
+      };
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({ ...corrupted, updatedAt: new Date().toISOString() }),
+      );
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+
+    it("returns null and clears the key when a heroPositions value isn't a real map-space id", () => {
+      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
+      const corrupted = {
+        ...sampleBattleState,
+        p1: {
+          ...sampleBattleState.p1,
+          heroPositions: { ...sampleBattleState.p1.heroPositions, [heroId]: "not-a-real-space" },
+        },
+      };
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({ ...corrupted, updatedAt: new Date().toISOString() }),
+      );
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+
+    it("accepts a real map-space id as a heroPositions value", () => {
+      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
+      const realSpaceId = MAP_SPACE_IDS[0];
+      const state = {
+        ...sampleBattleState,
+        p1: {
+          ...sampleBattleState.p1,
+          heroPositions: { ...sampleBattleState.p1.heroPositions, [heroId]: realSpaceId },
+        },
+      };
+      saveBattleState(state);
+
+      expect(loadBattleState()).toEqual(state);
+    });
+
+    it("returns null and clears the key when goldPiles is missing a known pile", () => {
+      const incompletePiles = Object.fromEntries(
+        Object.entries(sampleBattleState.goldPiles).filter(([id]) => id !== GOLD_PILE_SPACE_IDS[0]),
+      );
+      const corrupted = { ...sampleBattleState, goldPiles: incompletePiles };
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({ ...corrupted, updatedAt: new Date().toISOString() }),
+      );
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+
+    it("returns null and clears the key when a gold pile's value is above its ceiling", () => {
+      const corrupted = {
+        ...sampleBattleState,
+        goldPiles: { ...sampleBattleState.goldPiles, [GOLD_PILE_SPACE_IDS[0]]: GOLD_PILE_STARTING_COUNT + 1 },
+      };
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({ ...corrupted, updatedAt: new Date().toISOString() }),
+      );
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("draft/battle-state schema-version independence (intent/04 regression)", () => {
+    // The exact bug the CURRENT_DRAFT_SCHEMA_VERSION/CURRENT_BATTLE_SCHEMA_VERSION
+    // split exists to prevent: bumping the battle schema must never make
+    // loadDraft() also expect a migration that doesn't exist for drafts.
+    it("loadDraft still loads a schema-1 draft after CURRENT_BATTLE_SCHEMA_VERSION has been bumped to 2", () => {
+      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(2);
+      saveDraft(midDraftState);
+
+      expect(loadDraft()).toEqual(midDraftState);
+    });
   });
 });
 

@@ -1,4 +1,5 @@
 import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "./constants";
+import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 
 /**
  * Shared floor/ceiling clamp every mutator and every direct-entry field
@@ -33,4 +34,10 @@ export function clampHeroLevel(value: number): number {
  * hardcoded, since Tower and Bit have different ceilings. */
 export function clampStructureHp(value: number, ceiling: number): number {
   return clamp(value, 0, ceiling);
+}
+
+/** Gold pile: floor 0, ceiling GOLD_PILE_STARTING_COUNT (3) — both the
+ * starting value and the ceiling for each of the board's 3 neutral piles. */
+export function clampGoldPile(value: number): number {
+  return clamp(value, 0, GOLD_PILE_STARTING_COUNT);
 }

@@ -5,6 +5,7 @@ import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
 import type { BattleState, StructuresState } from "./battle/types";
 import type { Hero, HeroId, PlayerId } from "./draft/types";
+import type { GoldPileSpaceId, MapSpaceId } from "../data/mapSpaces";
 import { loadBattleState, saveBattleState } from "./persistence/storage";
 
 export type UseBattleResult = {
@@ -14,6 +15,8 @@ export type UseBattleResult = {
   setHeroHp: (side: PlayerId, heroId: HeroId, value: number) => void;
   setHeroLevel: (side: PlayerId, heroId: HeroId, value: number) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
+  setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => void;
+  setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
 };
 
 function heroIdKey(heroes: Hero[]): string {
@@ -82,10 +85,19 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
     );
   }, []);
 
+  // A hero whose HP lands at exactly 0 also moves to its team's respawn
+  // area in the same update (intent/04) — two independently-replaceable
+  // fields, triggered together by this one user action, not a combined
+  // reducer action. Raising HP back above 0 afterward does NOT reverse
+  // this: respawning is always its own explicit setHeroPosition call.
   const setHeroHp = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
-    setState((prev) =>
-      prev === null ? prev : battleReducer(prev, { type: "SET_HERO_HP", side, heroId, value }),
-    );
+    setState((prev) => {
+      if (prev === null) return prev;
+      const afterHp = battleReducer(prev, { type: "SET_HERO_HP", side, heroId, value });
+      if (afterHp === prev) return prev;
+      if (afterHp[side].heroes[heroId]?.hp !== 0) return afterHp;
+      return battleReducer(afterHp, { type: "SET_HERO_POSITION", side, heroId, spaceId: null });
+    });
   }, []);
 
   const setHeroLevel = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
@@ -105,6 +117,23 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
     [],
   );
 
+  const setHeroPosition = useCallback(
+    (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => {
+      setState((prev) =>
+        prev === null
+          ? prev
+          : battleReducer(prev, { type: "SET_HERO_POSITION", side, heroId, spaceId }),
+      );
+    },
+    [],
+  );
+
+  const setGoldPile = useCallback((pileId: GoldPileSpaceId, value: number) => {
+    setState((prev) =>
+      prev === null ? prev : battleReducer(prev, { type: "SET_GOLD_PILE", pileId, value }),
+    );
+  }, []);
+
   return {
     state,
     winner: state === null ? null : getBattleWinner(state),
@@ -112,5 +141,7 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
     setHeroHp,
     setHeroLevel,
     setStructureHp,
+    setHeroPosition,
+    setGoldPile,
   };
 }
