@@ -340,15 +340,35 @@ resolve them):
         above, coordinates unchanged) — reducing the Middle tower's HP
         on the Battle Board was hiding the dial that's actually
         visually bottommost among p2's three, since its `slot` didn't
-        match its true on-screen vertical order. And — reversing the
-        "hero tokens stay a constant on-screen size" decision from
-        earlier in this same build — the user found that at higher
-        zoom levels, a fixed-size token next to visibly-magnified
-        terrain looked disproportionately tiny; `MapToken`'s zoom
-        counter-scale was removed so hero tokens now grow with the
-        board's zoom exactly like structure icons already do, keeping
-        proportions consistent at any zoom level. Only the gold-pile
-        marker still counter-scales to a constant size.
+        match its true on-screen vertical order. Also in this round, two
+        more fan-out/zoom passes, each refined further after seeing the
+        prior attempt rendered:
+        1. Reversing the "hero tokens stay a constant on-screen size"
+           decision from earlier in this same build — the user found
+           that at higher zoom levels, a fixed-size token next to
+           visibly-magnified terrain looked disproportionately tiny.
+        2. `fanOffset`'s radius was halved (a new `RADIUS_SCALE = 0.5`
+           constant) after an 8-hero team fight read as too spread out —
+           since the existing formula ties every group size to the same
+           inter-token spacing, this also tightened 2-4-hero groups, not
+           just large pileups (confirmed acceptable per the user's own
+           screenshot of an un-zoomed 8-stack).
+        3. Reversing step 1 only *partially*: fully un-scaled hero
+           tokens (step 1) compounded with the halved radius (step 2) to
+           make a crowded node's overlap get visibly worse at higher
+           zoom — the opposite of what the user wanted (overlap is fine
+           un-zoomed, not once zoomed in). `MapToken`'s transform gained
+           back a counter-scale, but partial: `scale(1 / sqrt(zoom))`,
+           not the gold marker's full `1 / zoom`. A token's own rendered
+           size still grows with zoom (avoiding step 1's "too tiny"
+           complaint, confirmed 46px → 56 → 65 → 73px across the 4 zoom
+           steps) but slower than `fanOffset`'s spacing, which still
+           scales with the *full*, unscaled zoom — so the gap between
+           stacked tokens outgrows each token's own size as zoom
+           increases, resolving a crowded node's overlap by 2x zoom even
+           though the same stack is still allowed to overlap at 1x.
+           Only the gold-pile marker still counter-scales fully to a
+           constant size; the structure icon still applies none at all.
 
 ## Test Scenarios
 
