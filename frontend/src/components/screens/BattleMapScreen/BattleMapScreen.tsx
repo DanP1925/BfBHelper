@@ -176,6 +176,7 @@ export function BattleMapScreen({
                     heroesHere={bySpace.get(space.id) ?? []}
                     structures={{ p1: battleState.p1.structures, p2: battleState.p2.structures }}
                     goldPiles={battleState.goldPiles}
+                    zoom={zoom}
                     onDropHero={(side, heroId) => setHeroPosition(side, heroId, space.id)}
                   />
                 ))}

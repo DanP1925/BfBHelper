@@ -23,6 +23,11 @@ type MapSpaceProps = {
   heroesHere: Array<{ hero: Hero; side: PlayerId }>;
   structures: Record<PlayerId, StructuresState>;
   goldPiles: Record<GoldPileSpaceId, number>;
+  /** The board's current zoom level — this space counter-scales itself by
+   * `1 / zoom` so structure icons, hero tokens, and the gold marker stay
+   * a constant on-screen size as the board art grows around them, rather
+   * than growing along with it. */
+  zoom: number;
   onDropHero: (side: PlayerId, heroId: HeroId) => void;
 };
 
@@ -45,7 +50,7 @@ type MapSpaceProps = {
  * icon) within it, which a boolean would misread as leaving the space
  * entirely and cause the highlight to flicker off mid-hover.
  */
-export function MapSpace({ space, heroesHere, structures, goldPiles, onDropHero }: MapSpaceProps) {
+export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDropHero }: MapSpaceProps) {
   const hp = structureHp(structures, space);
   const isDestroyed = hp === 0;
   const goldCount = space.kind === "gold" ? goldPiles[space.id as GoldPileSpaceId] : null;
@@ -80,7 +85,11 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, onDropHero 
   return (
     <div
       className={isDragOver ? `${styles.space} ${styles.spaceDragOver}` : styles.space}
-      style={{ left: `${space.xPct}%`, top: `${space.yPct}%` }}
+      style={{
+        left: `${space.xPct}%`,
+        top: `${space.yPct}%`,
+        transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+      }}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
