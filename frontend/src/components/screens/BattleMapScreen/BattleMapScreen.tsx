@@ -144,7 +144,7 @@ export function BattleMapScreen({
       <div className={styles.scrollArea}>
         <div className={styles.content}>
           <div className={styles.row}>
-            <div className={styles.column}>
+            <div className={styles.sideGroup}>
               <MapTeamStatusPanel label="Player 1" side="p1" heroes={p1Heroes} team={battleState.p1} />
               <RespawnAreaStrip
                 side="p1"
@@ -213,14 +213,14 @@ export function BattleMapScreen({
               </div>
             </div>
 
-            <div className={styles.column}>
-              <MapTeamStatusPanel label="Player 2" side="p2" heroes={p2Heroes} team={battleState.p2} />
+            <div className={styles.sideGroup}>
               <RespawnAreaStrip
                 side="p2"
                 label="Player 2"
                 heroes={respawn.p2}
                 onDrop={(heroId) => setHeroPosition("p2", heroId, null)}
               />
+              <MapTeamStatusPanel label="Player 2" side="p2" heroes={p2Heroes} team={battleState.p2} />
             </div>
           </div>
 

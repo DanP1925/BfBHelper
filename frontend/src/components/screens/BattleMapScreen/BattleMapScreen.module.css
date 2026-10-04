@@ -36,10 +36,10 @@
   gap: 20px;
 }
 
-.column {
+.sideGroup {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .board {
