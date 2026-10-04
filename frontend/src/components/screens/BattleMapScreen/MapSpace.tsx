@@ -23,15 +23,14 @@ type MapSpaceProps = {
   heroesHere: Array<{ hero: Hero; side: PlayerId }>;
   structures: Record<PlayerId, StructuresState>;
   goldPiles: Record<GoldPileSpaceId, number>;
-  /** The board's current zoom level. Hero tokens and the gold marker
-   * counter-scale themselves by `1 / zoom` so they stay a constant
-   * on-screen size as the board art grows — but the structure icon
-   * deliberately does *not*: each Tower/Bit icon sits on a circular dial
-   * drawn into the board art itself, so it needs to keep growing in step
-   * with that dial (via the ambient zoom it inherits from
-   * `.boardTransform`, same as the dial) to stay visually docked inside
-   * it, rather than shrinking to a fixed size floating inside a dial
-   * that's grown past it. */
+  /** The board's current zoom level. Only the gold-pile marker
+   * counter-scales itself by `1 / zoom`, staying a constant on-screen
+   * size as the board art grows — hero tokens and the structure icon
+   * deliberately don't: they inherit the ambient zoom from
+   * `.boardTransform` like the board art itself, so a hero or Tower/Bit
+   * stays proportionate to the terrain around it instead of looking
+   * disproportionately tiny once the art has visually magnified past a
+   * fixed-size token. */
   zoom: number;
   onDropHero: (side: PlayerId, heroId: HeroId) => void;
 };
@@ -130,7 +129,7 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDro
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(${1 / zoom})`,
+                transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px)`,
                 zIndex: 1,
               }}
             />

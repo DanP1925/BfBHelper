@@ -335,6 +335,20 @@ resolve them):
         caught during this same round. `specs/04_battle-map.md`'s Data
         Model, Layout, and UI Design Reference sections are updated to
         match.
+      - **Third follow-up round**: p2's Middle/Bottom tower `slot`
+        values were also swapped (same pattern as p1's top/middle fix
+        above, coordinates unchanged) — reducing the Middle tower's HP
+        on the Battle Board was hiding the dial that's actually
+        visually bottommost among p2's three, since its `slot` didn't
+        match its true on-screen vertical order. And — reversing the
+        "hero tokens stay a constant on-screen size" decision from
+        earlier in this same build — the user found that at higher
+        zoom levels, a fixed-size token next to visibly-magnified
+        terrain looked disproportionately tiny; `MapToken`'s zoom
+        counter-scale was removed so hero tokens now grow with the
+        board's zoom exactly like structure icons already do, keeping
+        proportions consistent at any zoom level. Only the gold-pile
+        marker still counter-scales to a constant size.
 
 ## Test Scenarios
 
