@@ -310,6 +310,31 @@ resolve them):
         previously no way to tell where a drag would actually land.
         `specs/04_battle-map.md`'s Layout and UI Design Reference
         sections are updated to match all five.
+      - **Second follow-up round**, same pattern (direct testing against
+        `npm run dev`, committed on `feat/battle-map-widen`): the
+        multi-hero fan-out radius was tightened twice more (90px/1.1x →
+        75px/1.05x → 68px/1.03x footprint/spacing, the last value chosen
+        after testing specifically with the longest hero name at group
+        sizes 2-4, since the user's bar was "overlap at a single zoom
+        level is a problem, overlap only at full 250% zoom is
+        acceptable"); structure icons were decoupled from the zoom
+        counter-scale applied to hero tokens/the gold marker, so a
+        Tower/Bit's icon keeps growing with the board's zoom (staying
+        docked on its dial) instead of shrinking to a constant size
+        inside a dial that's grown past it (briefly reverted, then
+        restored, after the user confirmed on a second look that the
+        visual result was in fact what they wanted); and — the larger
+        fix — every Tower/Bit's `MapSpaceDef` entry gained a second
+        coordinate pair, `heroXPct`/`heroYPct`, after the user identified
+        via annotated screenshots of the physical board that the tile
+        where heroes actually stand is a separate, nearby spot from the
+        dial the structure's icon renders on (previously conflated as
+        one position). p1-tower-top and p1-tower-middle's `slot` values
+        were also swapped (coordinates unchanged, just which dial each
+        name refers to) to match the physical board's own labeling,
+        caught during this same round. `specs/04_battle-map.md`'s Data
+        Model, Layout, and UI Design Reference sections are updated to
+        match.
 
 ## Test Scenarios
 
@@ -380,3 +405,8 @@ any already-passing assertion.
 - Per intent 04's Out of Scope: no deployment-tower/reachability
   validation on `SET_HERO_POSITION`, no gold-pile-to-team-gold linkage —
   the app only ever records where a player says a hero/pile currently is.
+- p2's 4 Tower/Bit hero-tile coordinates (`heroXPct`/`heroYPct`) are
+  derived from p1's via the board's 180°-rotational symmetry, not
+  independently measured — the forest-biome art's lower contrast made
+  direct measurement unreliable there. Revisit if any look visibly off
+  in real gameplay.

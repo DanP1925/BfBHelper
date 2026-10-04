@@ -9,10 +9,27 @@ export type MapSpaceKind = "plain" | "tower" | "bit" | "gold";
  * independently-optional `side`/`slot` fields — lets the compiler enforce
  * that only `"tower"` carries `slot`, and that `"gold"` never carries
  * `side`, instead of relying on a comment.
+ *
+ * `"tower"`/`"bit"` carry a *second* coordinate pair, `heroXPct`/`heroYPct`
+ * — the board art draws each Tower/Bit's icon on a circular dial, but the
+ * physical tile where heroes actually stand for it is a separate, nearby
+ * square, not the dial itself. `xPct`/`yPct` stays the dial (icon
+ * rendering only); `heroXPct`/`heroYPct` is where the drop target, hero
+ * tokens, and fan-out all anchor. `"plain"`/`"gold"` nodes have no icon to
+ * separate from a standing spot, so they keep just one coordinate pair.
  */
 export type MapSpaceDef =
-  | { id: string; kind: "bit"; side: PlayerId; xPct: number; yPct: number }
-  | { id: string; kind: "tower"; side: PlayerId; slot: TowerSlot; xPct: number; yPct: number }
+  | { id: string; kind: "bit"; side: PlayerId; xPct: number; yPct: number; heroXPct: number; heroYPct: number }
+  | {
+      id: string;
+      kind: "tower";
+      side: PlayerId;
+      slot: TowerSlot;
+      xPct: number;
+      yPct: number;
+      heroXPct: number;
+      heroYPct: number;
+    }
   | { id: string; kind: "plain"; side: PlayerId; xPct: number; yPct: number }
   | { id: string; kind: "gold"; xPct: number; yPct: number };
 
@@ -25,20 +42,27 @@ export type MapSpaceDef =
  * The 3 `"gold"` nodes are the board's only shared front-line spaces —
  * there is no separate gold-only space anywhere else on the board.
  *
- * `xPct`/`yPct` are percent coordinates (0-100) of each space's center on
- * the board art (`/map/board.jpg`), measured against the full-resolution
- * source.
+ * `xPct`/`yPct` (and `heroXPct`/`heroYPct`, for Towers/Bits) are percent
+ * coordinates (0-100) of each space's center on the board art
+ * (`/map/board.jpg`), measured against the full-resolution source.
+ *
+ * The p2 Tower/Bit `heroXPct`/`heroYPct` values are derived from their
+ * confirmed p1 counterparts via the board's 180°-rotational symmetry
+ * (`(x, y) -> (100 - x, 100 - y)`), not independently confirmed against
+ * the source art — the p2 (forest) tiles have much lower visual contrast
+ * than p1's (desert), so direct measurement wasn't reliable. Nudge these
+ * if they look off in-game.
  */
 export const MAP_SPACES = [
-  { id: "p1-bit", kind: "bit", side: "p1", xPct: 87.7, yPct: 88.3 },
-  { id: "p2-bit", kind: "bit", side: "p2", xPct: 12, yPct: 11 },
+  { id: "p1-bit", kind: "bit", side: "p1", xPct: 87.7, yPct: 88.3, heroXPct: 83.5, heroYPct: 81.5 },
+  { id: "p2-bit", kind: "bit", side: "p2", xPct: 12, yPct: 11, heroXPct: 16.5, heroYPct: 18.5 },
 
-  { id: "p1-tower-top", kind: "tower", side: "p1", slot: "top", xPct: 71.7, yPct: 73.1 },
-  { id: "p1-tower-middle", kind: "tower", side: "p1", slot: "middle", xPct: 86.7, yPct: 69.3 },
-  { id: "p1-tower-bottom", kind: "tower", side: "p1", slot: "bottom", xPct: 68.9, yPct: 86.1 },
-  { id: "p2-tower-top", kind: "tower", side: "p2", slot: "top", xPct: 31.3, yPct: 12.5 },
-  { id: "p2-tower-middle", kind: "tower", side: "p2", slot: "middle", xPct: 13, yPct: 30 },
-  { id: "p2-tower-bottom", kind: "tower", side: "p2", slot: "bottom", xPct: 27, yPct: 26.7 },
+  { id: "p1-tower-top", kind: "tower", side: "p1", slot: "top", xPct: 86.7, yPct: 69.3, heroXPct: 84, heroYPct: 60 },
+  { id: "p1-tower-middle", kind: "tower", side: "p1", slot: "middle", xPct: 71.7, yPct: 73.1, heroXPct: 65, heroYPct: 68 },
+  { id: "p1-tower-bottom", kind: "tower", side: "p1", slot: "bottom", xPct: 68.9, yPct: 86.1, heroXPct: 60.7, heroYPct: 83.2 },
+  { id: "p2-tower-top", kind: "tower", side: "p2", slot: "top", xPct: 31.3, yPct: 12.5, heroXPct: 39.3, heroYPct: 16.8 },
+  { id: "p2-tower-middle", kind: "tower", side: "p2", slot: "middle", xPct: 13, yPct: 30, heroXPct: 16, heroYPct: 40 },
+  { id: "p2-tower-bottom", kind: "tower", side: "p2", slot: "bottom", xPct: 27, yPct: 26.7, heroXPct: 35, heroYPct: 32 },
 
   { id: "p1-plain-1", kind: "plain", side: "p1", xPct: 70.5, yPct: 41.5 },
   { id: "p1-plain-2", kind: "plain", side: "p1", xPct: 41.5, yPct: 72 },

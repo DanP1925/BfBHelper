@@ -39,11 +39,15 @@ type MapSpaceProps = {
 /**
  * One `MAP_SPACES` node: the actual native-HTML5-drag-and-drop drop
  * target (drag events bubble, so dropping directly on a token still lands
- * here). Z-order bottom-to-top: structure icon (hidden once destroyed) ->
- * fanned-out hero tokens -> the gold-pile marker, always topmost so a
- * token or icon landing nearby can never visually bury it. The marker is
- * deliberately read-only (icon + count, no stepper) — this same node is
- * also where heroes stand, and a `NumberStepper` has nowhere to go
+ * here). For a Tower/Bit, this renders as *two* independently-positioned
+ * elements — the structure icon at its dial (`xPct`/`yPct`, purely
+ * decorative, no drag handlers) and the drop target itself at the
+ * separate hero-standing tile (`heroXPct`/`heroYPct`) — since the board
+ * art draws those at different spots. Within the drop target, z-order
+ * bottom-to-top: fanned-out hero tokens -> the gold-pile marker, always
+ * topmost so a token landing nearby can never visually bury it. The
+ * marker is deliberately read-only (icon + count, no stepper) — this same
+ * node is also where heroes stand, and a `NumberStepper` has nowhere to go
  * without overlapping a token; the real controls live in `GoldPilesBar`.
  *
  * Highlights itself while a hero is being dragged over it — every space
@@ -51,9 +55,9 @@ type MapSpaceProps = {
  * of Scope), so this is purely "you can drop here," not "this move is
  * legal." Tracked via an enter/leave counter rather than a plain
  * boolean: `dragenter`/`dragleave` fire on this element again every time
- * the pointer crosses into/out of a child (a hero token or structure
- * icon) within it, which a boolean would misread as leaving the space
- * entirely and cause the highlight to flicker off mid-hover.
+ * the pointer crosses into/out of a child (a hero token) within it, which
+ * a boolean would misread as leaving the space entirely and cause the
+ * highlight to flicker off mid-hover.
  */
 export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDropHero }: MapSpaceProps) {
   const hp = structureHp(structures, space);
@@ -87,48 +91,59 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDro
     onDropHero(payload.side, payload.heroId);
   }
 
+  const isStructure = space.kind === "tower" || space.kind === "bit";
+  const heroXPct = isStructure ? space.heroXPct : space.xPct;
+  const heroYPct = isStructure ? space.heroYPct : space.yPct;
+
   return (
-    <div
-      className={isDragOver ? `${styles.space} ${styles.spaceDragOver}` : styles.space}
-      style={{ left: `${space.xPct}%`, top: `${space.yPct}%` }}
-      onDragEnter={handleDragEnter}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {(space.kind === "tower" || space.kind === "bit") && !isDestroyed && (
-        // eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts
-        <img
-          src={structureIcon(space.kind, space.side)}
-          alt=""
-          className={styles.structureIcon}
-          draggable={false}
-        />
-      )}
-      {heroesHere.map(({ hero, side }, index) => {
-        const { dx, dy } = fanOffset(index, heroesHere.length);
-        return (
-          <MapToken
-            key={hero.id}
-            hero={hero}
-            side={side}
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: "50%",
-              transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(${1 / zoom})`,
-              zIndex: 1,
-            }}
-          />
-        );
-      })}
-      {goldCount !== null && goldCount > 0 && (
-        <div className={styles.goldMarker} style={{ transform: `translate(-50%, -50%) scale(${1 / zoom})` }}>
+    <>
+      {isStructure && !isDestroyed && (
+        // The icon sits on its own dial, independent of the hero-standing
+        // tile below — a separate absolutely-positioned element rather
+        // than a child of `.space`, since the two have different centers.
+        <div className={styles.structureIconWrap} style={{ left: `${space.xPct}%`, top: `${space.yPct}%` }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
-          <img src="/structures/gold.png" alt="" className={styles.goldMarkerIcon} draggable={false} />
-          <span>{goldCount}</span>
+          <img
+            src={structureIcon(space.kind, space.side)}
+            alt=""
+            className={styles.structureIcon}
+            draggable={false}
+          />
         </div>
       )}
-    </div>
+      <div
+        className={isDragOver ? `${styles.space} ${styles.spaceDragOver}` : styles.space}
+        style={{ left: `${heroXPct}%`, top: `${heroYPct}%` }}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {heroesHere.map(({ hero, side }, index) => {
+          const { dx, dy } = fanOffset(index, heroesHere.length);
+          return (
+            <MapToken
+              key={hero.id}
+              hero={hero}
+              side={side}
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(${1 / zoom})`,
+                zIndex: 1,
+              }}
+            />
+          );
+        })}
+        {goldCount !== null && goldCount > 0 && (
+          <div className={styles.goldMarker} style={{ transform: `translate(-50%, -50%) scale(${1 / zoom})` }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
+            <img src="/structures/gold.png" alt="" className={styles.goldMarkerIcon} draggable={false} />
+            <span>{goldCount}</span>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

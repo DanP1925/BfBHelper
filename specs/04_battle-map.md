@@ -92,9 +92,19 @@
     id: string;
     kind: MapSpaceKind;
     /** Percent coordinates (0-100) of this space's center on the board
-     * art, used for absolute positioning — see Layout. */
+     * art, used for absolute positioning — see Layout. For "tower"/"bit",
+     * this is the dial the structure's icon renders on, *not* where
+     * heroes stand (see `heroXPct`/`heroYPct` below). */
     xPct: number;
     yPct: number;
+    /** Only present for "tower"/"bit": the board art draws a separate,
+     * nearby tile — distinct from the icon's own dial — as the actual
+     * spot heroes stand at that structure. The drop target, hero tokens,
+     * and fan-out all anchor here instead of `xPct`/`yPct`. "plain"/
+     * "gold" nodes have no icon to separate from a standing spot, so
+     * `xPct`/`yPct` alone serves both purposes for them. */
+    heroXPct?: number;
+    heroYPct?: number;
     /** "tower"/"bit", and the 4 exclusive "plain" front-line nodes (2
      * per side): which team this belongs to. The 3 "gold" nodes are
      * always shared/neutral and leave this `undefined`. */
@@ -128,6 +138,21 @@
       `kind: "gold"`, `side` always `undefined`. There's no separate
       gold-only space anywhere else on the board; farming and the
       shared front line are the same 3 nodes, not two overlapping sets.
+
+  Every Tower/Bit also has its own separate hero-standing tile, a short
+  distance from the dial its icon renders on (`heroXPct`/`heroYPct`
+  above) — not a second node, just a second coordinate pair on the same
+  entry. This wasn't apparent until well into build: the dial itself
+  reads as "where the structure is," but the board art draws a distinct
+  nearby square as the actual spot troops stand at it, confirmed against
+  screenshots of the physical board. p1's 4 tiles (2 Towers + bottom
+  Tower + Bit) are measured directly off the full-resolution source,
+  cross-checked against the dial's own already-confirmed position; p2's
+  4 are derived from p1's via the board's 180°-rotational symmetry
+  (`(x, y) -> (100 - x, 100 - y)`) rather than independently measured —
+  the forest-biome art has much lower contrast for these tiles than
+  the desert biome, making direct measurement unreliable there. See
+  Open Items.
   This resolves the open question the Scope's "cataloging every space
   exactly as drawn" raised: the board's much denser-looking tile art
   (the many individually-highlighted squares visible across it) is
@@ -216,7 +241,15 @@
     layer per space kind:
     - Structure icons (existing `/structures/tower-{red,blue}.png` /
       `bit-{red,blue}.png`, reused as-is) at each `kind: "tower"`/`"bit"`
-      space's `xPct`/`yPct`, hidden when that structure's HP is 0.
+      space's `xPct`/`yPct` (its dial), hidden when that structure's HP
+      is 0. A purely decorative layer — no drag handlers of its own; the
+      drop target for that structure lives separately, at `heroXPct`/
+      `heroYPct` (Data Model, above), and keeps the structure's icon
+      scaling with the board's zoom (inheriting `.boardTransform`'s
+      ambient scale, same as the dial it's drawn on) rather than
+      counter-scaling like hero tokens/the gold marker below — it needs
+      to stay visually docked inside a dial that's also growing with
+      zoom, not shrink to a fixed size floating inside it.
     - Gold piles: a read-only marker (existing gold icon + the pile's
       current count, no controls) at each `kind: "gold"` space, hidden
       once that pile reaches 0 — same reactive convention as a
@@ -229,7 +262,9 @@
       interactive here — a `NumberStepper` squeezed onto the same node
       as 1-2 hero tokens has nowhere to go without overlapping them.
     - Hero tokens: new `MapToken` component at each hero's current
-      `heroPositions` space (or in a respawn area strip, if `null`).
+      `heroPositions` space (or in a respawn area strip, if `null`) — for
+      a `"tower"`/`"bit"` space, centered on `heroXPct`/`heroYPct` (its
+      hero-standing tile), not the structure icon's own `xPct`/`yPct`.
       Reuses `hero.battleToken` art (no new per-hero art) inside a small
       colored ring — `border-color: var(--color-p1)` /
       `var(--color-p2)` matching the existing Tower/Bit team colors —
@@ -408,7 +443,14 @@ several things this spec left open above:
 - Every Tower/Bit icon is centered exactly on its dial in the board art,
   measured against the full-resolution source rather than a downscaled
   preview — the plain-space catalog (still an Open Item below) should
-  get the same treatment. The mockup's 6 on-board heroes are likewise
+  get the same treatment. **Superseded during build**: the mockup (and
+  this spec's original Data Model) treated the dial as the single
+  position for both the icon *and* where heroes stand at that structure.
+  Direct testing against the physical board's own art revealed those are
+  two separate spots — a nearby tile distinct from the dial is where
+  troops actually stand (`heroXPct`/`heroYPct`, Data Model above) — so
+  the icon still renders on its dial, but hero tokens/the drop
+  target/fan-out moved to the tile instead. The mockup's 6 on-board heroes are likewise
   now positioned against the real 15-node structure (Data Model, above)
   rather than scattered across open terrain: 2 per side sit on that
   side's own exclusive front-line nodes, and one hero from each side
@@ -443,17 +485,13 @@ during build-out.
 No change from v1-v3 — same static Vercel deployment, no new infra.
 
 ## Open Items for Implementation (not yet decided)
-- **The 15 nodes' actual coordinates.** Data Model above now
-  fixes the full node graph's shape and count, so this is down to
-  reading each node's precise `xPct`/`yPct` off the full-resolution
-  board art — unlike intent 02's Hero Base HP table, that's not a quick
-  card-by-card lookup, and guessing at percentages from a downscaled
-  preview ships wrong data (this spec's own earlier Tower/Bit placements
-  needed a full-resolution re-measure for exactly this reason). A small
-  throwaway dev-only tool (click the rendered board, copy out
-  `{xPct, yPct}` under the cursor) is a reasonable way to make this
-  tractable during build, rather than hand-measuring pixels in an image
-  editor.
+- **p2's 4 Tower/Bit hero-tile coordinates** (`heroXPct`/`heroYPct`) are
+  derived from p1's measured tiles via the board's 180°-rotational
+  symmetry, not independently confirmed against the source art — see
+  Data Model above. The forest-biome art makes these tiles much lower-
+  contrast than p1's desert-biome ones, so direct measurement wasn't
+  reliable the way it was for p1. Revisit if any look visibly off against
+  real gameplay screenshots of the p2 side.
 - **Touch/pointer support**, for both drag-and-drop and the zoom/pan
   control: native HTML5 drag-and-drop doesn't work on touchscreens
   without extra polyfill work, and the zoom/pan wrapper above only
