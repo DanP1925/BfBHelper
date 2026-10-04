@@ -103,9 +103,17 @@ resolve them):
   reverse it — respawning is always a separate, explicit `setHeroPosition`
   call.
 - **Fan-out is a ring, not a line**: `fanOffset(index, total)` places N
-  tokens evenly around a small circle centered on the shared node (radius
-  grows mildly past 4), so it holds up the same way for a same-team stack
-  or a cross-team pair without special-casing either.
+  tokens evenly around a small circle centered on the shared node, so it
+  holds up the same way for a same-team stack or a cross-team pair
+  without special-casing either. The radius isn't flat-then-growing as
+  originally planned — it's solved directly from each token's actual
+  on-screen footprint (ring *and* name label, not just the 46px ring) so
+  that adjacent tokens stay a fixed minimum distance apart at any group
+  size; a flat radius visibly overlapped both the rings and their labels
+  once rendered against real token art, even at just 3 sharing a space.
+  The ring is also rotated so no token ever lands exactly "above center,"
+  where its label would otherwise collide with that node's gold-pile
+  marker (always topmost).
 - **`MapSpace` (screen-local to `BattleMapScreen`) is the actual native-DnD
   drop target**, not a separate invisible overlay — native drag events
   bubble, so dropping directly on a token still lands on its parent space.
@@ -225,9 +233,12 @@ resolve them):
       element, same centering technique as structure HP tags).
 - [x] M19. `components/MapTeamStatusPanel/` (new): read-only gold total
       (icon + plain number), a "Heroes" section (name + HP, dimmed at 0),
-      a "Structures" section (reuses `StructureSlot` read-only with
-      `reactiveStyling` on Towers only) — slotted above each side's
-      `RespawnAreaStrip`.
+      a "Structures" section (label + HP text, no icon, dimmed at 0 for
+      all 4 — a bespoke row matching Heroes' own style, not a
+      `StructureSlot` reuse as originally planned: the mockup's
+      Structures rows never had an icon) — slotted next to each side's
+      `RespawnAreaStrip` (side by side, not stacked above it as
+      originally planned — see M26's follow-up note for why).
 - [x] M20. `components/GoldPilesBar/` (new): 3 real `NumberStepper`s
       (`min:0, max:GOLD_PILE_STARTING_COUNT`) labeled "NE"/"Mid"/"SW" from
       each gold id, centered below the board row; `MapSpace`'s gold
@@ -274,6 +285,31 @@ resolve them):
         Still worth a human pass at the exact 13.3"/1280×800 baseline
         (not 1400×900) and a real mouse/trackpad drag, which automation
         doesn't fully stand in for.
+      - **Follow-up round, from the user's own direct testing** (after PR
+        D was opened, before merge — all committed on top of the same
+        `feat/battle-map-widen` branch): five more fixes, each confirmed
+        against a running `npm run dev` session rather than the mockup —
+        `ViewToggle` moved back to the top bar's left edge next to
+        `OverflowMenu` on the right (`justify-content: space-between`),
+        matching the mockup exactly — an earlier pass had wrongly grouped
+        both on the right and then wrongly "fixed" the *mockup* to match
+        that instead of the other way around, caught and reverted;
+        `MapTeamStatusPanel`'s Structures rows dropped their icon (text
+        only, matching the mockup — this spec's own wording had called
+        for reusing `StructureSlot`, which always has one); the panel and
+        `RespawnAreaStrip` went from stacked to side-by-side per side
+        (too tall stacked at the 1280×800 baseline), then the strip was
+        moved to the outer position specifically (farther from the
+        board) after the first side-by-side attempt put it board-
+        adjacent instead; `MapTeamStatusPanel` was enlarged (140px →
+        170px, every font size up) once the layout change freed up
+        horizontal room; and drop-target highlighting was added to every
+        `MapSpace`/`RespawnAreaStrip` (gold ring/glow on
+        `dragenter`/`dragleave`, counter-based to avoid flicker from a
+        child element's own enter/leave events) since there was
+        previously no way to tell where a drag would actually land.
+        `specs/04_battle-map.md`'s Layout and UI Design Reference
+        sections are updated to match all five.
 
 ## Test Scenarios
 
