@@ -111,8 +111,8 @@
   align-items: center;
   justify-content: center;
   /* A generous hit area for dropping, independent of whatever's rendered
-     inside (a structure icon, hero tokens, or nothing at all for a plain/
-     gold node with no one standing on it yet). */
+     inside (hero tokens, or nothing at all for a plain/gold node with no
+     one standing on it yet). */
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -122,6 +122,16 @@
 .spaceDragOver {
   background: rgba(201, 162, 75, 0.22);
   box-shadow: 0 0 0 2px var(--color-gold) inset;
+}
+
+.structureIconWrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  /* No `scale(1/zoom)` here, unlike the hero tokens/gold marker below —
+     the icon sits on a circular dial drawn into the board art itself, so
+     it needs to keep growing in step with that dial (via the ambient
+     zoom it inherits from `.boardTransform`) rather than shrinking to a
+     fixed size floating inside a dial that's grown past it. */
 }
 
 .structureIcon {
