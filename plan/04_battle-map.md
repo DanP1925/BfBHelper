@@ -264,7 +264,7 @@ resolve them):
       `dragTo`) → switch back to Board, confirm HP edits still work →
       switch to Map again, confirm the position persisted. `npm run
       test:e2e` green.
-- [ ] M26. Manual click-through at the 13.3" baseline (1280×800 logical
+- [x] M26. Manual click-through at the 13.3" baseline (1280×800 logical
       px, per CLAUDE.md): board + both flanking columns + `GoldPilesBar`
       all fit without horizontal scroll; drag between respawn area and
       board; zoom/pan; destroyed structure and emptied gold pile both
