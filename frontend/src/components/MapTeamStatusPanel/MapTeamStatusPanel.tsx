@@ -1,8 +1,6 @@
 import type { Hero, PlayerId } from "../../lib/draft/types";
-import { TOWER_SLOTS } from "../../lib/battle/constants";
-import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
+import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState } from "../../lib/battle/types";
-import { StructureSlot } from "../StructureSlot/StructureSlot";
 import styles from "./MapTeamStatusPanel.module.css";
 
 type MapTeamStatusPanelProps = {
@@ -16,14 +14,19 @@ type MapTeamStatusPanelProps = {
  * Read-only glance-level summary sitting above a side's `RespawnAreaStrip`
  * — so a quick HP/gold check doesn't always need a trip to the Battle
  * Board. No props beyond what `BattleMapScreen` already receives; purely
- * a rendering addition, no new data plumbing. Heroes get a small bespoke
- * row (name + HP, dimmed at 0) rather than reusing `HeroCard` — this
- * panel deliberately omits token art and level, which `HeroCard`'s
- * "battle" variant always renders. Structures *do* reuse `StructureSlot`
- * (omitting `onHpChange`/`max` for its read-only rendering), matching
- * `BattleTeamPanel`'s existing pattern exactly.
+ * a rendering addition, no new data plumbing. Both Heroes and Structures
+ * get the same small bespoke row (name/label + HP, dimmed at 0) — per
+ * the mockup, a structure's row is just text, no icon (unlike the Battle
+ * Board's `StructureSlot`, which this panel deliberately doesn't reuse).
  */
 export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusPanelProps) {
+  const structureRows = [
+    { label: TOWER_LABEL.top, hp: team.structures.top },
+    { label: TOWER_LABEL.middle, hp: team.structures.middle },
+    { label: TOWER_LABEL.bottom, hp: team.structures.bottom },
+    { label: "Bit", hp: team.structures.bit },
+  ];
+
   return (
     <div className={styles.panel}>
       <div className={styles.header} style={{ borderBottomColor: `var(--color-${side})` }}>
@@ -59,25 +62,18 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
 
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Structures</div>
-        <div className={styles.structuresList}>
-          {TOWER_SLOTS.map((slot) => (
-            <StructureSlot
-              key={slot}
-              label={TOWER_LABEL[slot]}
-              teamLabel={label}
-              hp={team.structures[slot]}
-              icon={structureIcon("tower", side)}
-              reactiveStyling
-            />
-          ))}
-          <StructureSlot
-            label="Bit"
-            teamLabel={label}
-            hp={team.structures.bit}
-            icon={structureIcon("bit", side)}
-            accent={`var(--color-${side})`}
-          />
-        </div>
+        {structureRows.map((structure) => {
+          const isDestroyed = structure.hp === 0;
+          return (
+            <div
+              key={structure.label}
+              className={isDestroyed ? `${styles.structRow} ${styles.dimmed}` : styles.structRow}
+            >
+              <span className={styles.structLabel}>{structure.label}</span>
+              <span className={styles.structHp}>{structure.hp} HP</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
