@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fanOffset } from "./fanOut";
 
 const TOKEN_FOOTPRINT_PX = 68;
+const RADIUS_SCALE = 0.5;
 
 function radiusOf(index: number, total: number): number {
   const { dx, dy } = fanOffset(index, total);
@@ -27,12 +28,16 @@ describe("fanOffset", () => {
     expect(a.dx !== 0 || a.dy !== 0).toBe(true);
   });
 
-  it("keeps adjacent tokens (ring + name label) from overlapping, at any group size", () => {
-    // The whole point of the fan-out: neither the ring nor its wider name
-    // label should visually collide, regardless of how many heroes share
-    // the space.
+  it("keeps every group at the same, deliberately-tightened inter-token spacing", () => {
+    // RADIUS_SCALE trades the full footprint-clearance guarantee (no
+    // overlap at any size) for a visibly tighter cluster at the group
+    // sizes that actually come up, per the user's call after seeing an
+    // 8-hero team fight read as too spread out — a big pileup overlapping
+    // is acceptable (same bar as "overlap is fine at full zoom, not at a
+    // single zoom level"). The chord is still constant across every group
+    // size, just scaled down from the full footprint.
     for (const total of [2, 3, 4, 5, 6, 8, 12]) {
-      expect(chordBetween(total)).toBeGreaterThan(TOKEN_FOOTPRINT_PX);
+      expect(chordBetween(total)).toBeCloseTo(TOKEN_FOOTPRINT_PX * 1.03 * RADIUS_SCALE, 5);
     }
   });
 

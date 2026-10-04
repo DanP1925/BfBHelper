@@ -23,14 +23,23 @@ type MapSpaceProps = {
   heroesHere: Array<{ hero: Hero; side: PlayerId }>;
   structures: Record<PlayerId, StructuresState>;
   goldPiles: Record<GoldPileSpaceId, number>;
-  /** The board's current zoom level. Only the gold-pile marker
-   * counter-scales itself by `1 / zoom`, staying a constant on-screen
-   * size as the board art grows — hero tokens and the structure icon
-   * deliberately don't: they inherit the ambient zoom from
-   * `.boardTransform` like the board art itself, so a hero or Tower/Bit
-   * stays proportionate to the terrain around it instead of looking
-   * disproportionately tiny once the art has visually magnified past a
-   * fixed-size token. */
+  /** The board's current zoom level.
+   * - The gold-pile marker counter-scales by the full `1 / zoom`,
+   *   staying a constant on-screen size as the board art grows.
+   * - The structure icon applies no counter-scale at all — it inherits
+   *   the ambient zoom from `.boardTransform` 1:1, same as the dial it's
+   *   drawn on, so it stays docked inside that dial rather than
+   *   shrinking to a fixed size floating inside it.
+   * - A hero token counter-scales by `1 / sqrt(zoom)` — a *partial*
+   *   counter-scale, not the gold marker's full one: it still grows
+   *   with zoom (so it doesn't look disproportionately tiny against the
+   *   now-magnified terrain), just slower than the board art itself.
+   *   This is deliberate, not an approximation — the fan-out spacing
+   *   between stacked tokens (`fanOffset`) grows with the *full* zoom
+   *   (unscaled), so a token's own size falls increasingly behind that
+   *   gap as zoom increases, resolving overlap in a crowded stack at
+   *   higher zoom even though the same stack is allowed to overlap at
+   *   1x (where the gap and the sqrt-scaled size are closest). */
   zoom: number;
   onDropHero: (side: PlayerId, heroId: HeroId) => void;
 };
@@ -129,7 +138,7 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDro
                 position: "absolute",
                 left: "50%",
                 top: "50%",
-                transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px)`,
+                transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(${1 / Math.sqrt(zoom)})`,
                 zIndex: 1,
               }}
             />

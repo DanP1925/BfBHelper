@@ -11,6 +11,15 @@
 const TOKEN_FOOTPRINT_PX = 68;
 /** >1 so adjacent footprints get a visible gap, not just touch edge-to-edge. */
 const SPACING_FACTOR = 1.03;
+/** Halves the footprint-solved radius below — a big same-node pileup (a
+ * full 8-hero team fight) read as too spread out at the un-scaled
+ * radius, even though that radius was exactly what kept every pair of
+ * tokens clear of each other. Pulling the whole ring in tighter trades
+ * some overlap at large `total` for a visibly tighter cluster at the
+ * group sizes that actually come up — acceptable per the user's own
+ * bar ("overlap at a single zoom level is a problem, overlap only at
+ * full zoom is fine"). */
+const RADIUS_SCALE = 0.5;
 
 /**
  * Visual-only offset for the N-th of `total` tokens sharing one map
@@ -23,12 +32,14 @@ const SPACING_FACTOR = 1.03;
  * tokens around the ring stay `SPACING_FACTOR` ring-diameters apart no
  * matter how many share the space (radius = (diameter * spacing) / (2 *
  * sin(π / total))) — a fixed small radius visibly overlapped as few as 3
- * tokens once actually rendered against real 46px token art.
+ * tokens once actually rendered against real 46px token art — then
+ * scaled down by `RADIUS_SCALE` for a visibly tighter cluster.
  */
 export function fanOffset(index: number, total: number): { dx: number; dy: number } {
   if (total <= 1) return { dx: 0, dy: 0 };
 
-  const radius = (TOKEN_FOOTPRINT_PX * SPACING_FACTOR) / (2 * Math.sin(Math.PI / total));
+  const radius =
+    ((TOKEN_FOOTPRINT_PX * SPACING_FACTOR) / (2 * Math.sin(Math.PI / total))) * RADIUS_SCALE;
   // Rotated so no token ever lands exactly "straight up" (angle -π/2): a
   // token's name label always renders below its own ring (MapToken.tsx),
   // so a token placed directly above the node's center would have that
