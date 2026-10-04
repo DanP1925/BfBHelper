@@ -50,7 +50,7 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
             >
               <span className={styles.heroName}>{hero.name}</span>
               <span className={styles.heroHp}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--color-hp)" aria-hidden="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--color-hp)" aria-hidden="true">
                   <path d="M12 21s-6.716-4.35-9.428-8.106C.414 9.967 1.5 6 5.1 6c2.1 0 3.6 1.2 4.5 2.7C10.5 7.2 12 6 14.1 6c3.6 0 4.686 3.967 2.528 6.894C18.716 16.65 12 21 12 21z" />
                 </svg>
                 {hp}
