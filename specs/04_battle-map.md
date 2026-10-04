@@ -250,15 +250,14 @@
     ring (red/blue) exists to keep legible, not just same-team stacking.
   - **Two `RespawnAreaStrip` components** (new,
     `frontend/src/components/RespawnAreaStrip/`), one per side, flanking
-    the board — left/right columns rather than above/below it, so the
-    board itself can run larger — each renders that side's `MapToken`s
-    whose `heroPositions` entry is `null`. This renames intent 04's
-    original "holding area" to "respawn area" throughout the UI
-    (component name, on-screen label, code comments) and in
-    `intent/04_battle-map.md` itself.
+    the board — left/right of it rather than above/below, so the board
+    itself can run larger — each renders that side's `MapToken`s whose
+    `heroPositions` entry is `null`. This renames intent 04's original
+    "holding area" to "respawn area" throughout the UI (component name,
+    on-screen label, code comments) and in `intent/04_battle-map.md`
+    itself.
   - **New `MapTeamStatusPanel` component** (new,
-    `frontend/src/components/MapTeamStatusPanel/`), one per side, sitting
-    above that side's `RespawnAreaStrip` in the same flanking column — a
+    `frontend/src/components/MapTeamStatusPanel/`), one per side — a
     read-only complement to the Map's purely positional view, added so a
     quick HP/gold check doesn't always need a trip to the Battle Board.
     This was chosen over merging the Board and Map into one screen: the
@@ -267,15 +266,32 @@
     either losing those controls or widening the column enough to crowd
     the board back down — so the two screens (and the toggle between
     them) stay exactly as intent 04 scoped them; this panel only adds a
-    glance-level summary alongside the Map, nothing editable. Renders:
+    glance-level summary alongside the Map, nothing editable. Each side's
+    panel and `RespawnAreaStrip` sit **side by side**, not stacked —
+    stacking them vertically (the original plan) pushed the page well
+    past the viewport, forcing a scroll that wasn't there before this
+    feature; laid out horizontally instead, both fit in view at the
+    13.3"/1280×800 baseline with room to spare. The strip sits
+    *outermost* (farthest from the board) and the panel *innermost*
+    (adjacent to it) on both sides — the panel benefits more from
+    sitting close to what it's summarizing, and this keeps the pair
+    symmetric left and right rather than one side's strip ending up
+    board-adjacent and the other's not. Renders:
     - The team label and gold total (icon + plain number — no
       `NumberStepper`; this panel has no editable controls at all).
     - Each of the team's 4 heroes: name + HP (small heart icon + number,
       dimmed at `hp === 0` — same reactive convention `HeroCard`'s
       battle variant already uses, just without the token art or level).
-    - Each of the 4 structures: short label (Top/Middle/Bottom/Bit) + HP,
-      dimmed at `hp === 0` (same convention `StructureSlot`'s
-      `reactiveStyling` already uses for Towers).
+    - Each of the 4 structures: short label (Top/Middle/Bottom/Bit) + HP
+      text, **no icon** — a bespoke row matching the Heroes rows' own
+      style exactly, per the mockup (not a `StructureSlot` reuse, which
+      this spec originally called for; `StructureSlot` always renders an
+      icon, which the mockup's Structures rows never do). Dimmed at
+      `hp === 0` for all 4 structures, including the Bit — unlike the
+      Battle Board's own `StructureSlot`, whose `reactiveStyling` is
+      deliberately Towers-only there (Bit-at-0 drives the win condition
+      on that screen); here the dimming is purely a read-only visual
+      cue, so applying it uniformly has no such conflict.
     - No new props beyond what `BattleMapScreen` already receives
       (`battleState[side]`, that side's `Hero[]`) — this is a rendering-
       only addition, not a data-plumbing one.
@@ -296,6 +312,20 @@
   area strips are drop targets that parse the payload and call
   `setHeroPosition`. This is desktop/mouse-oriented — see Open Items for
   why that's an acceptable default here, not an oversight.
+  - **Drop-target highlighting**: every `MapSpace` and `RespawnAreaStrip`
+    shows a gold ring/glow while a drag is over it, via `onDragEnter`/
+    `onDragLeave` (not a plain boolean — those events re-fire every time
+    the pointer crosses into/out of a child element, like a token or
+    structure icon, which a boolean would misread as leaving the drop
+    target entirely and flicker the highlight; an enter/leave counter,
+    incremented/decremented per event and highlighting while `> 0`,
+    doesn't have that problem). Since every space and either side's
+    respawn strip already accepts any drop (Map Logic, above), the
+    highlight means "a drop can land here," not "this specific move is
+    legal" — browsers don't expose a drag payload's actual data (only
+    its MIME type list) until the `drop` event itself fires, so
+    `RespawnAreaStrip` can't distinguish the correct-side case from the
+    one it's about to silently reject just by hovering.
 - **Zoom and pan**, so the whole board doesn't have to stay visible at
   once (useful once the full plain-space catalog fills it in): the
   board art and every pin layer sit inside one additional wrapper that
@@ -318,8 +348,11 @@
   Board/Map control, placed in both `BattleBoardScreen`'s and
   `BattleMapScreen`'s top bar next to the `OverflowMenu` (not inside it —
   per intent, this is a core, frequently-used action, unlike the menu's
-  exceptional ones). Calls a shared `onSwitchView(target: "battle" | "map")`
-  prop that both screens receive from `page.tsx`.
+  exceptional ones). The top bar is `justify-content: space-between`, not
+  grouped flush with the menu — `ViewToggle` sits at the bar's near edge,
+  `OverflowMenu` at the far edge, matching the mockup exactly on both
+  screens. Calls a shared `onSwitchView(target: "battle" | "map")` prop
+  that both screens receive from `page.tsx`.
 - `page.tsx` wiring: a new `view === "map"` branch renders
   `BattleMapScreen` with the same `p1Heroes`/`p2Heroes`/`battleState`/
   `winner`/`onNewDraft`/`onEndBattle` props `BattleBoardScreen` already
@@ -356,7 +389,16 @@ several things this spec left open above:
   working `MapTeamStatusPanel` (team + gold, then a labeled "Heroes"
   section of name/HP rows, then a labeled "Structures" section of
   label/HP rows, visually separated by a divider, both dimmed reactively
-  at 0 HP) sitting above it.
+  at 0 HP). **Superseded during build** (not reflected in the mockup
+  itself): the mockup stacks the panel above the strip in one narrow
+  column; stacked, that pushed the page well past the viewport at the
+  13.3"/1280×800 baseline. The build instead lays the panel and strip
+  out side by side (see Layout, above) — same two pieces, same content,
+  different arrangement, arrived at from actually testing the stacked
+  version rather than from a mockup revision. The mockup's Structures
+  rows were always icon-less text (label + HP, matching this spec now —
+  an earlier draft of this spec incorrectly called for reusing
+  `StructureSlot`, which always renders an icon).
 - `MapToken`'s ring is sized tight to the hero art itself (not a fixed
   oversized box) and reads clearly once the hero's own token art is
   rendered at roughly 46px tall — both figures worth matching in build.
@@ -387,6 +429,12 @@ several things this spec left open above:
   mockup tried the steppers directly on the board first, but a gold
   node is also a shared front-line node heroes stand on, and the
   controls had nowhere to go without overlapping a token.
+- **Added during build, not in the mockup**: every drop target (`MapSpace`,
+  `RespawnAreaStrip`) highlights with a gold ring/glow while a drag is
+  over it (Drag and drop, above) — the mockup's drag-and-drop wasn't
+  interactive enough to surface the need; it only became clear once
+  dragging actually worked end-to-end that there was no feedback
+  distinguishing a valid drop target from the rest of the board.
 This is a prototype for visual direction only, same caveat as intents
 01-03's references — not implemented code, and expected to evolve
 during build-out.
