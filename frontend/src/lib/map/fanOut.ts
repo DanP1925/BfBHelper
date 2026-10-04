@@ -8,9 +8,9 @@
  * constant for numbers that are really about token/label art, not a
  * generic layout concern).
  */
-const TOKEN_FOOTPRINT_PX = 75;
+const TOKEN_FOOTPRINT_PX = 68;
 /** >1 so adjacent footprints get a visible gap, not just touch edge-to-edge. */
-const SPACING_FACTOR = 1.05;
+const SPACING_FACTOR = 1.03;
 
 /**
  * Visual-only offset for the N-th of `total` tokens sharing one map
