@@ -48,18 +48,20 @@
   margin-bottom: 2px;
 }
 
-.heroRow {
+.heroRow,
+.structRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 0.75rem;
 }
 
-.heroRow.dimmed {
+.dimmed {
   opacity: 0.5;
 }
 
-.heroName {
+.heroName,
+.structLabel {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -72,8 +74,8 @@
   flex-shrink: 0;
 }
 
-.structuresList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.structHp {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--color-text);
 }
