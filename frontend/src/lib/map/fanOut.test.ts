@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fanOffset } from "./fanOut";
 
-const TOKEN_FOOTPRINT_PX = 90;
+const TOKEN_FOOTPRINT_PX = 75;
 
 function radiusOf(index: number, total: number): number {
   const { dx, dy } = fanOffset(index, total);
