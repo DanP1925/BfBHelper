@@ -272,7 +272,11 @@
       Board's two separate panels. A small name tag sits just below the
       token (own absolutely-positioned element, like the structure
       labels below), so identifying a hero never requires dragging it or
-      opening the Board.
+      opening the Board. A token's own size scales up with the board's
+      zoom (so it stays proportionate to the now-magnified terrain
+      around it, matching the structure icon's behavior below) but at a
+      deliberately slower, dampened rate than the zoom itself — see the
+      fan-out note above for why.
   - **Multiple heroes sharing a space** fan out via a small CSS offset
     per index within that space's group (computed at render time by
     grouping all heroes whose `heroPositions[heroId]` equals that
@@ -283,6 +287,15 @@
     (Data Model, above), so a p1 and a p2 token can legitimately fan out
     together right on top of a gold pile — exactly the case the colored
     ring (red/blue) exists to keep legible, not just same-team stacking.
+    The fan-out radius is deliberately tight enough that a large pileup
+    (a full team retreated to its Bit, or several heroes sharing a gold
+    node) visibly overlaps at the board's default 100% zoom — per direct
+    user testing, that's an acceptable tradeoff for keeping smaller
+    groups (2-4 heroes, the common case) compact rather than widely
+    spread. A hero token's own on-screen size still grows as the board
+    zooms in (below), but deliberately slower than the fan-out spacing
+    does, so a crowded node's overlap resolves on its own by 200% zoom
+    even though the same stack is allowed to overlap un-zoomed.
   - **Two `RespawnAreaStrip` components** (new,
     `frontend/src/components/RespawnAreaStrip/`), one per side, flanking
     the board — left/right of it rather than above/below, so the board
@@ -374,7 +387,10 @@
   never moves or scales itself); scroll-wheel zoom is a bonus on top of
   the buttons, not a replacement for them. Panning is click-and-drag,
   clamped so the board can never be dragged past its own edge into
-  empty space. This is entirely local UI state —
+  empty space — but never while a hero's own native drag is what
+  actually started the mousedown (checked via the event target's
+  closest `[draggable="true"]` ancestor), so dragging a hero across a
+  zoomed-in board never also nudges the pan. This is entirely local UI state —
   `BattleMapScreen`'s own `useState`, not a `BattleState` field — a
   reload always starts back at 100%, un-panned, same as switching away
   from the Map and back.
@@ -457,12 +473,24 @@ several things this spec left open above:
   shares one of the gold-pile nodes together — a concrete example of the
   cross-team stacking the fan-out logic (Layout, above) has to handle.
   These are still illustrative placements, not the nodes' measured
-  coordinates (the same Open Item as the structure spaces).
+  coordinates (the same Open Item as the structure spaces). **Also
+  superseded**: the mockup's Top/Middle/Bottom Tower alt-text labels and
+  positions no longer line up with the built app's — direct user
+  testing caught two of the original measurement session's tower dials
+  mislabeled relative to the physical board (one on each side), fixed
+  by swapping which dial each `slot` value refers to (coordinates
+  themselves unchanged). Since `slot` is purely a cosmetic label with no
+  gameplay meaning (the 3 Towers per side are mechanically identical),
+  the mockup's now-mismatched labels are a documentation-only
+  inconsistency, not a functional one.
 - Zoom (100%/150%/200%/250%, buttons + scroll-wheel) and click-drag pan,
   clamped so the board can't be dragged past its own edge, plus a
   corner-brackets "fit" icon in place of a text "Reset" — no numeric
   zoom readout, since it wasn't adding anything the +/− buttons didn't
-  already convey.
+  already convey. **Superseded during build**: the mockup orders the
+  zoom controls +/−/divider/reset top-to-bottom; the built app orders
+  them −/reset/+, no divider — a cosmetic rearrangement with no design
+  rationale behind the change, just how it was first built.
 - The 3 gold-pile markers on the board are read-only (icon + count,
   always rendered above hero tokens/structure icons so a token landing
   nearby can never cover one) and disappear at 0, same as a destroyed
