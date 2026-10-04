@@ -106,7 +106,9 @@
 
 .space {
   position: absolute;
-  transform: translate(-50%, -50%);
+  /* transform (translate -50%/-50% to center, scale 1/zoom to counteract
+     .boardTransform's own zoom scale) is set inline — it depends on the
+     live zoom level, which this static stylesheet has no access to. */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,9 +138,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  /* transform set inline — depends on the live zoom level (counter-
-     scaled to stay a constant on-screen size), which this static
-     stylesheet has no access to. */
+  transform: translate(-50%, -50%);
   z-index: 2;
   display: flex;
   align-items: center;
