@@ -115,6 +115,13 @@
      gold node with no one standing on it yet). */
   width: 60px;
   height: 60px;
+  border-radius: 50%;
+  transition: background-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.spaceDragOver {
+  background: rgba(201, 162, 75, 0.22);
+  box-shadow: 0 0 0 2px var(--color-gold) inset;
 }
 
 .structureIcon {

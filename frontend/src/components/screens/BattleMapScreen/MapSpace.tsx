@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import type { DragEvent } from "react";
 import type { PlayerId } from "../../../lib/draft/types";
 import type { StructuresState } from "../../../lib/battle/types";
@@ -34,21 +35,43 @@ type MapSpaceProps = {
  * deliberately read-only (icon + count, no stepper) — this same node is
  * also where heroes stand, and a `NumberStepper` has nowhere to go
  * without overlapping a token; the real controls live in `GoldPilesBar`.
+ *
+ * Highlights itself while a hero is being dragged over it — every space
+ * is a valid drop target (no reachability validation, per intent's Out
+ * of Scope), so this is purely "you can drop here," not "this move is
+ * legal." Tracked via an enter/leave counter rather than a plain
+ * boolean: `dragenter`/`dragleave` fire on this element again every time
+ * the pointer crosses into/out of a child (a hero token or structure
+ * icon) within it, which a boolean would misread as leaving the space
+ * entirely and cause the highlight to flicker off mid-hover.
  */
 export function MapSpace({ space, heroesHere, structures, goldPiles, onDropHero }: MapSpaceProps) {
   const hp = structureHp(structures, space);
   const isDestroyed = hp === 0;
-  // `MapSpaceDef`'s `id` is plain `string` (shared across all 4 kinds);
-  // `kind === "gold"` is what actually guarantees it's one of the 3 known
-  // gold ids, which the type system can't see through this narrowing.
   const goldCount = space.kind === "gold" ? goldPiles[space.id as GoldPileSpaceId] : null;
+
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragDepthRef = useRef(0);
+
+  function handleDragEnter(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragDepthRef.current += 1;
+    setIsDragOver(true);
+  }
 
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
   }
 
+  function handleDragLeave() {
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setIsDragOver(false);
+  }
+
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
+    dragDepthRef.current = 0;
+    setIsDragOver(false);
     const payload = parseHeroDragPayload(event);
     if (payload === null) return;
     onDropHero(payload.side, payload.heroId);
@@ -56,9 +79,11 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, onDropHero 
 
   return (
     <div
-      className={styles.space}
+      className={isDragOver ? `${styles.space} ${styles.spaceDragOver}` : styles.space}
       style={{ left: `${space.xPct}%`, top: `${space.yPct}%` }}
+      onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {(space.kind === "tower" || space.kind === "bit") && !isDestroyed && (

@@ -66,4 +66,33 @@ describe("RespawnAreaStrip", () => {
 
     expect(onDrop).not.toHaveBeenCalled();
   });
+
+  it("highlights while something is dragged over it, and un-highlights on drag-leave", () => {
+    const { container } = render(
+      <RespawnAreaStrip side="p1" label="Player 1" heroes={[makeHero("boreas", "Boreas")]} onDrop={() => {}} />,
+    );
+    const strip = screen.getByText("Player 1").parentElement as HTMLElement;
+
+    fireEvent.dragEnter(strip, { dataTransfer: fakeDataTransfer() });
+    expect(container.querySelector('[class*="stripDragOver"]')).not.toBeNull();
+
+    fireEvent.dragLeave(strip);
+    expect(container.querySelector('[class*="stripDragOver"]')).toBeNull();
+  });
+
+  it("clears the highlight once the drop lands", () => {
+    const { container } = render(
+      <RespawnAreaStrip side="p1" label="Player 1" heroes={[makeHero("boreas", "Boreas")]} onDrop={() => {}} />,
+    );
+    const strip = screen.getByText("Player 1").parentElement as HTMLElement;
+
+    fireEvent.dragEnter(strip, { dataTransfer: fakeDataTransfer() });
+    expect(container.querySelector('[class*="stripDragOver"]')).not.toBeNull();
+
+    const dataTransfer = fakeDataTransfer();
+    dataTransfer.setData("application/x-bfbhelper-hero", JSON.stringify({ side: "p1", heroId: "boreas" }));
+    fireEvent.drop(strip, { dataTransfer });
+
+    expect(container.querySelector('[class*="stripDragOver"]')).toBeNull();
+  });
 });
