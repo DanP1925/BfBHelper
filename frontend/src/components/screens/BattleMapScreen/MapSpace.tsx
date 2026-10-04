@@ -23,10 +23,15 @@ type MapSpaceProps = {
   heroesHere: Array<{ hero: Hero; side: PlayerId }>;
   structures: Record<PlayerId, StructuresState>;
   goldPiles: Record<GoldPileSpaceId, number>;
-  /** The board's current zoom level — this space counter-scales itself by
-   * `1 / zoom` so structure icons, hero tokens, and the gold marker stay
-   * a constant on-screen size as the board art grows around them, rather
-   * than growing along with it. */
+  /** The board's current zoom level. Hero tokens and the gold marker
+   * counter-scale themselves by `1 / zoom` so they stay a constant
+   * on-screen size as the board art grows — but the structure icon
+   * deliberately does *not*: each Tower/Bit icon sits on a circular dial
+   * drawn into the board art itself, so it needs to keep growing in step
+   * with that dial (via the ambient zoom it inherits from
+   * `.boardTransform`, same as the dial) to stay visually docked inside
+   * it, rather than shrinking to a fixed size floating inside a dial
+   * that's grown past it. */
   zoom: number;
   onDropHero: (side: PlayerId, heroId: HeroId) => void;
 };
@@ -85,11 +90,7 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDro
   return (
     <div
       className={isDragOver ? `${styles.space} ${styles.spaceDragOver}` : styles.space}
-      style={{
-        left: `${space.xPct}%`,
-        top: `${space.yPct}%`,
-        transform: `translate(-50%, -50%) scale(${1 / zoom})`,
-      }}
+      style={{ left: `${space.xPct}%`, top: `${space.yPct}%` }}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -115,14 +116,14 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDro
               position: "absolute",
               left: "50%",
               top: "50%",
-              transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px)`,
+              transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(${1 / zoom})`,
               zIndex: 1,
             }}
           />
         );
       })}
       {goldCount !== null && goldCount > 0 && (
-        <div className={styles.goldMarker}>
+        <div className={styles.goldMarker} style={{ transform: `translate(-50%, -50%) scale(${1 / zoom})` }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
           <img src="/structures/gold.png" alt="" className={styles.goldMarkerIcon} draggable={false} />
           <span>{goldCount}</span>
