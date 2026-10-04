@@ -369,8 +369,15 @@ resolve them):
            though the same stack is still allowed to overlap at 1x.
            Only the gold-pile marker still counter-scales fully to a
            constant size; the structure icon still applies none at all.
-
-## Test Scenarios
+      - **Bug fix, same round**: dragging a hero while zoomed in also
+        visibly panned the board — `BattleMapScreen`'s click-and-drag
+        pan handler and `MapToken`'s native-HTML5 drag both listen for
+        `mousedown`/`mousemove` on overlapping elements (the token's
+        `mousedown` bubbles up to the board before the browser commits
+        to a native drag), so the brief window before that commit
+        nudged the pan state alongside the hero's own drag.
+        `handleMouseDown` now bails out (never arms the pan) when the
+        event's target is inside a `[draggable="true"]` element.
 
 Pure logic (no React):
 1. `lib/battle/bounds.test.ts` — `clampGoldPile`: floor 0, ceiling
