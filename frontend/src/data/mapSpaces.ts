@@ -61,8 +61,8 @@ export const MAP_SPACES = [
   { id: "p1-tower-middle", kind: "tower", side: "p1", slot: "middle", xPct: 71.7, yPct: 73.1, heroXPct: 65, heroYPct: 68 },
   { id: "p1-tower-bottom", kind: "tower", side: "p1", slot: "bottom", xPct: 68.9, yPct: 86.1, heroXPct: 60.7, heroYPct: 83.2 },
   { id: "p2-tower-top", kind: "tower", side: "p2", slot: "top", xPct: 31.3, yPct: 12.5, heroXPct: 39.3, heroYPct: 16.8 },
-  { id: "p2-tower-middle", kind: "tower", side: "p2", slot: "middle", xPct: 13, yPct: 30, heroXPct: 16, heroYPct: 40 },
-  { id: "p2-tower-bottom", kind: "tower", side: "p2", slot: "bottom", xPct: 27, yPct: 26.7, heroXPct: 35, heroYPct: 32 },
+  { id: "p2-tower-bottom", kind: "tower", side: "p2", slot: "bottom", xPct: 13, yPct: 30, heroXPct: 16, heroYPct: 40 },
+  { id: "p2-tower-middle", kind: "tower", side: "p2", slot: "middle", xPct: 27, yPct: 26.7, heroXPct: 35, heroYPct: 32 },
 
   { id: "p1-plain-1", kind: "plain", side: "p1", xPct: 70.5, yPct: 41.5 },
   { id: "p1-plain-2", kind: "plain", side: "p1", xPct: 41.5, yPct: 72 },
