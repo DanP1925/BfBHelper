@@ -84,6 +84,12 @@ export function BattleMapScreen({
   }
 
   function handleMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
+    // Don't start a pan when the mousedown is actually the start of a
+    // hero token's native drag (`MapToken`'s own `draggable` div) — this
+    // event bubbles up from the token before the browser's own drag
+    // gesture takes over, and without this check, panning would start
+    // alongside it and visibly fight the hero's drag.
+    if (event.target instanceof HTMLElement && event.target.closest('[draggable="true"]')) return;
     dragRef.current = { startX: event.clientX, startY: event.clientY, startPan: pan };
   }
 
