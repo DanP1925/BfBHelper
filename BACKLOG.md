@@ -24,8 +24,8 @@ Ken Obi.
   Initiative flips every round — the player without it gets it — so both
   screens need a display plus a "next round" control to pass it. Possibly a
   round counter too. *Size: small intent (05).*
-- [ ] **Bug: heroes start 1 HP short.** `lib/battle/reducer.ts` starts each
-  hero at `baseHp`, but the rulebook ("Prepare the Hero Mats", step 3) sets
+- [ ] **Bug: every hero starts 1 HP short.** Applies to all 19 heroes.
+  `lib/battle/reducer.ts` starts each hero at `baseHp`, but the rulebook ("Prepare the Hero Mats", step 3) sets
   starting HP to base HP + level (1), e.g. Vladiator starts at 11, not 10.
   Fix only the starting HP. Keep the flat 15 HP ceiling and the manual HP
   bump on level-up as they are (decided 2026-10-10). *Size: small fix PR.*
@@ -59,8 +59,7 @@ when the hero who uses them is in the battle, on either team.
   needed. One power card gives a target hero in Caligar's space two +1 Attack
   tokens, so tokens need per-hero counts (2+) and can go on allies.
 - **Vladiator (Barbarian):** *Rage* (+1 melee Attack per 4 HP below max) is
-  worked out by the player, with no app display. Needs nothing beyond the
-  starting-HP fix above.
+  worked out by the player, with no app display. Needs nothing.
 - **Sterling (Archer):** *Deadly Aim* (melee attacks on Basic cards gain Ranged
   if Sterling didn't move this round) is remembered at the table, with no app
   tracking. No power cards place tokens. Needs nothing.
@@ -175,8 +174,8 @@ Hero-specific (only when that hero is in the battle):
 | Artifacts (x3) | named on/off toggles on Runika | Runika |
 | Stone | count per hero | Sedusa |
 
-Need nothing beyond the starting-HP fix: Vladiator, Sterling, Ceralin, Motley,
-Ken Obi.
+Need nothing hero-specific: Vladiator, Sterling, Ceralin, Motley, Ken Obi.
+The starting-HP bug fix applies to every hero.
 
 All tokens are added and removed one tap at a time, by hand. The app doesn't
 apply any rule automatically (expiry, defeat, damage absorption).
