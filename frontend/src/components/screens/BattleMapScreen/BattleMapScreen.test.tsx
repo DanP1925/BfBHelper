@@ -39,6 +39,9 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   } as BattleState;
 }
 
+/** No test here exercises zoom/pan, so the camera is fixed at its default. */
+const cameraProps = { camera: INITIAL_MAP_CAMERA, onCameraChange: () => {} };
+
 describe("BattleMapScreen", () => {
   it("renders a deployed hero's token on the board, not in the respawn area", () => {
     render(
@@ -52,8 +55,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
 
@@ -75,8 +77,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
 
@@ -96,8 +97,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /more actions/i }));
@@ -116,8 +116,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
     expect(screen.getByRole("menuitem", { name: "End Battle" })).toBeInTheDocument();
@@ -136,8 +135,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={onSwitchView}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
 
@@ -159,8 +157,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
 
@@ -192,8 +189,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
 
@@ -234,8 +230,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        camera={INITIAL_MAP_CAMERA}
-        onCameraChange={() => {}}
+        {...cameraProps}
       />,
     );
 

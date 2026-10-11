@@ -8,6 +8,7 @@ import type {
   WheelEvent as ReactWheelEvent,
 } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
+import { clamp } from "../../../lib/battle/bounds";
 import type { BattleState } from "../../../lib/battle/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../../../data/mapSpaces";
 import { MAP_SPACES } from "../../../data/mapSpaces";
@@ -80,13 +81,13 @@ export function BattleMapScreen({
     const viewportSize = viewportRef.current?.clientWidth ?? 0;
     const maxOffset = (viewportSize * (atZoom - 1)) / 2;
     return {
-      x: Math.min(maxOffset, Math.max(-maxOffset, nextPan.x)),
-      y: Math.min(maxOffset, Math.max(-maxOffset, nextPan.y)),
+      x: clamp(nextPan.x, -maxOffset, maxOffset),
+      y: clamp(nextPan.y, -maxOffset, maxOffset),
     };
   }
 
   function setZoomIndexClamped(nextIndex: number) {
-    const clampedIndex = Math.min(ZOOM_LEVELS.length - 1, Math.max(0, nextIndex));
+    const clampedIndex = clamp(nextIndex, 0, ZOOM_LEVELS.length - 1);
     onCameraChange((prev) => ({
       zoomIndex: clampedIndex,
       pan: clampPan(prev.pan, ZOOM_LEVELS[clampedIndex]),
@@ -111,12 +112,15 @@ export function BattleMapScreen({
   function handleMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
     if (dragRef.current === null) return;
     const { startX, startY, startPan } = dragRef.current;
-    onCameraChange({
-      zoomIndex,
-      pan: clampPan(
+    onCameraChange((prev) => {
+      const nextPan = clampPan(
         { x: startPan.x + (event.clientX - startX), y: startPan.y + (event.clientY - startY) },
-        zoom,
-      ),
+        ZOOM_LEVELS[prev.zoomIndex],
+      );
+      // Returning `prev` unchanged lets React skip the re-render — e.g. every
+      // mousemove at 100% zoom, where the pan is clamped to 0.
+      if (nextPan.x === prev.pan.x && nextPan.y === prev.pan.y) return prev;
+      return { ...prev, pan: nextPan };
     });
   }
 
