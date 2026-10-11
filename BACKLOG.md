@@ -13,11 +13,11 @@ Battle Map merged). Paused mid-game; everything not listed below worked smoothly
 Teams: Caligar, Vladiator, Sterling, Ceralin vs Cynthia, Motley, Agatha Trunch,
 Ken Obi.
 
-- [ ] **Keep Map zoom/pan when switching tabs.** Switching Board → Map resets
+- [x] **Keep Map zoom/pan when switching tabs.** Switching Board → Map resets
   zoom to 100% and un-pans, because zoom/pan is local state in
   `BattleMapScreen` and the screen unmounts on a view toggle. Lift that state
   into `page.tsx`. Resetting on page reload is fine — no persistence needed.
-  *Size: small polish PR, no new intent.*
+  *Size: small polish PR, no new intent.* Done in `fix/keep-map-zoom-pan` (v0.4.1).
 - [ ] **Initiative indicator + passing it each round.** Neither the Battle
   Board nor the Battle Map shows who has initiative; it's only shown on the
   Draft Board (`draft.initiative`, decided by the pre-draft coin flip).

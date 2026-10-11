@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import Home from "./page";
 import { getHeroById, HERO_IDS } from "../data/heroes";
@@ -40,5 +40,27 @@ describe("Home", () => {
     expect(
       screen.getByRole("button", { name: /new draft/i }),
     ).toBeInTheDocument();
+  });
+
+  it("keeps the Map's zoom when switching to the Board and back", () => {
+    const p1Ids = HERO_IDS.slice(0, 4);
+    const p2Ids = HERO_IDS.slice(4, 8);
+    saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
+    saveBattleState(
+      createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById)),
+    );
+    saveView("map");
+
+    render(<Home />);
+    // Zoom out is disabled at 100%, so it being enabled means "zoomed in".
+    expect(screen.getByRole("button", { name: "Zoom out" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    expect(screen.getByRole("button", { name: "Zoom out" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Board" }));
+    expect(screen.queryByRole("button", { name: "Zoom out" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Map" }));
+
+    expect(screen.getByRole("button", { name: "Zoom out" })).toBeEnabled();
   });
 });

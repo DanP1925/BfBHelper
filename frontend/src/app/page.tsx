@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { getHeroById } from "../data/heroes";
 import { BattleBoardScreen } from "../components/screens/BattleBoardScreen/BattleBoardScreen";
-import { BattleMapScreen } from "../components/screens/BattleMapScreen/BattleMapScreen";
+import {
+  BattleMapScreen,
+  INITIAL_MAP_CAMERA,
+  type MapCamera,
+} from "../components/screens/BattleMapScreen/BattleMapScreen";
 import { DraftBoardScreen } from "../components/screens/DraftBoardScreen/DraftBoardScreen";
 import { ResultsScreen } from "../components/screens/ResultsScreen/ResultsScreen";
 import { StartScreen } from "../components/screens/StartScreen/StartScreen";
@@ -53,12 +57,19 @@ export default function Home() {
   // site's job.
   const [view, setView] = useState<View | null>(null);
 
+  // The Map's zoom/pan, held here rather than in BattleMapScreen so it
+  // survives the screen unmounting on a Board ⇄ Map toggle. Not persisted —
+  // a reload starts back at 100% — and reset whenever the draft leaves
+  // "done", so a new battle never inherits the last one's camera.
+  const [mapCamera, setMapCamera] = useState<MapCamera>(INITIAL_MAP_CAMERA);
+
   useEffect(() => {
     if (draft.phase === "done") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setView(loadView());
     } else {
       setView(null);
+      setMapCamera(INITIAL_MAP_CAMERA);
     }
   }, [draft.phase]);
 
@@ -116,6 +127,8 @@ export default function Home() {
             saveView("win");
           }}
           onSwitchView={switchView}
+          camera={mapCamera}
+          onCameraChange={setMapCamera}
         />
       );
     }

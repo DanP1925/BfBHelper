@@ -1,7 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent, WheelEvent as ReactWheelEvent } from "react";
+import type {
+  Dispatch,
+  MouseEvent as ReactMouseEvent,
+  SetStateAction,
+  WheelEvent as ReactWheelEvent,
+} from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import type { BattleState } from "../../../lib/battle/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../../../data/mapSpaces";
@@ -27,6 +32,10 @@ type BattleMapScreenProps = {
   /** Called only once "End Battle" is confirmed in the dialog below. */
   onEndBattle: () => void;
   onSwitchView: (target: BattleView) => void;
+  /** Owned by the caller so it survives this screen unmounting on a
+   * Board ⇄ Map view toggle. */
+  camera: MapCamera;
+  onCameraChange: Dispatch<SetStateAction<MapCamera>>;
 };
 
 type HeroOnBoard = { hero: Hero; side: PlayerId };
@@ -34,6 +43,12 @@ type HeroOnBoard = { hero: Hero; side: PlayerId };
 /** Fixed zoom steps — no numeric readout, since it doesn't convey anything
  * the +/- buttons don't already. */
 const ZOOM_LEVELS = [1, 1.5, 2, 2.5];
+
+/** The Map's zoom/pan — UI state only (not a BattleState field), so a
+ * reload always starts back at 100%, un-panned. */
+export type MapCamera = { zoomIndex: number; pan: { x: number; y: number } };
+
+export const INITIAL_MAP_CAMERA: MapCamera = { zoomIndex: 0, pan: { x: 0, y: 0 } };
 
 /** The entry point for the full spec (plan/04_battle-map.md's PR D,
  * widening PR C's thin end-to-end slice): every real board node, native
@@ -51,14 +66,12 @@ export function BattleMapScreen({
   onNewDraft,
   onEndBattle,
   onSwitchView,
+  camera,
+  onCameraChange,
 }: BattleMapScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Zoom/pan is entirely local UI state (not a BattleState field) — a
-  // reload always starts back at 100%, un-panned, same as switching away
-  // from the Map and back.
-  const [zoomIndex, setZoomIndex] = useState(0);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const { zoomIndex, pan } = camera;
   const viewportRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; startPan: { x: number; y: number } } | null>(null);
   const zoom = ZOOM_LEVELS[zoomIndex];
@@ -74,8 +87,10 @@ export function BattleMapScreen({
 
   function setZoomIndexClamped(nextIndex: number) {
     const clampedIndex = Math.min(ZOOM_LEVELS.length - 1, Math.max(0, nextIndex));
-    setZoomIndex(clampedIndex);
-    setPan((prev) => clampPan(prev, ZOOM_LEVELS[clampedIndex]));
+    onCameraChange((prev) => ({
+      zoomIndex: clampedIndex,
+      pan: clampPan(prev.pan, ZOOM_LEVELS[clampedIndex]),
+    }));
   }
 
   function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
@@ -96,12 +111,13 @@ export function BattleMapScreen({
   function handleMouseMove(event: ReactMouseEvent<HTMLDivElement>) {
     if (dragRef.current === null) return;
     const { startX, startY, startPan } = dragRef.current;
-    setPan(
-      clampPan(
+    onCameraChange({
+      zoomIndex,
+      pan: clampPan(
         { x: startPan.x + (event.clientX - startX), y: startPan.y + (event.clientY - startY) },
         zoom,
       ),
-    );
+    });
   }
 
   function endDrag() {
@@ -109,8 +125,7 @@ export function BattleMapScreen({
   }
 
   function resetZoomPan() {
-    setZoomIndex(0);
-    setPan({ x: 0, y: 0 });
+    onCameraChange(INITIAL_MAP_CAMERA);
   }
 
   const teams: Array<{ side: PlayerId; label: string; heroes: Hero[] }> = [
