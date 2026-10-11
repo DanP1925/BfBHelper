@@ -24,8 +24,8 @@
       handles a reload mid-battle.
     - Otherwise, build a fresh default `BattleState` from the heroes'
       starting HP (`baseHp` + `HERO_STARTING_LEVEL`, per the rulebook's
-      "Prepare the Hero Mats" step 3, via `startingHeroHp` in
-      `lib/battle/bounds.ts`) plus the existing intent-02 constants
+      "Prepare the Hero Mats" step 3, via `createInitialHeroState` in
+      `lib/battle/reducer.ts`) plus the existing intent-02 constants
       (`TOWER_STARTING_HP`, `BIT_STARTING_HP`, `HERO_STARTING_LEVEL`,
       `TEAM_STARTING_GOLD`) and persist it immediately — this is what
       "starting a battle" means now; there's no separate init action.
