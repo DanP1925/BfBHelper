@@ -6,7 +6,8 @@
   commit if run on `main`); it's versioned in `.githooks/` since regular
   `.git/hooks/` isn't tracked by git. Enable it once per clone with:
   `git config core.hooksPath .githooks`
-- Use Conventional Commits for commit messages (e.g. `docs:`, `chore:`, `feat:`, `fix:`).
+- Use Conventional Commits for commit messages and PR titles (e.g. `docs:`, `chore:`,
+  `feat:`, `fix:`). The `Version check` workflow reads the PR title's type.
 - Always confirm with the user before pushing or updating an open pull request —
   every time, not just for the first push of a task.
 
@@ -19,8 +20,8 @@
 - Pre-1.0 bump rules:
   - **Minor** (`0.X.0`): an intent is completed. If an intent spans several PRs,
     bump in the one that finishes it.
-  - **Patch** (`0.x.Y`): a `fix:` or polish PR that changes the app but isn't a
-    new intent.
+  - **Patch** (`0.x.Y`): a `fix:`, `perf:`, `refactor:` or polish PR that changes
+    `frontend/` but doesn't complete an intent.
   - **No bump**: `docs:`, `chore:`, `ci:` or `test:`-only changes.
 - **1.0.0** = everything in `BACKLOG.md` is done.
 - After the PR merges, the `Tag release` workflow tags the merged commit on `main`
