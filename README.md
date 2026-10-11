@@ -46,9 +46,3 @@ npm run dev        # local dev server
 npm test           # Vitest
 npm run test:e2e   # Playwright
 ```
-
-## Contributing
-
-See [`CLAUDE.md`](./CLAUDE.md) for the git workflow (branch + PR, Conventional
-Commits), Semantic Versioning rules and testing conventions. Enable the
-versioned git hooks once per clone with `git config core.hooksPath .githooks`.
