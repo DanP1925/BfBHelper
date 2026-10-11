@@ -38,6 +38,7 @@ Ken Obi.
   each token adds 1 to all of that hero's attacks; they're removed at the end
   of the hero's next activation or when it's stunned, and stay if the hero who
   placed them is defeated. Needs per-hero counts (2+), on allies too.
+  Scoped in `intent/06_attack-tokens.md`.
 - [ ] **Confuse tokens.** Not tracked anywhere; needed even by the heroes
   played in this game. Per the rulebook, in the next round's Orders Phase a
   confused hero is assigned the top action-deck card instead of one from the
@@ -183,3 +184,14 @@ The starting-HP bug fix applies to every hero.
 
 All tokens are added and removed one tap at a time, by hand. The app doesn't
 apply any rule automatically (expiry, defeat, damage absorption).
+
+## Follow-ups
+
+- [ ] **Revisit every token's display once all tokens exist.** Do this after
+  +1 Attack, Confuse, Immobilize and the hero-specific tokens are all built.
+  Each one is designed on its own first, so review them together for one
+  consistent look and layout on the Board's hero cards (and on the Map, where
+  they fit). Include the choice deferred in intent 06: today a hero with no
+  +1 Attack tokens still shows a small "+"; consider hiding token controls
+  entirely at 0 (e.g. adding tokens from a tap on the hero card) to cut
+  clutter. Added 2026-10-11.
