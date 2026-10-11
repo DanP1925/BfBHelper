@@ -18,13 +18,15 @@ Ken Obi.
   `BattleMapScreen` and the screen unmounts on a view toggle. Lift that state
   into `page.tsx`. Resetting on page reload is fine — no persistence needed.
   *Size: small polish PR, no new intent.* Done in `fix/keep-map-zoom-pan` (v0.4.1).
-- [ ] **Initiative indicator + passing it each round.** Neither the Battle
+- [x] **Initiative indicator + passing it each round.** Neither the Battle
   Board nor the Battle Map shows who has initiative; it's only shown on the
   Draft Board (`draft.initiative`, decided by the pre-draft coin flip).
   Initiative flips every round — the player without it gets it — so both
   screens need a display plus a "next round" control to pass it. Possibly a
   round counter too. *Size: small intent (05).* Scoped in
-  `intent/05_initiative-indicator.md`.
+  `intent/05_initiative-indicator.md`. Done in `feat/initiative-indicator`
+  (v0.5.0): a tappable badge on both screens passes initiative. The round
+  counter was deferred (no rule depends on it).
 - [x] **Bug: every hero starts 1 HP short.** Applies to all 19 heroes.
   `lib/battle/reducer.ts` starts each hero at `baseHp`, but the rulebook ("Prepare the Hero Mats", step 3) sets
   starting HP to base HP + level (1), e.g. Vladiator starts at 11, not 10.
