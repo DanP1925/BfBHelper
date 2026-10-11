@@ -24,8 +24,8 @@ This phase covers only:
   not a marker on each team's side, shows which player holds
   initiative. It reads "Player 1" or "Player 2" in that team's color,
   the same names the Results screen and the Map's panels already use.
-  It's in the header both screens share, next to the Board/Map toggle,
-  so switching between Board and Map doesn't move it.
+  It's at the top right of the header both screens share, next to the
+  overflow menu, so switching between Board and Map doesn't move it.
 - **Tap the badge to pass initiative** to the other player. There's no
   separate button. It's the app's version of the rulebook's last
   Cleanup step ("The player with initiative passes the initiative
@@ -77,7 +77,8 @@ alongside the physical cards.
   `BattleState`, the same state that already holds HP, level, gold,
   structures, hero positions and gold piles. No separate store.
 - **Battle Board and Battle Map screens.** Both get the badge, in the
-  header area they already share, next to the Board/Map `ViewToggle`.
+  header area they already share, at the top right next to the
+  `OverflowMenu`.
 - **Draft state.** Only read: the battle's starting initiative comes from
   `draft.initiative`. The Draft Board's own initiative display doesn't
   change.
