@@ -192,6 +192,6 @@ apply any rule automatically (expiry, defeat, damage absorption).
   Each one is designed on its own first, so review them together for one
   consistent look and layout on the Board's hero cards (and on the Map, where
   they fit). Include the choice deferred in intent 06: today a hero with no
-  +1 Attack tokens still shows a small "+"; consider hiding token controls
+  +1 Attack tokens still shows a muted swords icon; consider hiding token controls
   entirely at 0 (e.g. adding tokens from a tap on the hero card) to cut
   clutter. Added 2026-10-11.
