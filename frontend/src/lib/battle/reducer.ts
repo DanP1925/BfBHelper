@@ -23,6 +23,7 @@ export type BattleAction =
   | { type: "SET_HERO_HP"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_HERO_LEVEL"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_HERO_ATTACK_TOKENS"; side: PlayerId; heroId: HeroId; value: number }
+  | { type: "SET_HERO_CONFUSED"; side: PlayerId; heroId: HeroId; value: boolean }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: MapSpaceId | null }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
@@ -34,12 +35,12 @@ function structureCeiling(slot: keyof StructuresState): number {
 
 /** Replaces one already-clamped field on one hero. Same state reference if
  * the hero isn't on that side or the value is unchanged. */
-function setHeroField(
+function setHeroField<K extends keyof HeroBattleState>(
   state: BattleState,
   side: PlayerId,
   heroId: HeroId,
-  field: keyof HeroBattleState,
-  value: number,
+  field: K,
+  value: HeroBattleState[K],
 ): BattleState {
   const team = state[side];
   const hero = team.heroes[heroId];
@@ -84,6 +85,11 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
         "attackTokens",
         clampHeroAttackTokens(action.value),
       );
+
+    // Manual only (intent/07), like attackTokens: defeat, respawn and a
+    // passed round all leave it alone.
+    case "SET_HERO_CONFUSED":
+      return setHeroField(state, action.side, action.heroId, "confused", action.value);
 
     case "SET_STRUCTURE_HP": {
       const team = state[action.side];
@@ -133,12 +139,14 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
  * write path in this file — without that, a future hero whose starting HP
  * exceeds HERO_HP_CEILING would create a battle state that
  * loadBattleState's own validator would then reject as corrupt on the
- * very next reload. Every hero starts with no +1 Attack tokens. */
+ * very next reload. Every hero starts with no +1 Attack tokens and
+ * unconfused. */
 export function createInitialHeroState(hero: Hero): HeroBattleState {
   return {
     hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL),
     level: HERO_STARTING_LEVEL,
     attackTokens: 0,
+    confused: false,
   };
 }
 
@@ -173,7 +181,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

@@ -111,4 +111,28 @@ describe("Home", () => {
 
     expect(chip(p1Name)).toHaveAccessibleName(new RegExp(`^${p1Name}: 1 \\+1 Attack token`));
   });
+
+  it("toggles one hero's Confuse token on the Board, closing an open chip in the same tap", () => {
+    saveBattleState(seedDoneDraft());
+    saveView("battle");
+    const p1Name = getHeroById(HERO_IDS[0]).name;
+    const p1Other = getHeroById(HERO_IDS[1]).name;
+    const chip = (name: string) =>
+      screen.getByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Attack token`) });
+    const confuse = (name: string) =>
+      screen.getByRole("button", { name: `Confuse token on ${name}` });
+
+    render(<Home />);
+    fireEvent.click(chip(p1Name));
+    expect(chip(p1Name)).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.mouseDown(confuse(p1Other));
+    fireEvent.click(confuse(p1Other));
+    expect(chip(p1Name)).toHaveAttribute("aria-expanded", "false");
+    expect(confuse(p1Other)).toHaveAttribute("aria-pressed", "true");
+    expect(confuse(p1Name)).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(confuse(p1Other));
+    expect(confuse(p1Other)).toHaveAttribute("aria-pressed", "false");
+  });
 });

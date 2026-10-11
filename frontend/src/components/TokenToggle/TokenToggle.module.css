@@ -1,0 +1,32 @@
+/* The on/off counterpart of TokenChip (intent/07), in the same 20px pill
+ * shape. Off it's just the muted icon, no border or fill; on it's the lit
+ * pill in the token's own accent, read from `--token-accent` (set inline
+ * from the `accent` prop) so each on/off token keeps one set of rules. */
+.toggle {
+  box-sizing: border-box;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  color: var(--color-muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.toggle:hover,
+.on {
+  color: var(--token-accent);
+}
+
+.on {
+  border-color: var(--token-accent);
+  background: color-mix(in srgb, var(--token-accent) 14%, transparent);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--token-accent);
+  outline-offset: 2px;
+}

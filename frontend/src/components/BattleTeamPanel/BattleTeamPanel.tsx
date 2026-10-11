@@ -19,6 +19,7 @@ type BattleTeamPanelProps = {
   onHeroHpChange: (heroId: HeroId, value: number) => void;
   onHeroLevelChange: (heroId: HeroId, value: number) => void;
   onHeroAttackTokensChange: (heroId: HeroId, value: number) => void;
+  onHeroConfusedChange: (heroId: HeroId, value: boolean) => void;
   onStructureHpChange: (slot: keyof StructuresState, value: number) => void;
   /** Which token chip on the Board is open, owned by `BattleBoardScreen` so
    * opening one in this panel closes any open in the other (intent/06). */
@@ -35,6 +36,7 @@ export function BattleTeamPanel({
   onHeroHpChange,
   onHeroLevelChange,
   onHeroAttackTokensChange,
+  onHeroConfusedChange,
   onStructureHpChange,
   openTokenKey,
   onOpenTokenKeyChange,
@@ -79,6 +81,10 @@ export function BattleTeamPanel({
                 onChange: (value) => onHeroAttackTokensChange(hero.id, value),
                 expanded: openTokenKey === attackTokenKey,
                 onExpandedChange: (open) => onOpenTokenKeyChange(open ? attackTokenKey : null),
+              }}
+              confused={{
+                on: heroState.confused,
+                onChange: (value) => onHeroConfusedChange(hero.id, value),
               }}
             />
           );

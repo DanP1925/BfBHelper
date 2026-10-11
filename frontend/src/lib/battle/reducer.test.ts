@@ -34,16 +34,18 @@ function baseState(): BattleState {
 }
 
 describe("createInitialHeroState", () => {
-  it("starts at baseHp + starting level, clamped to the HP ceiling, with no attack tokens", () => {
+  it("starts at baseHp + starting level, clamped to the HP ceiling, with no tokens", () => {
     expect(createInitialHeroState({ ...HERO_A, baseHp: 10 })).toEqual({
       hp: 11,
       level: 1,
       attackTokens: 0,
+      confused: false,
     });
     expect(createInitialHeroState({ ...HERO_A, baseHp: HERO_HP_CEILING })).toEqual({
       hp: HERO_HP_CEILING,
       level: 1,
       attackTokens: 0,
+      confused: false,
     });
   });
 });
@@ -55,6 +57,7 @@ describe("createInitialBattleState", () => {
       hp: HERO_A.baseHp + 1,
       level: 1,
       attackTokens: 0,
+      confused: false,
     });
   });
 
@@ -80,9 +83,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 4", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 5", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(4);
+    expect(state.schemaVersion).toBe(5);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -230,6 +233,65 @@ describe("battleReducer", () => {
         value: 0,
       });
       expect(defeated.p1.heroes[HERO_A.id].attackTokens).toBe(2);
+    });
+  });
+
+  describe("SET_HERO_CONFUSED", () => {
+    function confuse(state: BattleState, value: boolean): BattleState {
+      return battleReducer(state, {
+        type: "SET_HERO_CONFUSED",
+        side: "p1",
+        heroId: HERO_A.id,
+        value,
+      });
+    }
+
+    it("turns the flag on and off, changing nothing but that hero's flag", () => {
+      const state = baseState();
+      const on = confuse(state, true);
+      expect(on.p1.heroes[HERO_A.id]).toEqual({ ...state.p1.heroes[HERO_A.id], confused: true });
+      expect(on.p1.heroPositions).toBe(state.p1.heroPositions);
+      expect(on.p2).toBe(state.p2);
+
+      const off = confuse(on, false);
+      expect(off.p1.heroes[HERO_A.id].confused).toBe(false);
+      expect(off).not.toBe(on);
+    });
+
+    it("is a no-op for an unknown heroId", () => {
+      const state = baseState();
+      const next = battleReducer(state, {
+        type: "SET_HERO_CONFUSED",
+        side: "p1",
+        heroId: "sterling",
+        value: true,
+      });
+      expect(next).toBe(state);
+    });
+
+    it("is a no-op (same reference) when the value is unchanged", () => {
+      const state = baseState();
+      expect(confuse(state, false)).toBe(state);
+      const on = confuse(state, true);
+      expect(confuse(on, true)).toBe(on);
+    });
+
+    it("survives SET_HERO_HP to 0, SET_HERO_POSITION and PASS_INITIATIVE", () => {
+      let state = confuse(baseState(), true);
+      state = battleReducer(state, {
+        type: "SET_HERO_HP",
+        side: "p1",
+        heroId: HERO_A.id,
+        value: 0,
+      });
+      state = battleReducer(state, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: null,
+      });
+      state = battleReducer(state, { type: "PASS_INITIATIVE" });
+      expect(state.p1.heroes[HERO_A.id].confused).toBe(true);
     });
   });
 
