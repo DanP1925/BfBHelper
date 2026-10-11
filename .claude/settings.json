@@ -1,4 +1,22 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npx vitest run)",
+      "Bash(npx vitest run *)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx tsc --noEmit -p .)",
+      "Bash(npx --no-install tsc --noEmit)",
+      "Bash(npm test)",
+      "Bash(npx eslint --max-warnings=0 src)",
+      "Bash(npx --no-install eslint . --max-warnings=0)",
+      "Bash(npm run lint)",
+      "Bash(git fetch -q)",
+      "Bash(git fetch -q --prune)",
+      "Bash(git fetch -q origin)",
+      "Bash(git fetch --all --prune)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\n\" http://localhost:3000)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
