@@ -194,76 +194,86 @@ export function BattleMapScreen({
               />
             </div>
 
-            <div
-              ref={viewportRef}
-              className={styles.board}
-              onWheel={handleWheel}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={endDrag}
-              onMouseLeave={endDrag}
-            >
+            {/* The gold piles sit right under the board, not under the whole
+                row, so they don't drop below the taller side columns and
+                leave a gap. */}
+            <div className={styles.boardColumn}>
               <div
-                className={styles.boardTransform}
-                style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+                ref={viewportRef}
+                className={styles.board}
+                onWheel={handleWheel}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={endDrag}
+                onMouseLeave={endDrag}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
-                <img src="/map/board.jpg" alt="" className={styles.boardArt} draggable={false} />
-                {MAP_SPACES.map((space) => (
-                  <MapSpace
-                    key={space.id}
-                    space={space}
-                    heroesHere={bySpace.get(space.id) ?? []}
-                    structures={{ p1: battleState.p1.structures, p2: battleState.p2.structures }}
-                    goldPiles={battleState.goldPiles}
-                    zoom={zoom}
-                    onDropHero={(side, heroId) => setHeroPosition(side, heroId, space.id)}
-                  />
-                ))}
+                <div
+                  className={styles.boardTransform}
+                  style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
+                  <img src="/map/board.jpg" alt="" className={styles.boardArt} draggable={false} />
+                  {MAP_SPACES.map((space) => (
+                    <MapSpace
+                      key={space.id}
+                      space={space}
+                      heroesHere={bySpace.get(space.id) ?? []}
+                      structures={{ p1: battleState.p1.structures, p2: battleState.p2.structures }}
+                      goldPiles={battleState.goldPiles}
+                      zoom={zoom}
+                      onDropHero={(side, heroId) => setHeroPosition(side, heroId, space.id)}
+                    />
+                  ))}
+                </div>
+
+                <div className={styles.zoomControls}>
+                  <button
+                    type="button"
+                    className={styles.zoomButton}
+                    aria-label="Zoom out"
+                    disabled={zoomIndex === 0}
+                    onClick={() => setZoomIndexClamped(zoomIndex - 1)}
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.zoomButton}
+                    aria-label="Reset zoom and pan"
+                    onClick={resetZoomPan}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.zoomButton}
+                    aria-label="Zoom in"
+                    disabled={zoomIndex === ZOOM_LEVELS.length - 1}
+                    onClick={() => setZoomIndexClamped(zoomIndex + 1)}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
-              <div className={styles.zoomControls}>
-                <button
-                  type="button"
-                  className={styles.zoomButton}
-                  aria-label="Zoom out"
-                  disabled={zoomIndex === 0}
-                  onClick={() => setZoomIndexClamped(zoomIndex - 1)}
-                >
-                  −
-                </button>
-                <button
-                  type="button"
-                  className={styles.zoomButton}
-                  aria-label="Reset zoom and pan"
-                  onClick={resetZoomPan}
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className={styles.zoomButton}
-                  aria-label="Zoom in"
-                  disabled={zoomIndex === ZOOM_LEVELS.length - 1}
-                  onClick={() => setZoomIndexClamped(zoomIndex + 1)}
-                >
-                  +
-                </button>
-              </div>
+              <GoldPilesBar
+                goldPiles={battleState.goldPiles}
+                onChange={(pileId, value) => setGoldPile(pileId, value)}
+              />
             </div>
 
             <div className={styles.sideGroup}>
@@ -281,11 +291,6 @@ export function BattleMapScreen({
               />
             </div>
           </div>
-
-          <GoldPilesBar
-            goldPiles={battleState.goldPiles}
-            onChange={(pileId, value) => setGoldPile(pileId, value)}
-          />
         </div>
       </div>
 
