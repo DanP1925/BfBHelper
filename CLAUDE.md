@@ -10,6 +10,21 @@
 - Always confirm with the user before pushing or updating an open pull request —
   every time, not just for the first push of a task.
 
+## Versioning
+- Semantic Versioning. The source of truth is `"version"` in `frontend/package.json`
+  (keep `frontend/package-lock.json` in sync). Bump it in the PR that ships the change.
+- Pre-1.0 bump rules:
+  - **Minor** (`0.X.0`): an intent is completed. If an intent spans several PRs,
+    bump in the one that finishes it.
+  - **Patch** (`0.x.Y`): a `fix:` or polish PR that changes the app but isn't a
+    new intent.
+  - **No bump**: `docs:`, `chore:`, `ci:` or `test:`-only changes.
+- **1.0.0** = everything in `BACKLOG.md` is done.
+- After the PR merges, tag the merged commit on `main` with an annotated
+  `vX.Y.Z` tag. Pushing the tag needs confirmation, like any push.
+- Past intents were tagged after the fact: `v0.1.0`–`v0.3.0` for intents 01–03,
+  and `v0.4.0` for intent 04, together with this scheme.
+
 ## Docs
 - `intent/` and `specs/` each hold one file per feature, named `NN_feature-name.md`
   (e.g. `01_hero-draft-picker.md`), numbered in the order features were scoped. An
