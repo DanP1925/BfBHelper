@@ -44,6 +44,7 @@ Ken Obi.
   confused hero is assigned the top action-deck card instead of one from the
   hand, then the token is removed. It doesn't affect activation in the round
   it's applied, and stays if the hero who placed it is defeated.
+  Scoped in `intent/07_confuse-tokens.md`.
 - [ ] **Immobilize status.** General (not hero-specific). Per the rulebook,
   an immobilized hero's standee is laid on its side; the next time it would
   move, it stands back up instead of moving. In the app: an on/off toggle per
