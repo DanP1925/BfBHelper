@@ -28,7 +28,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 3 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 4 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -54,23 +54,38 @@ export type LegacyBattleTeamStateV1 = {
   structures: StructuresState;
 };
 
+/** One side's battle-team state in schemas 2-3: heroPositions, but no
+ * per-hero attackTokens yet (intent/06). */
+export type LegacyBattleTeamStateV2 = Omit<BattleTeamState, "heroes"> & {
+  heroes: Record<HeroId, { hp: number; level: number }>;
+};
+
 /** The on-disk (localStorage) shape of a persisted battle state, version 2
  * (intent/04: `heroPositions` per side, top-level `goldPiles`) — now only
  * the migration source shape `battleMigrations[2]` upgrades from. */
 export type PersistedBattleStateV2 = {
   schemaVersion: 2;
-  p1: BattleTeamState;
-  p2: BattleTeamState;
+  p1: LegacyBattleTeamStateV2;
+  p2: LegacyBattleTeamStateV2;
   goldPiles: Record<GoldPileSpaceId, number>;
   /** Informational only — not used for any load-time logic. */
   updatedAt: string;
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 3
- * (intent/05: top-level `initiative`). */
+ * (intent/05: top-level `initiative`) — now only the migration source
+ * shape `battleMigrations[3]` upgrades from. */
 export type PersistedBattleStateV3 = Omit<PersistedBattleStateV2, "schemaVersion"> & {
   schemaVersion: 3;
   initiative: PlayerId;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 4
+ * (intent/06: per-hero `attackTokens`). */
+export type PersistedBattleStateV4 = Omit<PersistedBattleStateV3, "schemaVersion" | "p1" | "p2"> & {
+  schemaVersion: 4;
+  p1: BattleTeamState;
+  p2: BattleTeamState;
 };
 
 /** Which screen is showing once a draft is done. Only a non-`"results"`

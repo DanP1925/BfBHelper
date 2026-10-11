@@ -1,6 +1,13 @@
 import type { Hero, HeroId, PlayerId } from "../draft/types";
 import { otherPlayer } from "../draft/selectors";
-import { clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
+import {
+  clampGold,
+  clampGoldPile,
+  clampHeroAttackTokens,
+  clampHeroHp,
+  clampHeroLevel,
+  clampStructureHp,
+} from "./bounds";
 import {
   BIT_STARTING_HP,
   HERO_STARTING_LEVEL,
@@ -9,12 +16,13 @@ import {
 } from "./constants";
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
-import type { BattleState, BattleTeamState, StructuresState } from "./types";
+import type { BattleState, BattleTeamState, HeroBattleState, StructuresState } from "./types";
 
 export type BattleAction =
   | { type: "SET_GOLD"; side: PlayerId; value: number }
   | { type: "SET_HERO_HP"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_HERO_LEVEL"; side: PlayerId; heroId: HeroId; value: number }
+  | { type: "SET_HERO_ATTACK_TOKENS"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: MapSpaceId | null }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
@@ -22,6 +30,24 @@ export type BattleAction =
 
 function structureCeiling(slot: keyof StructuresState): number {
   return slot === "bit" ? BIT_STARTING_HP : TOWER_STARTING_HP;
+}
+
+/** Replaces one already-clamped field on one hero. Same state reference if
+ * the hero isn't on that side or the value is unchanged. */
+function setHeroField(
+  state: BattleState,
+  side: PlayerId,
+  heroId: HeroId,
+  field: keyof HeroBattleState,
+  value: number,
+): BattleState {
+  const team = state[side];
+  const hero = team.heroes[heroId];
+  if (!hero || hero[field] === value) return state;
+  return {
+    ...state,
+    [side]: { ...team, heroes: { ...team.heroes, [heroId]: { ...hero, [field]: value } } },
+  };
 }
 
 /**
@@ -42,35 +68,22 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
       return { ...state, [action.side]: { ...team, gold: nextGold } };
     }
 
-    case "SET_HERO_HP": {
-      const team = state[action.side];
-      const hero = team.heroes[action.heroId];
-      if (!hero) return state;
-      const nextHp = clampHeroHp(action.value);
-      if (nextHp === hero.hp) return state;
-      return {
-        ...state,
-        [action.side]: {
-          ...team,
-          heroes: { ...team.heroes, [action.heroId]: { ...hero, hp: nextHp } },
-        },
-      };
-    }
+    case "SET_HERO_HP":
+      return setHeroField(state, action.side, action.heroId, "hp", clampHeroHp(action.value));
 
-    case "SET_HERO_LEVEL": {
-      const team = state[action.side];
-      const hero = team.heroes[action.heroId];
-      if (!hero) return state;
-      const nextLevel = clampHeroLevel(action.value);
-      if (nextLevel === hero.level) return state;
-      return {
-        ...state,
-        [action.side]: {
-          ...team,
-          heroes: { ...team.heroes, [action.heroId]: { ...hero, level: nextLevel } },
-        },
-      };
-    }
+    case "SET_HERO_LEVEL":
+      return setHeroField(state, action.side, action.heroId, "level", clampHeroLevel(action.value));
+
+    // Manual only (intent/06): nothing else in this reducer ever touches
+    // attackTokens — not HP to 0, not a position change, not a passed round.
+    case "SET_HERO_ATTACK_TOKENS":
+      return setHeroField(
+        state,
+        action.side,
+        action.heroId,
+        "attackTokens",
+        clampHeroAttackTokens(action.value),
+      );
 
     case "SET_STRUCTURE_HP": {
       const team = state[action.side];
@@ -120,9 +133,13 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
  * write path in this file — without that, a future hero whose starting HP
  * exceeds HERO_HP_CEILING would create a battle state that
  * loadBattleState's own validator would then reject as corrupt on the
- * very next reload. */
-export function createInitialHeroState(hero: Hero): { hp: number; level: number } {
-  return { hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL), level: HERO_STARTING_LEVEL };
+ * very next reload. Every hero starts with no +1 Attack tokens. */
+export function createInitialHeroState(hero: Hero): HeroBattleState {
+  return {
+    hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL),
+    level: HERO_STARTING_LEVEL,
+    attackTokens: 0,
+  };
 }
 
 function createInitialTeamState(heroes: Hero[]): BattleTeamState {
@@ -130,7 +147,7 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
 
   return {
     gold: TEAM_STARTING_GOLD,
-    heroes: Object.fromEntries(heroEntries) as Record<HeroId, { hp: number; level: number }>,
+    heroes: Object.fromEntries(heroEntries) as Record<HeroId, HeroBattleState>,
     structures: {
       top: TOWER_STARTING_HP,
       middle: TOWER_STARTING_HP,
@@ -156,7 +173,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

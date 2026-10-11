@@ -1,6 +1,13 @@
 import type { Hero } from "../../lib/draft/types";
-import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "../../lib/battle/constants";
+import {
+  HERO_ATTACK_TOKEN_CEILING,
+  HERO_HP_CEILING,
+  HERO_MAX_LEVEL,
+  HERO_STARTING_LEVEL,
+} from "../../lib/battle/constants";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
+import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
+import { TokenChip } from "../TokenChip/TokenChip";
 import styles from "./HeroCard.module.css";
 
 type HeroCardCommonProps = {
@@ -31,7 +38,20 @@ type HeroCardProps =
       level: number;
       onHpChange?: (value: number) => void;
       onLevelChange?: (value: number) => void;
+      /** +1 Attack tokens (intent/06). The token row renders only when this
+       * is provided (the Battle Board), so the Win Screen's cards stay as
+       * they are. */
+      attackTokens?: HeroCardTokenProps;
     });
+
+/** One counted token's value, setter and open state, passed all together
+ * so the chip can't be wired half-way. */
+export type HeroCardTokenProps = {
+  count: number;
+  onChange: (value: number) => void;
+  expanded: boolean;
+  onExpandedChange: (next: boolean) => void;
+};
 
 export function HeroCard(props: HeroCardProps) {
   const { hero, variant, onClick } = props;
@@ -52,7 +72,7 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { hp, level, onHpChange, onLevelChange } = props;
+    const { hp, level, onHpChange, onLevelChange, attackTokens } = props;
     const isDefeated = hp === 0;
     return (
       <div className={styles.battleCard}>
@@ -125,6 +145,17 @@ export function HeroCard(props: HeroCardProps) {
               </>
             )}
           </div>
+          {attackTokens && (
+            <div className={styles.tokenRow}>
+              <TokenChip
+                {...attackTokens}
+                max={HERO_ATTACK_TOKEN_CEILING}
+                icon={<AttackTokenIcon size={12} />}
+                label="+1 Attack"
+                heroName={hero.name}
+              />
+            </div>
+          )}
         </div>
       </div>
     );

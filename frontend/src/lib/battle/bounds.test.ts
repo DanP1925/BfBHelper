@@ -3,11 +3,17 @@ import {
   clamp,
   clampGold,
   clampGoldPile,
+  clampHeroAttackTokens,
   clampHeroHp,
   clampHeroLevel,
   clampStructureHp,
 } from "./bounds";
-import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "./constants";
+import {
+  HERO_ATTACK_TOKEN_CEILING,
+  HERO_HP_CEILING,
+  HERO_MAX_LEVEL,
+  HERO_STARTING_LEVEL,
+} from "./constants";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 
 describe("clamp", () => {
@@ -63,6 +69,22 @@ describe("clampHeroLevel", () => {
     [HERO_MAX_LEVEL + 1, HERO_MAX_LEVEL],
   ])("clampHeroLevel(%d) -> %d", (value, expected) => {
     expect(clampHeroLevel(value)).toBe(expected);
+  });
+});
+
+describe("clampHeroAttackTokens", () => {
+  it.each([
+    [-1, 0],
+    [0, 0],
+    [3, 3],
+    [HERO_ATTACK_TOKEN_CEILING, HERO_ATTACK_TOKEN_CEILING],
+    [HERO_ATTACK_TOKEN_CEILING + 1, HERO_ATTACK_TOKEN_CEILING],
+  ])("clampHeroAttackTokens(%d) -> %d", (value, expected) => {
+    expect(clampHeroAttackTokens(value)).toBe(expected);
+  });
+
+  it("NaN falls back to the floor", () => {
+    expect(clampHeroAttackTokens(Number.NaN)).toBe(0);
   });
 });
 

@@ -105,18 +105,23 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
       hp: HERO_A.baseHp + 1,
       level: 1,
+      attackTokens: 0,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
 
   it("hydrates a matching persisted state verbatim instead of rebuilding fresh", () => {
     const persisted = createInitialBattleState([HERO_A], [HERO_B], "p1");
-    persisted.p1.heroes[HERO_A.id] = { hp: 2, level: 3 };
+    persisted.p1.heroes[HERO_A.id] = { hp: 2, level: 3, attackTokens: 4 };
     saveBattleState(persisted);
 
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
-    expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({ hp: 2, level: 3 });
+    expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
+      hp: 2,
+      level: 3,
+      attackTokens: 4,
+    });
   });
 
   it("rejects a persisted state whose hero-id set doesn't match, rebuilding fresh instead", () => {
@@ -128,6 +133,7 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
       hp: HERO_A.baseHp + 1,
       level: 1,
+      attackTokens: 0,
     });
   });
 
@@ -161,6 +167,36 @@ describe("useBattle", () => {
     });
 
     expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(15);
+  });
+
+  it("setHeroAttackTokens persists the clamped result, which survives a reload", () => {
+    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroAttackTokens("p2", HERO_B.id, 3);
+    });
+    expect(result.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(3);
+    expect(readRawState().p2.heroes[HERO_B.id].attackTokens).toBe(3);
+
+    act(() => {
+      result.current.setHeroAttackTokens("p2", HERO_B.id, 99);
+    });
+    expect(result.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(9);
+    unmount();
+
+    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+    expect(reloaded.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(9);
+  });
+
+  it("setHeroHp to 0 keeps the hero's attack tokens", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroAttackTokens("p1", HERO_A.id, 2);
+      result.current.setHeroHp("p1", HERO_A.id, 0);
+    });
+
+    expect(result.current.state?.p1.heroes[HERO_A.id].attackTokens).toBe(2);
   });
 
   it("derives winner from live state and clears it once Bit HP is raised back above 0", () => {

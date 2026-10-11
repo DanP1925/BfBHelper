@@ -102,8 +102,9 @@
   negative, above-9 or non-numeric value fails the whole payload, the
   same clear-on-failure convention as hp/level. `hasValidLegacyBattleTeamShape`
   stays as it is, since it still gates raw schema-1 payloads.
-- **Migration.** `loadPersisted` runs exactly **one** migration step and
-  doesn't chain, so every older version has to land on schema 4:
+- **Migration.** `loadPersisted` now chains one-step migrations from the
+  stored version up to the current one (changed in the build: it used to
+  run exactly one step, so each entry had to land on the current schema):
   - New `upgradeV3ToV4(data)`: returns `null` unless `p1` and `p2` are
     objects with an object `heroes`. Otherwise it returns the payload with
     `attackTokens: 0` added to every hero on both sides, `schemaVersion: 4`
@@ -111,16 +112,15 @@
     `heroPositions`, `structures`, `gold`, `goldPiles`, `initiative`) passes
     through unchanged. The current-shape validator checks the result
     afterward, as with `upgradeV2ToV3`.
-  - `battleMigrations` becomes:
+  - `battleMigrations` becomes one step per version, typed
+    `MigrationSteps` (`(data: unknown) => unknown`, since the validator
+    checks the end result):
     ```ts
-    1: (data) => chain(upgradeV1ToV2(data), upgradeV2ToV3, upgradeV3ToV4),
-    2: (data) => chain(upgradeV2ToV3(data), upgradeV3ToV4),
+    1: upgradeV1ToV2,
+    2: upgradeV2ToV3,
     3: upgradeV3ToV4,
     ```
-    The `chain` helper is optional. It reads better than nested
-    `=== null` checks now that there are three steps, but inline checks
-    like today's `[1]` are fine too. The map's value type becomes
-    `PersistedBattleStateV4 | null`.
+    A later schema bump adds one entry and touches no others.
   - Default for upgraded saves: **0 for every hero** (intent's
     Constraints). A battle that was mid-game with physical tokens on the
     table gets them re-entered by hand, one tap each.
@@ -226,13 +226,11 @@
     to the Map and back, starts with every chip closed. Only token
     *counts* are battle state (intent's Session Lifecycle).
 - **`HeroCard` battle variant** (`frontend/src/components/HeroCard/`)
-  gains optional props `attackTokens?: number`,
-  `onAttackTokensChange?: (value: number) => void`,
-  `attackTokensExpanded?: boolean` and
-  `onAttackTokensExpandedChange?: (next: boolean) => void`. The token row
-  renders only when `onAttackTokensChange` is provided:
-  - The Battle Board (`BattleTeamPanel`) passes both.
-  - `WinScreen` passes neither, so its cards stay as they are. Intent's
+  gains one optional prop, `attackTokens?: HeroCardTokenProps`
+  (`{ count, onChange, expanded, onExpandedChange }`), grouped so the chip
+  can't be wired half-way. The token row renders only when it's provided:
+  - The Battle Board (`BattleTeamPanel`) passes it.
+  - `WinScreen` doesn't, so its cards stay as they are. Intent's
     Out of Scope keeps token counts off the Win Screen.
 - **Placement on the card:** a new `.tokenRow` (flex, `flex-wrap: wrap`,
   4px gap) as the last child of `.battleInfo`, under the level row. It
@@ -356,18 +354,19 @@ No change from v1-v5: same static Vercel deployment, no new infra.
   only; 1+ → pill with − / +) and the "⚔N" entry to the "Battle Map"
   artboard's status panels, then update UI Design Reference above.~~
   **Decided:** done (App Flow version 55). See UI Design Reference.
-- Check the Board at 1280x800 with all four hero cards per team holding
+- ~~Check the Board at 1280x800 with all four hero cards per team holding
   tokens, and one chip expanded. Both panels should still fit without scrolling (estimate
   above: ~616px of ~670px). If not, tighten `.battleInfo`'s gap or the
-  card padding before anything else moves.
-- Check the Map at 1280x800 with all four heroes on one team holding
-  tokens. The status panel grows about 68px (see Layout).
-  - **Passes** if the board area keeps its size and the page doesn't
-    scroll.
-  - **If not:** tighten the token line first. Only as a last resort, drop
-    the Map entry (intent: "If it doesn't fit, the Map shows nothing").
-- Pill accent color: gold border/tint as proposed, or neutral like the
-  ⋯ button. Decide in the browser next to the red HP badge.
-- Animation feel: check the 150ms expand/collapse in the browser. Too
+  card padding before anything else moves.~~
+  **Decided:** fits as specced, no gap change.
+- ~~Check the Map at 1280x800 with all four heroes on one team holding
+  tokens. The status panel grows about 68px (see Layout).~~
+  **Decided:** fits as specced with all eight heroes tokened. The Map
+  entry stays.
+- ~~Pill accent color: gold border/tint as proposed, or neutral like the
+  ⋯ button. Decide in the browser next to the red HP badge.~~
+  **Decided:** gold.
+- ~~Animation feel: check the 150ms expand/collapse in the browser. Too
   slow gets in the way of tapping + three times for Cynthia, and too fast
-  reads as a jump. Also check that `prefers-reduced-motion` turns it off.
+  reads as a jump. Also check that `prefers-reduced-motion` turns it off.~~
+  **Decided:** 150ms kept. Reduced motion turns the transition off.

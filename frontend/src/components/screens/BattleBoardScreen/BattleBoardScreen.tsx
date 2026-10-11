@@ -19,6 +19,7 @@ type BattleBoardScreenProps = {
   setGold: (side: PlayerId, value: number) => void;
   setHeroHp: (side: PlayerId, heroId: HeroId, value: number) => void;
   setHeroLevel: (side: PlayerId, heroId: HeroId, value: number) => void;
+  setHeroAttackTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
@@ -35,6 +36,7 @@ export function BattleBoardScreen({
   setGold,
   setHeroHp,
   setHeroLevel,
+  setHeroAttackTokens,
   setStructureHp,
   onNewDraft,
   onEndBattle,
@@ -42,6 +44,9 @@ export function BattleBoardScreen({
   onPassInitiative,
 }: BattleBoardScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  // At most one token chip open across both panels (intent/06). UI state
+  // only: not persisted, so a reload or a Map round-trip starts all closed.
+  const [openTokenKey, setOpenTokenKey] = useState<string | null>(null);
 
   const teams: Array<{ label: string; side: PlayerId; heroes: Hero[] }> = [
     { label: "Player 1", side: "p1", heroes: p1Heroes },
@@ -79,7 +84,12 @@ export function BattleBoardScreen({
               onGoldChange={(value) => setGold(team.side, value)}
               onHeroHpChange={(heroId, value) => setHeroHp(team.side, heroId, value)}
               onHeroLevelChange={(heroId, value) => setHeroLevel(team.side, heroId, value)}
+              onHeroAttackTokensChange={(heroId, value) =>
+                setHeroAttackTokens(team.side, heroId, value)
+              }
               onStructureHpChange={(slot, value) => setStructureHp(team.side, slot, value)}
+              openTokenKey={openTokenKey}
+              onOpenTokenKeyChange={setOpenTokenKey}
             />
           ))}
         </div>

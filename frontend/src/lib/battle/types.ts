@@ -8,9 +8,17 @@ export type StructuresState = {
   bit: number;
 };
 
+export type HeroBattleState = {
+  hp: number;
+  level: number;
+  /** +1 Attack tokens on this hero (intent/06). 0..HERO_ATTACK_TOKEN_CEILING,
+   * changed only by hand: never cleared on defeat, respawn or a new round. */
+  attackTokens: number;
+};
+
 export type BattleTeamState = {
   gold: number;
-  heroes: Record<HeroId, { hp: number; level: number }>;
+  heroes: Record<HeroId, HeroBattleState>;
   structures: StructuresState;
   /** `null` = this hero is in its team's respawn area (not yet deployed,
    * or defeated and awaiting respawn) — see battle/reducer.ts's
@@ -19,7 +27,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 3;
+  schemaVersion: 4;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

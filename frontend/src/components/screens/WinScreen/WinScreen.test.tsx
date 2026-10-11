@@ -20,13 +20,13 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling"), makeHero("felix", "F
 
 function makeBattleState(): BattleState {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     initiative: "p1",
     p1: {
       gold: 5,
       heroes: {
-        boreas: { hp: 10, level: 2 },
-        caligar: { hp: 0, level: 1 },
+        boreas: { hp: 10, level: 2, attackTokens: 0 },
+        caligar: { hp: 0, level: 1, attackTokens: 0 },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
       heroPositions: { boreas: null, caligar: null },
@@ -34,8 +34,8 @@ function makeBattleState(): BattleState {
     p2: {
       gold: 3,
       heroes: {
-        sterling: { hp: 7, level: 3 },
-        felix: { hp: 9, level: 1 },
+        sterling: { hp: 7, level: 3, attackTokens: 0 },
+        felix: { hp: 9, level: 1, attackTokens: 0 },
       },
       structures: { top: 11, middle: 0, bottom: 11, bit: 0 },
       heroPositions: { sterling: null, felix: null },

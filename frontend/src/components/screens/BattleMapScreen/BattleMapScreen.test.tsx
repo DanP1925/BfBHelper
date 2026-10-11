@@ -21,17 +21,20 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     initiative: "p1",
     p1: {
       gold: 0,
-      heroes: { boreas: { hp: 10, level: 1 }, caligar: { hp: 0, level: 1 } },
+      heroes: {
+        boreas: { hp: 10, level: 1, attackTokens: 0 },
+        caligar: { hp: 0, level: 1, attackTokens: 0 },
+      },
       structures: { top: 11, middle: 11, bottom: 0, bit: 16 },
       heroPositions: { boreas: MAP_SPACE_IDS[0], caligar: null },
     },
     p2: {
       gold: 0,
-      heroes: { sterling: { hp: 8, level: 1 } },
+      heroes: { sterling: { hp: 8, level: 1, attackTokens: 0 } },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
       heroPositions: { sterling: null },
     },
@@ -90,6 +93,34 @@ describe("BattleMapScreen", () => {
 
     expect(screen.getByAltText("Caligar")).toBeInTheDocument();
     expect(screen.getByAltText("Sterling")).toBeInTheDocument();
+  });
+
+  it("shows a hero's +1 Attack tokens in the status panel only above 0", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: { ...base.p1.heroes, caligar: { hp: 0, level: 1, attackTokens: 2 } },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    // Only Caligar has tokens, and a defeated hero keeps them (intent/06).
+    expect(screen.getAllByLabelText(/\+1 Attack token/)).toHaveLength(1);
+    expect(screen.getByLabelText("2 +1 Attack tokens")).toBeInTheDocument();
   });
 
   it('shows "End Battle" in the menu only once a winner exists', () => {
@@ -215,11 +246,13 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 3,
+      schemaVersion: 4,
       initiative: "p1",
       p1: {
         gold: 0,
-        heroes: Object.fromEntries(crowdedHeroes.map((h) => [h.id, { hp: 10, level: 1 }])),
+        heroes: Object.fromEntries(
+          crowdedHeroes.map((h) => [h.id, { hp: 10, level: 1, attackTokens: 0 }]),
+        ),
         structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
         heroPositions: Object.fromEntries(crowdedHeroes.map((h) => [h.id, sharedSpace])),
       },

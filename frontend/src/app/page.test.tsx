@@ -81,4 +81,34 @@ describe("Home", () => {
     render(<Home />);
     expect(screen.getByRole("button", { name: /^Initiative: Player 2\./ })).toBeInTheDocument();
   });
+
+  it("keeps at most one +1 Attack chip open on the Board, across both teams", () => {
+    saveBattleState(seedDoneDraft());
+    saveView("battle");
+    const p1Name = getHeroById(HERO_IDS[0]).name;
+    const p1Other = getHeroById(HERO_IDS[1]).name;
+    const p2Name = getHeroById(HERO_IDS[4]).name;
+    const chip = (name: string) =>
+      screen.getByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Attack token`) });
+
+    render(<Home />);
+    fireEvent.click(chip(p1Name));
+    expect(chip(p1Name)).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: `Add +1 Attack token to ${p1Name}` }));
+    expect(chip(p1Name)).toHaveAttribute("aria-expanded", "true");
+
+    // Same team: the outside mousedown closes the first, the click opens the second.
+    fireEvent.mouseDown(chip(p1Other));
+    fireEvent.click(chip(p1Other));
+    expect(chip(p1Name)).toHaveAttribute("aria-expanded", "false");
+    expect(chip(p1Other)).toHaveAttribute("aria-expanded", "true");
+
+    // Other team's panel.
+    fireEvent.mouseDown(chip(p2Name));
+    fireEvent.click(chip(p2Name));
+    expect(chip(p1Other)).toHaveAttribute("aria-expanded", "false");
+    expect(chip(p2Name)).toHaveAttribute("aria-expanded", "true");
+
+    expect(chip(p1Name)).toHaveAccessibleName(new RegExp(`^${p1Name}: 1 \\+1 Attack token`));
+  });
 });

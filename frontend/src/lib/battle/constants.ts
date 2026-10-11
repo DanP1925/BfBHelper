@@ -13,3 +13,7 @@ export type TowerSlot = (typeof TOWER_SLOTS)[number];
  * (intent/03) — level and HP stay independently adjustable; this ceiling
  * doesn't recalculate off either. */
 export const HERO_HP_CEILING = 15;
+
+/** Per-hero +1 Attack token ceiling (intent/06's Value Bounds, decided
+ * 2026-10-11) — keeps the count to a single digit on the hero card. */
+export const HERO_ATTACK_TOKEN_CEILING = 9;
