@@ -1,0 +1,38 @@
+name: Tag release
+
+# After a merge to main, tags the merged commit with an annotated vX.Y.Z tag
+# when frontend/package.json holds a version that isn't tagged yet.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create tag if missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(node -p "require('./frontend/package.json').version")"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists — nothing to do."
+            exit 0
+          fi
+
+          # Describe the tag with the merged PR's title, minus its type prefix.
+          title=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" --jq '.[0].title // empty')
+          [ -n "$title" ] || title=$(git log -1 --format=%s)
+          desc=$(printf '%s' "$title" | sed -E 's/^[a-z]+(\([^)]*\))?!?: *//')
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "$tag: $desc"
+          git push origin "$tag"
+          echo "Tagged ${{ github.sha }} as $tag"

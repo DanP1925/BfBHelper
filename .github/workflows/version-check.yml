@@ -1,0 +1,52 @@
+name: Version check
+
+# Fails a PR that changes frontend/ without bumping the version, per the
+# "Versioning" rules in CLAUDE.md. docs:/chore:/ci:/test: PRs are exempt.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  version-bumped:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check version bump
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          type=$(printf '%s' "$TITLE" | sed -nE 's/^([a-z]+)(\([^)]*\))?!?:.*/\1/p')
+          if [ -z "$type" ]; then
+            echo "::error::PR title isn't a Conventional Commit (e.g. 'fix: ...'): $TITLE"
+            exit 1
+          fi
+
+          case "$type" in
+            docs|chore|ci|test)
+              echo "'$type:' PR — no version bump needed."
+              exit 0
+              ;;
+          esac
+
+          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- frontend/; then
+            echo "No changes under frontend/ — no version bump needed."
+            exit 0
+          fi
+
+          base=$(git show "$BASE_SHA:frontend/package.json" | node -p "JSON.parse(require('fs').readFileSync(0)).version")
+          head=$(node -p "require('./frontend/package.json').version")
+          lock=$(node -p "require('./frontend/package-lock.json').version")
+
+          if [ "$head" = "$base" ]; then
+            echo "::error::'$type:' PR changes frontend/ but the version is still $base (same as main). Run: cd frontend && npm version patch --no-git-tag-version  (or minor if this completes an intent)"
+            exit 1
+          fi
+          if [ "$lock" != "$head" ]; then
+            echo "::error::package-lock.json version ($lock) doesn't match package.json ($head)."
+            exit 1
+          fi
+          echo "Version bumped: $base -> $head"
