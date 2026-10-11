@@ -21,7 +21,8 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
+    initiative: "p1",
     p1: {
       gold: 0,
       heroes: { boreas: { hp: 10, level: 1 }, caligar: { hp: 0, level: 1 } },
@@ -39,8 +40,14 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   } as BattleState;
 }
 
-/** No test here exercises zoom/pan, so the camera is fixed at its default. */
-const cameraProps = { camera: INITIAL_MAP_CAMERA, onCameraChange: () => {} };
+/** No test here exercises zoom/pan, so the camera is fixed at its default;
+ * the initiative badge's own behavior is covered by InitiativeBadge.test
+ * and page.test. */
+const fixedProps = {
+  camera: INITIAL_MAP_CAMERA,
+  onCameraChange: () => {},
+  onPassInitiative: () => {},
+};
 
 describe("BattleMapScreen", () => {
   it("renders a deployed hero's token on the board, not in the respawn area", () => {
@@ -55,7 +62,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
 
@@ -77,7 +84,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
 
@@ -97,7 +104,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /more actions/i }));
@@ -116,7 +123,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
     expect(screen.getByRole("menuitem", { name: "End Battle" })).toBeInTheDocument();
@@ -135,7 +142,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={onSwitchView}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
 
@@ -157,7 +164,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
 
@@ -189,7 +196,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
 
@@ -208,7 +215,8 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 2,
+      schemaVersion: 3,
+      initiative: "p1",
       p1: {
         gold: 0,
         heroes: Object.fromEntries(crowdedHeroes.map((h) => [h.id, { hp: 10, level: 1 }])),
@@ -235,7 +243,7 @@ describe("BattleMapScreen", () => {
         onNewDraft={() => {}}
         onEndBattle={() => {}}
         onSwitchView={() => {}}
-        {...cameraProps}
+        {...fixedProps}
       />,
     );
 

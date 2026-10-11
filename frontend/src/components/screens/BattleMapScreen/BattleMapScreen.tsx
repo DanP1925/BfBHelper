@@ -15,6 +15,7 @@ import { MAP_SPACES } from "../../../data/mapSpaces";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { GoldPilesBar } from "../../GoldPilesBar/GoldPilesBar";
 import { MapTeamStatusPanel } from "../../MapTeamStatusPanel/MapTeamStatusPanel";
+import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
 import { RespawnAreaStrip } from "../../RespawnAreaStrip/RespawnAreaStrip";
 import { ViewToggle, type BattleView } from "../../ViewToggle/ViewToggle";
@@ -33,6 +34,7 @@ type BattleMapScreenProps = {
   /** Called only once "End Battle" is confirmed in the dialog below. */
   onEndBattle: () => void;
   onSwitchView: (target: BattleView) => void;
+  onPassInitiative: () => void;
   /** Owned by the caller so it survives this screen unmounting on a
    * Board ⇄ Map view toggle. */
   camera: MapCamera;
@@ -67,6 +69,7 @@ export function BattleMapScreen({
   onNewDraft,
   onEndBattle,
   onSwitchView,
+  onPassInitiative,
   camera,
   onCameraChange,
 }: BattleMapScreenProps) {
@@ -167,7 +170,10 @@ export function BattleMapScreen({
     <div className={styles.screen}>
       <div className={styles.topBar}>
         <ViewToggle active="map" onSwitchView={onSwitchView} />
-        <OverflowMenu items={menuItems} />
+        <div className={styles.topBarActions}>
+          <InitiativeBadge holder={battleState.initiative} onPass={onPassInitiative} />
+          <OverflowMenu items={menuItems} />
+        </div>
       </div>
 
       <div className={styles.scrollArea}>

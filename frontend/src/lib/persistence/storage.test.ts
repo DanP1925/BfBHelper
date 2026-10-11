@@ -51,7 +51,16 @@ const sampleBattleState: BattleState = createInitialBattleState(
       baseHp: 9,
     },
   ],
+  "p1",
 );
+
+/** A valid draft whose coin-flip winner is p2 — distinct from
+ * `sampleBattleState`'s "p1", so a migration's defaulted `initiative`
+ * visibly comes from the draft. */
+const p2InitiativeDraft: DraftState = {
+  initiative: "p2",
+  picks: { p1: [], p2: ["baldwin"] },
+};
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -264,7 +273,7 @@ describe("saveBattleState / loadBattleState", () => {
   it("returns null and clears the key when schemaVersion is newer than current", () => {
     window.localStorage.setItem(
       BATTLE_STATE_STORAGE_KEY,
-      JSON.stringify({ schemaVersion: 3, p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
+      JSON.stringify({ schemaVersion: 4, p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
     );
 
     expect(loadBattleState()).toBeNull();
@@ -334,7 +343,11 @@ describe("saveBattleState / loadBattleState", () => {
     expect(loadBattleState()).toEqual(state);
   });
 
-  describe("schema-1 -> 2 migration (intent/04)", () => {
+  describe("schema-1 -> 3 migration (intents 04 + 05)", () => {
+    beforeEach(() => {
+      saveDraft(p2InitiativeDraft);
+    });
+
     function persistRawSchema1(
       p1Heroes: Record<string, { hp: number; level: number }>,
       p2Heroes: Record<string, { hp: number; level: number }>,
@@ -367,7 +380,8 @@ describe("saveBattleState / loadBattleState", () => {
       const loaded = loadBattleState();
 
       expect(loaded).not.toBeNull();
-      expect(loaded?.schemaVersion).toBe(2);
+      expect(loaded?.schemaVersion).toBe(3);
+      expect(loaded?.initiative).toBe("p2");
       expect(loaded?.p1.heroPositions).toEqual({ "agatha-trunch": null });
       expect(loaded?.p2.heroPositions).toEqual({ baldwin: null });
       expect(loaded?.goldPiles).toEqual(
@@ -375,7 +389,7 @@ describe("saveBattleState / loadBattleState", () => {
       );
     });
 
-    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 2 on disk", () => {
+    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 3 on disk", () => {
       persistRawSchema1(
         { "agatha-trunch": { hp: 10, level: 1 } },
         { baldwin: { hp: 9, level: 1 } },
@@ -387,8 +401,73 @@ describe("saveBattleState / loadBattleState", () => {
 
       const raw = window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY);
       const parsed = JSON.parse(raw as string);
-      expect(parsed.schemaVersion).toBe(2);
+      expect(parsed.schemaVersion).toBe(3);
+      expect(parsed.initiative).toBe("p2");
       expect(parsed.p1.heroPositions["agatha-trunch"]).toBeNull();
+    });
+  });
+
+  describe("schema-2 -> 3 migration (intent/05)", () => {
+    function persistRawSchema2(state: BattleState) {
+      const { initiative: _omitted, ...rest } = state;
+      void _omitted;
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({ ...rest, schemaVersion: 2, updatedAt: new Date().toISOString() }),
+      );
+    }
+
+    it("upgrades in place, defaulting initiative to the draft's coin-flip winner", () => {
+      saveDraft(p2InitiativeDraft);
+      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
+      const midBattle: BattleState = {
+        ...sampleBattleState,
+        p1: {
+          ...sampleBattleState.p1,
+          gold: 4,
+          heroPositions: { ...sampleBattleState.p1.heroPositions, [heroId]: MAP_SPACE_IDS[0] },
+        },
+      };
+      persistRawSchema2(midBattle);
+
+      expect(loadBattleState()).toEqual({ ...midBattle, schemaVersion: 3, initiative: "p2" });
+    });
+
+    it("returns null and clears the key when there's no valid draft to default from", () => {
+      persistRawSchema2(sampleBattleState);
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+
+    it("still rejects a schema-2 payload whose other fields are invalid", () => {
+      saveDraft(p2InitiativeDraft);
+      persistRawSchema2({ ...sampleBattleState, p1: { ...sampleBattleState.p1, gold: -1 } });
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("initiative validation (intent/05)", () => {
+    it.each([["p3"], [null], [undefined]])(
+      "returns null and clears the key when initiative is %s",
+      (initiative) => {
+        window.localStorage.setItem(
+          BATTLE_STATE_STORAGE_KEY,
+          JSON.stringify({ ...sampleBattleState, initiative, updatedAt: new Date().toISOString() }),
+        );
+
+        expect(loadBattleState()).toBeNull();
+        expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+      },
+    );
+
+    it("round-trips either holder", () => {
+      const p2Holds: BattleState = { ...sampleBattleState, initiative: "p2" };
+      saveBattleState(p2Holds);
+
+      expect(loadBattleState()).toEqual(p2Holds);
     });
   });
 
@@ -479,8 +558,8 @@ describe("saveBattleState / loadBattleState", () => {
     // The exact bug the CURRENT_DRAFT_SCHEMA_VERSION/CURRENT_BATTLE_SCHEMA_VERSION
     // split exists to prevent: bumping the battle schema must never make
     // loadDraft() also expect a migration that doesn't exist for drafts.
-    it("loadDraft still loads a schema-1 draft after CURRENT_BATTLE_SCHEMA_VERSION has been bumped to 2", () => {
-      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(2);
+    it("loadDraft still loads a schema-1 draft after CURRENT_BATTLE_SCHEMA_VERSION has been bumped past 1", () => {
+      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(3);
       saveDraft(midDraftState);
 
       expect(loadDraft()).toEqual(midDraftState);

@@ -9,7 +9,7 @@ import {
 /** Number of team slots each player has (fixed roster size). */
 export const TEAM_SIZE = 4;
 
-function otherPlayer(player: PlayerId): PlayerId {
+export function otherPlayer(player: PlayerId): PlayerId {
   return player === "p1" ? "p2" : "p1";
 }
 

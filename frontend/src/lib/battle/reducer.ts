@@ -1,4 +1,5 @@
 import type { Hero, HeroId, PlayerId } from "../draft/types";
+import { otherPlayer } from "../draft/selectors";
 import { clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
 import {
   BIT_STARTING_HP,
@@ -16,7 +17,8 @@ export type BattleAction =
   | { type: "SET_HERO_LEVEL"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: MapSpaceId | null }
-  | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number };
+  | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
+  | { type: "PASS_INITIATIVE" };
 
 function structureCeiling(slot: keyof StructuresState): number {
   return slot === "bit" ? BIT_STARTING_HP : TOWER_STARTING_HP;
@@ -102,6 +104,12 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
       return { ...state, goldPiles: { ...state.goldPiles, [action.pileId]: nextValue } };
     }
 
+    // Initiative always alternates (intent/05's Rules) — no "set to p1/p2"
+    // form, and passing twice returns to the starting state, which is how a
+    // wrong tap gets undone.
+    case "PASS_INITIATIVE":
+      return { ...state, initiative: otherPlayer(state.initiative) };
+
     default:
       return state;
   }
@@ -140,12 +148,18 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
  * hero's starting HP is their own `baseHp` + starting level, not a flat
  * default;
  * every hero starts in its team's respawn area, and every gold pile
- * starts full. */
-export function createInitialBattleState(p1Heroes: Hero[], p2Heroes: Hero[]): BattleState {
+ * starts full. `initiative` is the draft's coin-flip winner, who keeps the
+ * marker for deployment and Round 1 (rulebook). */
+export function createInitialBattleState(
+  p1Heroes: Hero[],
+  p2Heroes: Hero[],
+  initiative: PlayerId,
+): BattleState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),
+    initiative,
   };
 }

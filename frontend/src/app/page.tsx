@@ -41,6 +41,9 @@ export default function Home() {
   const battle = useBattle(
     draft.phase === "done" ? p1Picks : EMPTY_HEROES,
     draft.phase === "done" ? p2Picks : EMPTY_HEROES,
+    // A fresh battle starts with initiative on the coin-flip winner, who
+    // keeps the marker for deployment and Round 1 (intent/05).
+    draft.phase === "done" ? draft.initiative : null,
   );
 
   // Which screen is showing once a draft is done — persisted separately
@@ -108,6 +111,7 @@ export default function Home() {
             saveView("win");
           }}
           onSwitchView={switchView}
+          onPassInitiative={battle.passInitiative}
         />
       );
     }
@@ -127,6 +131,7 @@ export default function Home() {
             saveView("win");
           }}
           onSwitchView={switchView}
+          onPassInitiative={battle.passInitiative}
           camera={mapCamera}
           onCameraChange={setMapCamera}
         />

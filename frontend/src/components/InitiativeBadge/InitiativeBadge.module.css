@@ -1,0 +1,44 @@
+/* Fixed height, same as OverflowMenu's trigger and no taller than
+ * ViewToggle, so adding the badge doesn't make the top bar taller (and
+ * steal height from the Map's board area on the 13.3" laptop). */
+.badge {
+  box-sizing: border-box;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--team-color);
+  background: var(--color-panel-bg);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.p1 {
+  --team-color: var(--color-p1);
+}
+
+.p2 {
+  --team-color: var(--color-p2);
+}
+
+.name {
+  font-weight: 700;
+  color: var(--team-color);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+.badge:hover .icon {
+  color: var(--color-text);
+}
+
+.badge:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}

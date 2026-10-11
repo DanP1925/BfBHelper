@@ -20,7 +20,8 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling"), makeHero("felix", "F
 
 function makeBattleState(): BattleState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
+    initiative: "p1",
     p1: {
       gold: 5,
       heroes: {

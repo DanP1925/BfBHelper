@@ -17,6 +17,7 @@ export type UseBattleResult = {
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
+  passInitiative: () => void;
 };
 
 function heroIdKey(heroes: Hero[]): string {
@@ -39,17 +40,25 @@ export function heroIdSetsMatch(state: BattleState, p1Heroes: Hero[], p2Heroes: 
 /**
  * The single integration point between the pure battle reducer/selectors,
  * localStorage persistence, and React. Inactive (`state === null`)
- * whenever either heroes array is empty. Mirrors `useDraft`'s hydrate/
- * persist effect split.
+ * whenever either heroes array is empty or `startingInitiative` is `null`.
+ * Mirrors `useDraft`'s hydrate/persist effect split.
+ *
+ * `startingInitiative` is only read when building a fresh battle — a
+ * persisted battle keeps its own stored `initiative`, so passing it
+ * mid-battle and reloading never snaps it back to the coin-flip winner.
  */
-export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
+export function useBattle(
+  p1Heroes: Hero[],
+  p2Heroes: Hero[],
+  startingInitiative: PlayerId | null,
+): UseBattleResult {
   const [state, setState] = useState<BattleState | null>(null);
 
   const p1Key = heroIdKey(p1Heroes);
   const p2Key = heroIdKey(p2Heroes);
 
   useEffect(() => {
-    if (p1Heroes.length === 0 || p2Heroes.length === 0) {
+    if (p1Heroes.length === 0 || p2Heroes.length === 0 || startingInitiative === null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setState(null);
       return;
@@ -61,7 +70,7 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
       return;
     }
 
-    const fresh = createInitialBattleState(p1Heroes, p2Heroes);
+    const fresh = createInitialBattleState(p1Heroes, p2Heroes, startingInitiative);
     setState(fresh);
     // Persisting happens via the effect below, which reacts to this state
     // change — not here too, which would otherwise write the same payload
@@ -70,6 +79,9 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
     // reference — callers (e.g. page.tsx) recompute those arrays fresh
     // every render, so a reference-keyed effect would thrash (re-hydrate/
     // re-persist every render instead of once per actual roster change).
+    // `startingInitiative` isn't a key either: it can't change while a
+    // draft is done (only a new draft changes it, and that clears battle
+    // state and empties the rosters first).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p1Key, p2Key]);
 
@@ -132,6 +144,10 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
     );
   }, []);
 
+  const passInitiative = useCallback(() => {
+    setState((prev) => (prev === null ? prev : battleReducer(prev, { type: "PASS_INITIATIVE" })));
+  }, []);
+
   return {
     state,
     winner: state === null ? null : getBattleWinner(state),
@@ -141,5 +157,6 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
     setStructureHp,
     setHeroPosition,
     setGoldPile,
+    passInitiative,
   };
 }
