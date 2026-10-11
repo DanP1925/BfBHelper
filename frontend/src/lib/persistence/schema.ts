@@ -1,4 +1,4 @@
-import type { HeroId } from "../draft/types";
+import type { HeroId, PlayerId } from "../draft/types";
 import type { BattleTeamState, StructuresState } from "../battle/types";
 import type { GoldPileSpaceId } from "../../data/mapSpaces";
 
@@ -28,7 +28,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 2 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 3 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -55,7 +55,8 @@ export type LegacyBattleTeamStateV1 = {
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 2
- * (intent/04: `heroPositions` per side, top-level `goldPiles`). */
+ * (intent/04: `heroPositions` per side, top-level `goldPiles`) — now only
+ * the migration source shape `battleMigrations[2]` upgrades from. */
 export type PersistedBattleStateV2 = {
   schemaVersion: 2;
   p1: BattleTeamState;
@@ -63,6 +64,13 @@ export type PersistedBattleStateV2 = {
   goldPiles: Record<GoldPileSpaceId, number>;
   /** Informational only — not used for any load-time logic. */
   updatedAt: string;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 3
+ * (intent/05: top-level `initiative`). */
+export type PersistedBattleStateV3 = Omit<PersistedBattleStateV2, "schemaVersion"> & {
+  schemaVersion: 3;
+  initiative: PlayerId;
 };
 
 /** Which screen is showing once a draft is done. Only a non-`"results"`

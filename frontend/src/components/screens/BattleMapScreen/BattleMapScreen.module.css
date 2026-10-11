@@ -13,6 +13,12 @@
   padding: 16px 40px 0;
 }
 
+.topBarActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .scrollArea {
   flex: 1;
   min-height: 0;

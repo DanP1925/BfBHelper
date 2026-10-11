@@ -47,12 +47,12 @@ beforeEach(() => {
 
 describe("heroIdSetsMatch", () => {
   it("matches regardless of order", () => {
-    const state = createInitialBattleState([HERO_A, HERO_B], [OTHER_HERO]);
+    const state = createInitialBattleState([HERO_A, HERO_B], [OTHER_HERO], "p1");
     expect(heroIdSetsMatch(state, [HERO_B, HERO_A], [OTHER_HERO])).toBe(true);
   });
 
   it("rejects a different hero-id set on either side", () => {
-    const state = createInitialBattleState([HERO_A], [OTHER_HERO]);
+    const state = createInitialBattleState([HERO_A], [OTHER_HERO], "p1");
     expect(heroIdSetsMatch(state, [HERO_B], [OTHER_HERO])).toBe(false);
     expect(heroIdSetsMatch(state, [HERO_A], [HERO_B])).toBe(false);
   });
@@ -60,13 +60,47 @@ describe("heroIdSetsMatch", () => {
 
 describe("useBattle", () => {
   it("is inactive (state === null) when either heroes array is empty", () => {
-    const { result } = renderHook(() => useBattle([], [HERO_B]));
+    const { result } = renderHook(() => useBattle([], [HERO_B], "p1"));
     expect(result.current.state).toBeNull();
     expect(result.current.winner).toBeNull();
   });
 
+  it("is inactive when there's no starting initiative yet", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], null));
+    expect(result.current.state).toBeNull();
+  });
+
+  it("starts a fresh battle with initiative on startingInitiative", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p2"));
+    expect(result.current.state?.initiative).toBe("p2");
+    expect(readRawState().initiative).toBe("p2");
+  });
+
+  it("passInitiative flips the holder and persists it", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.passInitiative();
+    });
+    expect(result.current.state?.initiative).toBe("p2");
+    expect(readRawState().initiative).toBe("p2");
+
+    act(() => {
+      result.current.passInitiative();
+    });
+    expect(result.current.state?.initiative).toBe("p1");
+  });
+
+  it("a persisted battle keeps its own initiative, not the coin-flip winner", () => {
+    saveBattleState({ ...createInitialBattleState([HERO_A], [HERO_B], "p1"), initiative: "p2" });
+
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    expect(result.current.state?.initiative).toBe("p2");
+  });
+
   it("builds and persists a fresh state from each hero's starting HP when nothing is persisted", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
       hp: HERO_A.baseHp + 1,
@@ -76,20 +110,20 @@ describe("useBattle", () => {
   });
 
   it("hydrates a matching persisted state verbatim instead of rebuilding fresh", () => {
-    const persisted = createInitialBattleState([HERO_A], [HERO_B]);
+    const persisted = createInitialBattleState([HERO_A], [HERO_B], "p1");
     persisted.p1.heroes[HERO_A.id] = { hp: 2, level: 3 };
     saveBattleState(persisted);
 
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({ hp: 2, level: 3 });
   });
 
   it("rejects a persisted state whose hero-id set doesn't match, rebuilding fresh instead", () => {
-    const persisted = createInitialBattleState([OTHER_HERO], [HERO_B]);
+    const persisted = createInitialBattleState([OTHER_HERO], [HERO_B], "p1");
     saveBattleState(persisted);
 
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
       hp: HERO_A.baseHp + 1,
@@ -99,7 +133,7 @@ describe("useBattle", () => {
 
   it("resets to null when the heroes arrays go back to empty", () => {
     const { result, rerender } = renderHook(
-      ({ p1, p2 }: { p1: Hero[]; p2: Hero[] }) => useBattle(p1, p2),
+      ({ p1, p2 }: { p1: Hero[]; p2: Hero[] }) => useBattle(p1, p2, "p1"),
       { initialProps: { p1: [HERO_A], p2: [HERO_B] } },
     );
     expect(result.current.state).not.toBeNull();
@@ -109,7 +143,7 @@ describe("useBattle", () => {
   });
 
   it("setGold persists the clamped result", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
       result.current.setGold("p1", 7);
@@ -120,7 +154,7 @@ describe("useBattle", () => {
   });
 
   it("setHeroHp persists the clamped result", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
       result.current.setHeroHp("p1", HERO_A.id, 99);
@@ -130,7 +164,7 @@ describe("useBattle", () => {
   });
 
   it("derives winner from live state and clears it once Bit HP is raised back above 0", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
       result.current.setStructureHp("p1", "bit", 0);
@@ -144,7 +178,7 @@ describe("useBattle", () => {
   });
 
   it("setHeroPosition persists the replaced result", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
     const spaceId = MAP_SPACE_IDS[0];
 
     act(() => {
@@ -156,7 +190,7 @@ describe("useBattle", () => {
   });
 
   it("setGoldPile persists the clamped result", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
     const pileId = GOLD_PILE_SPACE_IDS[0];
 
     act(() => {
@@ -172,7 +206,7 @@ describe("useBattle", () => {
   });
 
   it("setHeroHp to 0 also moves the hero to its respawn area, in one update", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
     const spaceId = MAP_SPACE_IDS[0];
 
     act(() => {
@@ -190,7 +224,7 @@ describe("useBattle", () => {
   });
 
   it("raising HP back above 0 does not restore a prior position", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
     const spaceId = MAP_SPACE_IDS[0];
 
     act(() => {

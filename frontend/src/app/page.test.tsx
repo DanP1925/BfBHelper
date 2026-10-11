@@ -11,7 +11,7 @@ function seedDoneDraft() {
   const p1Ids = HERO_IDS.slice(0, 4);
   const p2Ids = HERO_IDS.slice(4, 8);
   saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
-  return createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById));
+  return createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById), "p1");
 }
 
 beforeEach(() => {
@@ -56,5 +56,29 @@ describe("Home", () => {
     fireEvent.click(screen.getByRole("button", { name: "Map" }));
 
     expect(screen.getByRole("button", { name: "Zoom out" })).toBeEnabled();
+  });
+
+  it("starts a new battle with initiative on the draft's coin-flip winner", () => {
+    seedDoneDraft();
+    saveView("battle");
+
+    render(<Home />);
+    expect(screen.getByRole("button", { name: /^Initiative: Player 1\./ })).toBeInTheDocument();
+  });
+
+  it("passing initiative on the Board shows on the Map too, and survives a reload", () => {
+    saveBattleState(seedDoneDraft());
+    saveView("battle");
+
+    const { unmount } = render(<Home />);
+    fireEvent.click(screen.getByRole("button", { name: /^Initiative: Player 1\./ }));
+    expect(screen.getByRole("button", { name: /^Initiative: Player 2\./ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Map" }));
+    expect(screen.getByRole("button", { name: /^Initiative: Player 2\./ })).toBeInTheDocument();
+
+    unmount();
+    render(<Home />);
+    expect(screen.getByRole("button", { name: /^Initiative: Player 2\./ })).toBeInTheDocument();
   });
 });

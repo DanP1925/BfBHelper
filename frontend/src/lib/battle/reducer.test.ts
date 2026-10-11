@@ -25,7 +25,7 @@ const HERO_B: Hero = {
 };
 
 function baseState(): BattleState {
-  return createInitialBattleState([HERO_A], [HERO_B]);
+  return createInitialBattleState([HERO_A], [HERO_B], "p1");
 }
 
 describe("createInitialHeroState", () => {
@@ -40,8 +40,13 @@ describe("createInitialHeroState", () => {
 
 describe("createInitialBattleState", () => {
   it("seeds each hero's hp as their own baseHp + starting level, not a flat default", () => {
-    const state = createInitialBattleState([HERO_A], []);
+    const state = createInitialBattleState([HERO_A], [], "p1");
     expect(state.p1.heroes[HERO_A.id]).toEqual({ hp: HERO_A.baseHp + 1, level: 1 });
+  });
+
+  it("starts initiative on the given holder", () => {
+    expect(createInitialBattleState([HERO_A], [HERO_B], "p1").initiative).toBe("p1");
+    expect(createInitialBattleState([HERO_A], [HERO_B], "p2").initiative).toBe("p2");
   });
 
   it("seeds gold and structures at the intent-02 starting values", () => {
@@ -61,9 +66,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 2", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 3", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(2);
+    expect(state.schemaVersion).toBe(3);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -275,6 +280,25 @@ describe("battleReducer", () => {
       const next = battleReducer(state, { type: "SET_GOLD_PILE", pileId, value: 0 });
       expect(next.p1.gold).toBe(state.p1.gold);
       expect(next.p2.gold).toBe(state.p2.gold);
+    });
+  });
+
+  describe("PASS_INITIATIVE", () => {
+    it("hands initiative to the other player, and back on a second pass", () => {
+      const state = baseState();
+      const once = battleReducer(state, { type: "PASS_INITIATIVE" });
+      expect(once.initiative).toBe("p2");
+      const twice = battleReducer(once, { type: "PASS_INITIATIVE" });
+      expect(twice.initiative).toBe("p1");
+    });
+
+    it("changes nothing but the initiative holder", () => {
+      const state = baseState();
+      const next = battleReducer(state, { type: "PASS_INITIATIVE" });
+      expect({ ...next, initiative: state.initiative }).toEqual(state);
+      expect(next.p1).toBe(state.p1);
+      expect(next.p2).toBe(state.p2);
+      expect(next.goldPiles).toBe(state.goldPiles);
     });
   });
 });

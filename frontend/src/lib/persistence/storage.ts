@@ -25,6 +25,7 @@ import {
   VIEW_STORAGE_KEY,
   type LegacyBattleTeamStateV1,
   type PersistedBattleStateV2,
+  type PersistedBattleStateV3,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -43,40 +44,74 @@ const KNOWN_MAP_SPACE_IDS = new Set<string>(MAP_SPACE_IDS);
 const migrations: Record<number, (data: unknown) => PersistedDraftV1 | null> = {};
 
 /**
- * Same idea as `migrations` above, for the battle-state payload.
- * `battleMigrations[1]` upgrades a schema-1 payload (no `heroPositions`/
- * `goldPiles`) to schema 2 — every existing hero starts in its team's
- * respawn area (`null`), and every gold pile starts full (intent/04:
- * "upgrades in place rather than resetting").
+ * Upgrades a schema-1 battle payload (no `heroPositions`/`goldPiles`) to
+ * schema 2 — every existing hero starts in its team's respawn area
+ * (`null`), and every gold pile starts full (intent/04: "upgrades in place
+ * rather than resetting").
  */
-const battleMigrations: Record<number, (data: unknown) => PersistedBattleStateV2 | null> = {
+function upgradeV1ToV2(data: unknown): PersistedBattleStateV2 | null {
+  if (typeof data !== "object" || data === null) return null;
+  const candidate = data as Record<string, unknown>;
+
+  if (
+    !hasValidLegacyBattleTeamShape(candidate.p1) ||
+    !hasValidLegacyBattleTeamShape(candidate.p2)
+  ) {
+    return null;
+  }
+
+  const upgradeTeam = (team: LegacyBattleTeamStateV1): BattleTeamState => ({
+    ...team,
+    heroPositions: seedHeroPositions(Object.keys(team.heroes) as HeroId[]) as Record<
+      HeroId,
+      MapSpaceId | null
+    >,
+  });
+
+  return {
+    schemaVersion: 2,
+    p1: upgradeTeam(candidate.p1),
+    p2: upgradeTeam(candidate.p2),
+    goldPiles: createFreshGoldPiles(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Upgrades a schema-2 battle payload to schema 3 by adding `initiative`
+ * (intent/05), defaulted to the persisted draft's coin-flip winner — if
+ * that's wrong for a battle already a few rounds in, players fix it with
+ * one tap on the badge. With no valid draft there's nothing to default
+ * from, so the battle is treated as unmigratable (can't happen in
+ * practice: `useBattle` only loads battle state once the draft is done,
+ * and `clearDraft` removes both keys together). Everything else passes
+ * through unchanged; the current-shape validator checks it afterward.
+ */
+function upgradeV2ToV3(data: unknown): PersistedBattleStateV3 | null {
+  if (typeof data !== "object" || data === null) return null;
+  const initiative = loadDraft()?.initiative;
+  if (initiative === undefined) return null;
+
+  return {
+    ...(data as PersistedBattleStateV2),
+    schemaVersion: 3,
+    initiative,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Same idea as `migrations` above, for the battle-state payload.
+ * `loadPersisted` runs exactly one migration step, so each entry must land
+ * on the current schema: `[1]` composes both upgrades, `[2]` is just the
+ * second.
+ */
+const battleMigrations: Record<number, (data: unknown) => PersistedBattleStateV3 | null> = {
   1: (data) => {
-    if (typeof data !== "object" || data === null) return null;
-    const candidate = data as Record<string, unknown>;
-
-    if (
-      !hasValidLegacyBattleTeamShape(candidate.p1) ||
-      !hasValidLegacyBattleTeamShape(candidate.p2)
-    ) {
-      return null;
-    }
-
-    const upgradeTeam = (team: LegacyBattleTeamStateV1): BattleTeamState => ({
-      ...team,
-      heroPositions: seedHeroPositions(Object.keys(team.heroes) as HeroId[]) as Record<
-        HeroId,
-        MapSpaceId | null
-      >,
-    });
-
-    return {
-      schemaVersion: 2,
-      p1: upgradeTeam(candidate.p1),
-      p2: upgradeTeam(candidate.p2),
-      goldPiles: createFreshGoldPiles(),
-      updatedAt: new Date().toISOString(),
-    };
+    const v2 = upgradeV1ToV2(data);
+    return v2 === null ? null : upgradeV2ToV3(v2);
   },
+  2: upgradeV2ToV3,
 };
 
 function isBrowser(): boolean {
@@ -250,11 +285,12 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV2 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV3 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
 
+  if (!isPlayerId(candidate.initiative)) return false;
   if (!hasValidBattleTeamShape(candidate.p1)) return false;
   if (!hasValidBattleTeamShape(candidate.p2)) return false;
 
@@ -425,11 +461,12 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV2 = {
+  const payload: PersistedBattleStateV3 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
     goldPiles: state.goldPiles,
+    initiative: state.initiative,
     updatedAt: new Date().toISOString(),
   };
 
@@ -453,10 +490,11 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,
+    initiative: data.initiative,
   };
 }
 

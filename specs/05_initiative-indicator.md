@@ -125,7 +125,8 @@
     does.
   - Clicking calls `onPass`. The badge has no internal state; it
     re-renders from `holder`.
-  - Height matches `ViewToggle` so the top bar's height doesn't change,
+  - Fixed at 32px tall, the same as the ⋯ button and no taller than
+    `ViewToggle`, so the top bar's height doesn't change,
     and the Map's board area and the Board's team panels keep the
     vertical space they have on the 13.3" laptop (1280x800 CSS px).
 - **Placement:** both screens' `.topBar` is a `space-between` flex row
@@ -137,8 +138,10 @@
   The menu's dropdown is anchored to the top bar's right edge, so it
   still opens under the ⋯ button.
 - **Screen props:** `BattleBoardScreen` and `BattleMapScreen` each gain
-  `initiative: PlayerId` and `onPassInitiative: () => void`. `page.tsx`
-  wires them to `battle.state.initiative` and `battle.passInitiative`.
+  `onPassInitiative: () => void`, which `page.tsx` wires to
+  `battle.passInitiative`. The holder comes from the `battleState` prop
+  they already take (`battleState.initiative`), so there's no separate
+  `initiative` prop.
 - **Not shown** on `ResultsScreen` (before the battle starts) or
   `WinScreen` (after it ends). `DraftBoardScreen`'s own initiative
   subtitle doesn't change (intent's Affected Systems).
@@ -168,7 +171,8 @@ what's written here.
 ## Deployment
 No change from v1-v4: same static Vercel deployment, no new infra.
 
-## Open Items for Implementation (not yet decided)
-- Whether the badge also gets a team-color background tint on top of
-  the border. Decide in the browser on the 13.3" laptop, keeping it
-  readable next to the ⋯ menu button.
+## Open Items for Implementation
+- ~~Whether the badge also gets a team-color background tint on top of
+  the border.~~ **Decided: no tint.** Checked in the browser at
+  1280x800: the team-color border and name already read clearly, and an
+  unfilled pill matches the ⋯ button next to it.

@@ -5,6 +5,7 @@ import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import type { BattleState, StructuresState } from "../../../lib/battle/types";
 import { BattleTeamPanel } from "../../BattleTeamPanel/BattleTeamPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
+import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
 import { ViewToggle, type BattleView } from "../../ViewToggle/ViewToggle";
 import styles from "./BattleBoardScreen.module.css";
@@ -23,6 +24,7 @@ type BattleBoardScreenProps = {
   /** Called only once "End Battle" is confirmed in the dialog below. */
   onEndBattle: () => void;
   onSwitchView: (target: BattleView) => void;
+  onPassInitiative: () => void;
 };
 
 export function BattleBoardScreen({
@@ -37,6 +39,7 @@ export function BattleBoardScreen({
   onNewDraft,
   onEndBattle,
   onSwitchView,
+  onPassInitiative,
 }: BattleBoardScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -58,7 +61,10 @@ export function BattleBoardScreen({
     <div className={styles.screen}>
       <div className={styles.topBar}>
         <ViewToggle active="battle" onSwitchView={onSwitchView} />
-        <OverflowMenu items={menuItems} />
+        <div className={styles.topBarActions}>
+          <InitiativeBadge holder={battleState.initiative} onPass={onPassInitiative} />
+          <OverflowMenu items={menuItems} />
+        </div>
       </div>
 
       <div className={styles.scrollArea}>
