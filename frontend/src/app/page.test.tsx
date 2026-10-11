@@ -21,12 +21,8 @@ beforeEach(() => {
 describe("Home", () => {
   it("renders the Start screen when no draft is in progress", () => {
     render(<Home />);
-    expect(
-      screen.getByRole("heading", { name: /battle for biternia/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /start draft/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /battle for biternia/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /start draft/i })).toBeInTheDocument();
   });
 
   it("renders the Win Screen when a completed battle's persisted view is 'win'", () => {
@@ -42,9 +38,7 @@ describe("Home", () => {
 
     render(<Home />);
     expect(screen.getByText(/player 2 wins!/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /new draft/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /new draft/i })).toBeInTheDocument();
   });
 
   it("keeps the Map's zoom when switching to the Board and back", () => {

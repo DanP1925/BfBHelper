@@ -46,7 +46,13 @@ function WinTeamPanel({ label, side, heroes, battleState, emphasis }: WinTeamPan
           // useBattle's heroIdSetsMatch.
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
           return (
-            <HeroCard key={hero.id} hero={hero} variant="battle" hp={heroState.hp} level={heroState.level} />
+            <HeroCard
+              key={hero.id}
+              hero={hero}
+              variant="battle"
+              hp={heroState.hp}
+              level={heroState.level}
+            />
           );
         })}
       </div>

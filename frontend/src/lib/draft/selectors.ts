@@ -59,10 +59,7 @@ export function getCurrentTurnPlayer(state: DraftState): PlayerId | null {
  * either player. `allHeroIds` is passed in (rather than imported) so this
  * stays decoupled from wherever the hero roster data ends up living.
  */
-export function getRemainingPool(
-  state: DraftState,
-  allHeroIds: readonly HeroId[],
-): HeroId[] {
+export function getRemainingPool(state: DraftState, allHeroIds: readonly HeroId[]): HeroId[] {
   const picked = new Set<HeroId>([...state.picks.p1, ...state.picks.p2]);
   return allHeroIds.filter((id) => !picked.has(id));
 }

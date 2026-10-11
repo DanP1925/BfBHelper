@@ -74,7 +74,11 @@ export function BattleMapScreen({
 
   const { zoomIndex, pan } = camera;
   const viewportRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ startX: number; startY: number; startPan: { x: number; y: number } } | null>(null);
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    startPan: { x: number; y: number };
+  } | null>(null);
   const zoom = ZOOM_LEVELS[zoomIndex];
 
   function clampPan(nextPan: { x: number; y: number }, atZoom: number) {
@@ -176,7 +180,12 @@ export function BattleMapScreen({
                 heroes={respawn.p1}
                 onDrop={(heroId) => setHeroPosition("p1", heroId, null)}
               />
-              <MapTeamStatusPanel label="Player 1" side="p1" heroes={p1Heroes} team={battleState.p1} />
+              <MapTeamStatusPanel
+                label="Player 1"
+                side="p1"
+                heroes={p1Heroes}
+                team={battleState.p1}
+              />
             </div>
 
             <div
@@ -223,8 +232,20 @@ export function BattleMapScreen({
                   aria-label="Reset zoom and pan"
                   onClick={resetZoomPan}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <path d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
                 <button
@@ -240,7 +261,12 @@ export function BattleMapScreen({
             </div>
 
             <div className={styles.sideGroup}>
-              <MapTeamStatusPanel label="Player 2" side="p2" heroes={p2Heroes} team={battleState.p2} />
+              <MapTeamStatusPanel
+                label="Player 2"
+                side="p2"
+                heroes={p2Heroes}
+                team={battleState.p2}
+              />
               <RespawnAreaStrip
                 side="p2"
                 label="Player 2"

@@ -109,9 +109,7 @@ export function useBattle(p1Heroes: Hero[], p2Heroes: Hero[]): UseBattleResult {
   const setStructureHp = useCallback(
     (side: PlayerId, slot: keyof StructuresState, value: number) => {
       setState((prev) =>
-        prev === null
-          ? prev
-          : battleReducer(prev, { type: "SET_STRUCTURE_HP", side, slot, value }),
+        prev === null ? prev : battleReducer(prev, { type: "SET_STRUCTURE_HP", side, slot, value }),
       );
     },
     [],

@@ -30,21 +30,17 @@ export function HeroPool({ heroes, onPick }: HeroPoolProps) {
   // setState — producing the same infinite-loop class of bug fixed earlier.
   const columnOptions = useMemo(() => {
     const minColumns = Math.max(1, Math.min(MIN_COLUMNS, heroes.length));
-    return Array.from(
-      { length: heroes.length - minColumns + 1 },
-      (_, i) => minColumns + i,
-    );
+    return Array.from({ length: heroes.length - minColumns + 1 }, (_, i) => minColumns + i);
   }, [heroes.length]);
 
-  const { containerRef, columns, cardWidth, overflows } =
-    useFitGrid<HTMLDivElement>({
-      itemCount: heroes.length,
-      aspectRatio: CARD_ASPECT_RATIO,
-      gap: GAP,
-      columnOptions,
-      minCardWidth: MIN_CARD_WIDTH,
-      maxCardWidth: MAX_CARD_WIDTH,
-    });
+  const { containerRef, columns, cardWidth, overflows } = useFitGrid<HTMLDivElement>({
+    itemCount: heroes.length,
+    aspectRatio: CARD_ASPECT_RATIO,
+    gap: GAP,
+    columnOptions,
+    minCardWidth: MIN_CARD_WIDTH,
+    maxCardWidth: MAX_CARD_WIDTH,
+  });
 
   return (
     <div
@@ -55,18 +51,11 @@ export function HeroPool({ heroes, onPick }: HeroPoolProps) {
       <div
         className={styles.grid}
         style={
-          cardWidth > 0
-            ? { gridTemplateColumns: `repeat(${columns}, ${cardWidth}px)` }
-            : undefined
+          cardWidth > 0 ? { gridTemplateColumns: `repeat(${columns}, ${cardWidth}px)` } : undefined
         }
       >
         {heroes.map((hero) => (
-          <HeroCard
-            key={hero.id}
-            hero={hero}
-            variant="pool"
-            onClick={() => onPick(hero.id)}
-          />
+          <HeroCard key={hero.id} hero={hero} variant="pool" onClick={() => onPick(hero.id)} />
         ))}
       </div>
     </div>

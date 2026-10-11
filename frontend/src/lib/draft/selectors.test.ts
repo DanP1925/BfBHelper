@@ -30,7 +30,6 @@ describe("selectors", () => {
     expect(getPicksRemainingThisStep(midStep)).toBe(1);
   });
 
-
   it("computes total picks from both players' picks", () => {
     const state: DraftState = {
       initiative: "p1",
@@ -74,10 +73,7 @@ describe("selectors", () => {
     const turnsByStep: Array<[DraftState, string | null]> = [
       [{ initiative: "p1", picks: { p1: [], p2: [] } }, "p1"], // step 1
       [{ initiative: "p1", picks: { p1: ["agatha-trunch"], p2: [] } }, "p2"], // step 2
-      [
-        { initiative: "p1", picks: { p1: ["agatha-trunch"], p2: ["boreas", "caligar"] } },
-        "p1",
-      ], // step 3
+      [{ initiative: "p1", picks: { p1: ["agatha-trunch"], p2: ["boreas", "caligar"] } }, "p1"], // step 3
       [
         {
           initiative: "p1",
@@ -109,10 +105,7 @@ describe("selectors", () => {
     const turnsByStep: Array<[DraftState, string | null]> = [
       [{ initiative: "p2", picks: { p1: [], p2: [] } }, "p2"],
       [{ initiative: "p2", picks: { p1: [], p2: ["agatha-trunch"] } }, "p1"],
-      [
-        { initiative: "p2", picks: { p1: ["boreas", "caligar"], p2: ["agatha-trunch"] } },
-        "p2",
-      ],
+      [{ initiative: "p2", picks: { p1: ["boreas", "caligar"], p2: ["agatha-trunch"] } }, "p2"],
       [
         {
           initiative: "p2",

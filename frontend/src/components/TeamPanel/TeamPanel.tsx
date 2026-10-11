@@ -39,20 +39,14 @@ export function TeamPanel({ label, side, active, slots }: TeamPanelProps) {
     maxCardWidth: MAX_CARD_WIDTH,
   });
 
-  const panelWidth =
-    cardWidth > 0 ? columns * cardWidth + GAP * (columns - 1) : undefined;
+  const panelWidth = cardWidth > 0 ? columns * cardWidth + GAP * (columns - 1) : undefined;
 
   return (
-    <div
-      className={styles.panel}
-      style={panelWidth ? { width: panelWidth } : undefined}
-    >
+    <div className={styles.panel} style={panelWidth ? { width: panelWidth } : undefined}>
       <div
         className={styles.header}
         style={{
-          borderBottomColor: active
-            ? `var(--color-${side})`
-            : "var(--color-border)",
+          borderBottomColor: active ? `var(--color-${side})` : "var(--color-border)",
         }}
       >
         {label}
@@ -62,8 +56,7 @@ export function TeamPanel({ label, side, active, slots }: TeamPanelProps) {
         className={styles.slotList}
         style={{
           overflowY: overflows ? "auto" : "hidden",
-          gridTemplateColumns:
-            cardWidth > 0 ? `repeat(${columns}, ${cardWidth}px)` : undefined,
+          gridTemplateColumns: cardWidth > 0 ? `repeat(${columns}, ${cardWidth}px)` : undefined,
         }}
       >
         {slots.map((hero, index) =>

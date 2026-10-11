@@ -19,7 +19,15 @@ export type MapSpaceKind = "plain" | "tower" | "bit" | "gold";
  * separate from a standing spot, so they keep just one coordinate pair.
  */
 export type MapSpaceDef =
-  | { id: string; kind: "bit"; side: PlayerId; xPct: number; yPct: number; heroXPct: number; heroYPct: number }
+  | {
+      id: string;
+      kind: "bit";
+      side: PlayerId;
+      xPct: number;
+      yPct: number;
+      heroXPct: number;
+      heroYPct: number;
+    }
   | {
       id: string;
       kind: "tower";
@@ -57,12 +65,66 @@ export const MAP_SPACES = [
   { id: "p1-bit", kind: "bit", side: "p1", xPct: 87.7, yPct: 88.3, heroXPct: 83.5, heroYPct: 81.5 },
   { id: "p2-bit", kind: "bit", side: "p2", xPct: 12, yPct: 11, heroXPct: 16.5, heroYPct: 18.5 },
 
-  { id: "p1-tower-top", kind: "tower", side: "p1", slot: "top", xPct: 86.7, yPct: 69.3, heroXPct: 84, heroYPct: 60 },
-  { id: "p1-tower-middle", kind: "tower", side: "p1", slot: "middle", xPct: 71.7, yPct: 73.1, heroXPct: 65, heroYPct: 68 },
-  { id: "p1-tower-bottom", kind: "tower", side: "p1", slot: "bottom", xPct: 68.9, yPct: 86.1, heroXPct: 60.7, heroYPct: 83.2 },
-  { id: "p2-tower-top", kind: "tower", side: "p2", slot: "top", xPct: 31.3, yPct: 12.5, heroXPct: 39.3, heroYPct: 16.8 },
-  { id: "p2-tower-bottom", kind: "tower", side: "p2", slot: "bottom", xPct: 13, yPct: 30, heroXPct: 16, heroYPct: 40 },
-  { id: "p2-tower-middle", kind: "tower", side: "p2", slot: "middle", xPct: 27, yPct: 26.7, heroXPct: 35, heroYPct: 32 },
+  {
+    id: "p1-tower-top",
+    kind: "tower",
+    side: "p1",
+    slot: "top",
+    xPct: 86.7,
+    yPct: 69.3,
+    heroXPct: 84,
+    heroYPct: 60,
+  },
+  {
+    id: "p1-tower-middle",
+    kind: "tower",
+    side: "p1",
+    slot: "middle",
+    xPct: 71.7,
+    yPct: 73.1,
+    heroXPct: 65,
+    heroYPct: 68,
+  },
+  {
+    id: "p1-tower-bottom",
+    kind: "tower",
+    side: "p1",
+    slot: "bottom",
+    xPct: 68.9,
+    yPct: 86.1,
+    heroXPct: 60.7,
+    heroYPct: 83.2,
+  },
+  {
+    id: "p2-tower-top",
+    kind: "tower",
+    side: "p2",
+    slot: "top",
+    xPct: 31.3,
+    yPct: 12.5,
+    heroXPct: 39.3,
+    heroYPct: 16.8,
+  },
+  {
+    id: "p2-tower-bottom",
+    kind: "tower",
+    side: "p2",
+    slot: "bottom",
+    xPct: 13,
+    yPct: 30,
+    heroXPct: 16,
+    heroYPct: 40,
+  },
+  {
+    id: "p2-tower-middle",
+    kind: "tower",
+    side: "p2",
+    slot: "middle",
+    xPct: 27,
+    yPct: 26.7,
+    heroXPct: 35,
+    heroYPct: 32,
+  },
 
   { id: "p1-plain-1", kind: "plain", side: "p1", xPct: 70.5, yPct: 41.5 },
   { id: "p1-plain-2", kind: "plain", side: "p1", xPct: 41.5, yPct: 72 },

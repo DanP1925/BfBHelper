@@ -5,7 +5,12 @@ import { ConfirmDialog } from "./ConfirmDialog";
 describe("ConfirmDialog", () => {
   it("renders with dialog semantics, labeled by its title", () => {
     render(
-      <ConfirmDialog title="End Battle" body="Are you sure?" onConfirm={vi.fn()} onCancel={vi.fn()} />,
+      <ConfirmDialog
+        title="End Battle"
+        body="Are you sure?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     );
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
@@ -15,7 +20,12 @@ describe("ConfirmDialog", () => {
   it("calls onCancel on Escape", () => {
     const onCancel = vi.fn();
     render(
-      <ConfirmDialog title="End Battle" body="Are you sure?" onConfirm={vi.fn()} onCancel={onCancel} />,
+      <ConfirmDialog
+        title="End Battle"
+        body="Are you sure?"
+        onConfirm={vi.fn()}
+        onCancel={onCancel}
+      />,
     );
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -26,7 +36,12 @@ describe("ConfirmDialog", () => {
   it("calls onCancel on a backdrop click, but not a click inside the panel", () => {
     const onCancel = vi.fn();
     const { container } = render(
-      <ConfirmDialog title="End Battle" body="Are you sure?" onConfirm={vi.fn()} onCancel={onCancel} />,
+      <ConfirmDialog
+        title="End Battle"
+        body="Are you sure?"
+        onConfirm={vi.fn()}
+        onCancel={onCancel}
+      />,
     );
 
     fireEvent.click(screen.getByRole("dialog"));
@@ -38,7 +53,12 @@ describe("ConfirmDialog", () => {
 
   it("wraps Shift+Tab backward from the first focusable to the last", () => {
     render(
-      <ConfirmDialog title="End Battle" body="Are you sure?" onConfirm={vi.fn()} onCancel={vi.fn()} />,
+      <ConfirmDialog
+        title="End Battle"
+        body="Are you sure?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     );
     const cancelButton = screen.getByRole("button", { name: "Cancel" });
     const confirmButton = screen.getByRole("button", { name: "Confirm" });
@@ -52,7 +72,12 @@ describe("ConfirmDialog", () => {
 
   it("wraps Tab forward from the last focusable back to the first", () => {
     render(
-      <ConfirmDialog title="End Battle" body="Are you sure?" onConfirm={vi.fn()} onCancel={vi.fn()} />,
+      <ConfirmDialog
+        title="End Battle"
+        body="Are you sure?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     );
     const cancelButton = screen.getByRole("button", { name: "Cancel" });
     const confirmButton = screen.getByRole("button", { name: "Confirm" });
@@ -68,7 +93,12 @@ describe("ConfirmDialog", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
     render(
-      <ConfirmDialog title="End Battle" body="Are you sure?" onConfirm={onConfirm} onCancel={onCancel} />,
+      <ConfirmDialog
+        title="End Battle"
+        body="Are you sure?"
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));

@@ -122,7 +122,7 @@ describe("BattleMapScreen", () => {
     expect(screen.getByRole("menuitem", { name: "End Battle" })).toBeInTheDocument();
   });
 
-  it("calls onSwitchView with \"battle\" when the Board toggle is clicked", () => {
+  it('calls onSwitchView with "battle" when the Board toggle is clicked', () => {
     const onSwitchView = vi.fn();
     render(
       <BattleMapScreen
@@ -215,7 +215,12 @@ describe("BattleMapScreen", () => {
         structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
         heroPositions: Object.fromEntries(crowdedHeroes.map((h) => [h.id, sharedSpace])),
       },
-      p2: { gold: 0, heroes: {}, structures: { top: 11, middle: 11, bottom: 11, bit: 16 }, heroPositions: {} },
+      p2: {
+        gold: 0,
+        heroes: {},
+        structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
+        heroPositions: {},
+      },
       goldPiles: createFreshGoldPiles(),
     } as BattleState;
 

@@ -276,7 +276,9 @@ describe("saveBattleState / loadBattleState", () => {
       ...sampleBattleState,
       p1: {
         ...sampleBattleState.p1,
-        heroes: { "not-a-real-hero": { hp: 5, level: 1 } } as unknown as BattleState["p1"]["heroes"],
+        heroes: {
+          "not-a-real-hero": { hp: 5, level: 1 },
+        } as unknown as BattleState["p1"]["heroes"],
       },
     };
     window.localStorage.setItem(
@@ -333,7 +335,10 @@ describe("saveBattleState / loadBattleState", () => {
   });
 
   describe("schema-1 -> 2 migration (intent/04)", () => {
-    function persistRawSchema1(p1Heroes: Record<string, { hp: number; level: number }>, p2Heroes: Record<string, { hp: number; level: number }>) {
+    function persistRawSchema1(
+      p1Heroes: Record<string, { hp: number; level: number }>,
+      p2Heroes: Record<string, { hp: number; level: number }>,
+    ) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
@@ -371,7 +376,10 @@ describe("saveBattleState / loadBattleState", () => {
     });
 
     it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 2 on disk", () => {
-      persistRawSchema1({ "agatha-trunch": { hp: 10, level: 1 } }, { baldwin: { hp: 9, level: 1 } });
+      persistRawSchema1(
+        { "agatha-trunch": { hp: 10, level: 1 } },
+        { baldwin: { hp: 9, level: 1 } },
+      );
       const migrated = loadBattleState();
       expect(migrated).not.toBeNull();
 
@@ -452,7 +460,10 @@ describe("saveBattleState / loadBattleState", () => {
     it("returns null and clears the key when a gold pile's value is above its ceiling", () => {
       const corrupted = {
         ...sampleBattleState,
-        goldPiles: { ...sampleBattleState.goldPiles, [GOLD_PILE_SPACE_IDS[0]]: GOLD_PILE_STARTING_COUNT + 1 },
+        goldPiles: {
+          ...sampleBattleState.goldPiles,
+          [GOLD_PILE_SPACE_IDS[0]]: GOLD_PILE_STARTING_COUNT + 1,
+        },
       };
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,

@@ -1,9 +1,5 @@
 import type { Hero, HeroId, PlayerId } from "../../lib/draft/types";
-import {
-  BIT_STARTING_HP,
-  TOWER_SLOTS,
-  TOWER_STARTING_HP,
-} from "../../lib/battle/constants";
+import { BIT_STARTING_HP, TOWER_SLOTS, TOWER_STARTING_HP } from "../../lib/battle/constants";
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, StructuresState } from "../../lib/battle/types";
@@ -37,15 +33,17 @@ export function BattleTeamPanel({
 }: BattleTeamPanelProps) {
   return (
     <div className={styles.panel}>
-      <div
-        className={styles.header}
-        style={{ borderBottomColor: `var(--color-${side})` }}
-      >
+      <div className={styles.header} style={{ borderBottomColor: `var(--color-${side})` }}>
         <div className={styles.headerLabel}>{label}</div>
         <div className={styles.goldBadge}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
           <img src="/structures/gold.png" alt="" className={styles.goldIcon} />
-          <NumberStepper value={team.gold} min={0} onChange={onGoldChange} label={`${label} gold`} />
+          <NumberStepper
+            value={team.gold}
+            min={0}
+            onChange={onGoldChange}
+            label={`${label} gold`}
+          />
         </div>
       </div>
 

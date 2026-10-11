@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { clamp, clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
+import {
+  clamp,
+  clampGold,
+  clampGoldPile,
+  clampHeroHp,
+  clampHeroLevel,
+  clampStructureHp,
+} from "./bounds";
 import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "./constants";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 

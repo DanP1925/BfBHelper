@@ -35,10 +35,7 @@ export function pickBestColumnLayout(
     if (!best || cardWidth > best.cardWidth) {
       best = { columns, cardWidth };
     }
-    if (
-      cardWidth >= minCardWidth &&
-      (!bestMeetsMin || cardWidth > bestMeetsMin.cardWidth)
-    ) {
+    if (cardWidth >= minCardWidth && (!bestMeetsMin || cardWidth > bestMeetsMin.cardWidth)) {
       bestMeetsMin = { columns, cardWidth };
     }
   }

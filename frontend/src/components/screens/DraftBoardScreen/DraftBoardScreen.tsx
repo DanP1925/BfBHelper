@@ -48,19 +48,9 @@ export function DraftBoardScreen({
       </div>
 
       <div className={styles.body}>
-        <TeamPanel
-          label="Player 1"
-          side="p1"
-          active={currentTurnPlayer === "p1"}
-          slots={p1Slots}
-        />
+        <TeamPanel label="Player 1" side="p1" active={currentTurnPlayer === "p1"} slots={p1Slots} />
         <HeroPool heroes={pool} onPick={onPick} />
-        <TeamPanel
-          label="Player 2"
-          side="p2"
-          active={currentTurnPlayer === "p2"}
-          slots={p2Slots}
-        />
+        <TeamPanel label="Player 2" side="p2" active={currentTurnPlayer === "p2"} slots={p2Slots} />
       </div>
 
       <div className={styles.footer}>

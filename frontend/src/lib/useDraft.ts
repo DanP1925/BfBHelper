@@ -89,23 +89,15 @@ export function useDraft(): UseDraftResult {
   }, []);
 
   const phase: DraftPhase =
-    draftState === null
-      ? "idle"
-      : isDraftComplete(draftState)
-        ? "done"
-        : "drafting";
+    draftState === null ? "idle" : isDraftComplete(draftState) ? "done" : "drafting";
 
   return {
     phase,
     initiative: draftState ? draftState.initiative : null,
     currentStep: draftState ? getCurrentStep(draftState) : null,
     currentTurnPlayer: draftState ? getCurrentTurnPlayer(draftState) : null,
-    picksRequiredThisStep: draftState
-      ? getPicksRequiredThisStep(draftState)
-      : null,
-    picksRemainingThisStep: draftState
-      ? getPicksRemainingThisStep(draftState)
-      : null,
+    picksRequiredThisStep: draftState ? getPicksRequiredThisStep(draftState) : null,
+    picksRemainingThisStep: draftState ? getPicksRemainingThisStep(draftState) : null,
     remainingPool: draftState ? getRemainingPool(draftState, HERO_IDS) : [],
     teamSlots: {
       p1: draftState ? getTeamSlots(draftState, "p1") : EMPTY_SLOTS,

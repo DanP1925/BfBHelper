@@ -61,7 +61,9 @@ export function HeroCard(props: HeroCardProps) {
           <img
             src={hero.battleToken}
             alt=""
-            className={isDefeated ? `${styles.battleToken} ${styles.tokenDefeated}` : styles.battleToken}
+            className={
+              isDefeated ? `${styles.battleToken} ${styles.tokenDefeated}` : styles.battleToken
+            }
           />
         </div>
         <div className={styles.battleInfo}>

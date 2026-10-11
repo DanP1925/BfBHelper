@@ -30,11 +30,19 @@ describe("RespawnAreaStrip", () => {
   it("calls onDrop when the drag payload's side matches this strip's side", () => {
     const onDrop = vi.fn();
     render(
-      <RespawnAreaStrip side="p1" label="Player 1" heroes={[makeHero("boreas", "Boreas")]} onDrop={onDrop} />,
+      <RespawnAreaStrip
+        side="p1"
+        label="Player 1"
+        heroes={[makeHero("boreas", "Boreas")]}
+        onDrop={onDrop}
+      />,
     );
 
     const dataTransfer = fakeDataTransfer();
-    dataTransfer.setData("application/x-bfbhelper-hero", JSON.stringify({ side: "p1", heroId: "caligar" }));
+    dataTransfer.setData(
+      "application/x-bfbhelper-hero",
+      JSON.stringify({ side: "p1", heroId: "caligar" }),
+    );
 
     fireEvent.drop(screen.getByText("Player 1").parentElement as HTMLElement, { dataTransfer });
 
@@ -45,11 +53,19 @@ describe("RespawnAreaStrip", () => {
   it("rejects a drop carrying the other side's payload", () => {
     const onDrop = vi.fn();
     render(
-      <RespawnAreaStrip side="p1" label="Player 1" heroes={[makeHero("boreas", "Boreas")]} onDrop={onDrop} />,
+      <RespawnAreaStrip
+        side="p1"
+        label="Player 1"
+        heroes={[makeHero("boreas", "Boreas")]}
+        onDrop={onDrop}
+      />,
     );
 
     const dataTransfer = fakeDataTransfer();
-    dataTransfer.setData("application/x-bfbhelper-hero", JSON.stringify({ side: "p2", heroId: "sterling" }));
+    dataTransfer.setData(
+      "application/x-bfbhelper-hero",
+      JSON.stringify({ side: "p2", heroId: "sterling" }),
+    );
 
     fireEvent.drop(screen.getByText("Player 1").parentElement as HTMLElement, { dataTransfer });
 
@@ -59,17 +75,29 @@ describe("RespawnAreaStrip", () => {
   it("ignores a drop with no recognizable payload", () => {
     const onDrop = vi.fn();
     render(
-      <RespawnAreaStrip side="p1" label="Player 1" heroes={[makeHero("boreas", "Boreas")]} onDrop={onDrop} />,
+      <RespawnAreaStrip
+        side="p1"
+        label="Player 1"
+        heroes={[makeHero("boreas", "Boreas")]}
+        onDrop={onDrop}
+      />,
     );
 
-    fireEvent.drop(screen.getByText("Player 1").parentElement as HTMLElement, { dataTransfer: fakeDataTransfer() });
+    fireEvent.drop(screen.getByText("Player 1").parentElement as HTMLElement, {
+      dataTransfer: fakeDataTransfer(),
+    });
 
     expect(onDrop).not.toHaveBeenCalled();
   });
 
   it("highlights while something is dragged over it, and un-highlights on drag-leave", () => {
     const { container } = render(
-      <RespawnAreaStrip side="p1" label="Player 1" heroes={[makeHero("boreas", "Boreas")]} onDrop={() => {}} />,
+      <RespawnAreaStrip
+        side="p1"
+        label="Player 1"
+        heroes={[makeHero("boreas", "Boreas")]}
+        onDrop={() => {}}
+      />,
     );
     const strip = screen.getByText("Player 1").parentElement as HTMLElement;
 
@@ -82,7 +110,12 @@ describe("RespawnAreaStrip", () => {
 
   it("clears the highlight once the drop lands", () => {
     const { container } = render(
-      <RespawnAreaStrip side="p1" label="Player 1" heroes={[makeHero("boreas", "Boreas")]} onDrop={() => {}} />,
+      <RespawnAreaStrip
+        side="p1"
+        label="Player 1"
+        heroes={[makeHero("boreas", "Boreas")]}
+        onDrop={() => {}}
+      />,
     );
     const strip = screen.getByText("Player 1").parentElement as HTMLElement;
 
@@ -90,7 +123,10 @@ describe("RespawnAreaStrip", () => {
     expect(container.querySelector('[class*="stripDragOver"]')).not.toBeNull();
 
     const dataTransfer = fakeDataTransfer();
-    dataTransfer.setData("application/x-bfbhelper-hero", JSON.stringify({ side: "p1", heroId: "boreas" }));
+    dataTransfer.setData(
+      "application/x-bfbhelper-hero",
+      JSON.stringify({ side: "p1", heroId: "boreas" }),
+    );
     fireEvent.drop(strip, { dataTransfer });
 
     expect(container.querySelector('[class*="stripDragOver"]')).toBeNull();

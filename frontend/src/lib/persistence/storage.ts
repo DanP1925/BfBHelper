@@ -1,5 +1,10 @@
 import { HERO_IDS } from "../../data/heroes";
-import { createFreshGoldPiles, GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS, seedHeroPositions } from "../../data/mapSpaces";
+import {
+  createFreshGoldPiles,
+  GOLD_PILE_SPACE_IDS,
+  MAP_SPACE_IDS,
+  seedHeroPositions,
+} from "../../data/mapSpaces";
 import type { MapSpaceId } from "../../data/mapSpaces";
 import type { DraftState, HeroId, PlayerId } from "../draft/types";
 import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
@@ -35,8 +40,7 @@ const KNOWN_MAP_SPACE_IDS = new Set<string>(MAP_SPACE_IDS);
  * version encountered at load time has no migration path and is treated as
  * corrupt.
  */
-const migrations: Record<number, (data: unknown) => PersistedDraftV1 | null> =
-  {};
+const migrations: Record<number, (data: unknown) => PersistedDraftV1 | null> = {};
 
 /**
  * Same idea as `migrations` above, for the battle-state payload.
@@ -128,9 +132,7 @@ function expectedPicksPerPlayer(
  * ids, no duplicate ids (within or across players), and the per-player/
  * overall pick-count caps.
  */
-function hasValidPicksShape(
-  picks: unknown,
-): picks is { p1: HeroId[]; p2: HeroId[] } {
+function hasValidPicksShape(picks: unknown): picks is { p1: HeroId[]; p2: HeroId[] } {
   if (typeof picks !== "object" || picks === null) return false;
 
   const candidate = picks as Record<string, unknown>;
@@ -402,7 +404,12 @@ export function saveDraft(state: DraftState): void {
  * caller.
  */
 export function loadDraft(): DraftState | null {
-  const data = loadPersisted(STORAGE_KEY, CURRENT_DRAFT_SCHEMA_VERSION, migrations, isValidPersistedDraft);
+  const data = loadPersisted(
+    STORAGE_KEY,
+    CURRENT_DRAFT_SCHEMA_VERSION,
+    migrations,
+    isValidPersistedDraft,
+  );
   if (data === null) return null;
 
   return {
