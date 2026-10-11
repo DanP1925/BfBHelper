@@ -9,6 +9,9 @@ import styles from "./RespawnAreaStrip.module.css";
 
 type RespawnAreaStripProps = {
   side: PlayerId;
+  /** The team's name — used only for the section's accessible name; the
+   * visible heading is always "Respawning Area" (the status panel right
+   * above it already names the team). */
   label: string;
   /** This side's heroes whose `heroPositions` entry is `null`. */
   heroes: Hero[];
@@ -16,8 +19,8 @@ type RespawnAreaStripProps = {
 };
 
 /**
- * One side's column of not-yet-deployed/defeated-and-awaiting-respawn
- * heroes, flanking the board. A native-HTML5-drag-and-drop target that
+ * One side's box of not-yet-deployed/defeated-and-awaiting-respawn
+ * heroes, below that side's status panel. A native-HTML5-drag-and-drop target that
  * silently rejects a drop carrying the *other* side's payload — the
  * respawn area is never shared between teams.
  *
@@ -56,20 +59,26 @@ export function RespawnAreaStrip({ side, label, heroes, onDrop }: RespawnAreaStr
     onDrop(payload.heroId);
   }
 
+  // The whole section (heading included) is the drop target, so a drop
+  // that lands on the heading still counts; only the dashed box itself
+  // highlights.
   return (
-    <div
-      className={isDragOver ? `${styles.strip} ${styles.stripDragOver}` : styles.strip}
+    <section
+      className={styles.area}
+      aria-label={`${label} respawning area`}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className={styles.label}>{label}</div>
-      <div className={styles.tokens}>
+      <div className={`${styles.label} ${side === "p1" ? styles.labelP1 : styles.labelP2}`}>
+        Respawning Area
+      </div>
+      <div className={isDragOver ? `${styles.strip} ${styles.stripDragOver}` : styles.strip}>
         {heroes.map((hero) => (
           <MapToken key={hero.id} hero={hero} side={side} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
