@@ -303,7 +303,9 @@
     `heroPositions` entry is `null`. This renames intent 04's original
     "holding area" to "respawn area" throughout the UI (component name,
     on-screen label, code comments) and in `intent/04_battle-map.md`
-    itself.
+    itself. Each strip carries a "Respawning Area" heading (with a
+    team-colored left accent) above a dashed box whose tokens wrap two
+    per row; the whole section, heading included, is the drop target.
   - **New `MapTeamStatusPanel` component** (new,
     `frontend/src/components/MapTeamStatusPanel/`), one per side — a
     read-only complement to the Map's purely positional view, added so a
@@ -315,16 +317,14 @@
     the board back down — so the two screens (and the toggle between
     them) stay exactly as intent 04 scoped them; this panel only adds a
     glance-level summary alongside the Map, nothing editable. Each side's
-    panel and `RespawnAreaStrip` sit **side by side**, not stacked —
-    stacking them vertically (the original plan) pushed the page well
-    past the viewport, forcing a scroll that wasn't there before this
-    feature; laid out horizontally instead, both fit in view at the
-    13.3"/1280×800 baseline with room to spare. The strip sits
-    *outermost* (farthest from the board) and the panel *innermost*
-    (adjacent to it) on both sides — the panel benefits more from
-    sitting close to what it's summarizing, and this keeps the pair
-    symmetric left and right rather than one side's strip ending up
-    board-adjacent and the other's not. Renders:
+    panel and `RespawnAreaStrip` are **stacked** in one 170px column,
+    panel on top, as the mockup has them. The build first laid them out
+    side by side instead, because the stacked version scrolled past the
+    viewport. That was caused by the strip's single-column token list
+    (`min-height: 200px`). With tokens wrapping two per row, the stacked
+    column fits at the 13.3"/1280×800 baseline, and still fits with no
+    scroll at a 1280×720 viewport (what's left after browser chrome).
+    Renders:
     - The team label and gold total (icon + plain number — no
       `NumberStepper`; this panel has no editable controls at all).
     - Each of the team's 4 heroes: name + HP (small heart icon + number,
@@ -440,14 +440,11 @@ several things this spec left open above:
   working `MapTeamStatusPanel` (team + gold, then a labeled "Heroes"
   section of name/HP rows, then a labeled "Structures" section of
   label/HP rows, visually separated by a divider, both dimmed reactively
-  at 0 HP). **Superseded during build** (not reflected in the mockup
-  itself): the mockup stacks the panel above the strip in one narrow
-  column; stacked, that pushed the page well past the viewport at the
-  13.3"/1280×800 baseline. The build instead lays the panel and strip
-  out side by side (see Layout, above) — same two pieces, same content,
-  different arrangement, arrived at from actually testing the stacked
-  version rather than from a mockup revision. The mockup's Structures
-  rows were always icon-less text (label + HP, matching this spec now —
+  at 0 HP). The mockup stacks the panel above the strip in one narrow
+  column, under a "Respawning Area" heading, and the build now matches
+  that (see Layout, above). An earlier build put the two side by side
+  for viewport reasons that wrapping the strip's tokens resolved. The
+  mockup's Structures rows were always icon-less text (label + HP, matching this spec now —
   an earlier draft of this spec incorrectly called for reusing
   `StructureSlot`, which always renders an icon).
 - `MapToken`'s ring is sized tight to the hero art itself (not a fixed

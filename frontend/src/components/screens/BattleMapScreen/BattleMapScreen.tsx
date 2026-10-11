@@ -174,17 +174,17 @@ export function BattleMapScreen({
         <div className={styles.content}>
           <div className={styles.row}>
             <div className={styles.sideGroup}>
-              <RespawnAreaStrip
-                side="p1"
-                label="Player 1"
-                heroes={respawn.p1}
-                onDrop={(heroId) => setHeroPosition("p1", heroId, null)}
-              />
               <MapTeamStatusPanel
                 label="Player 1"
                 side="p1"
                 heroes={p1Heroes}
                 team={battleState.p1}
+              />
+              <RespawnAreaStrip
+                side="p1"
+                label="Player 1"
+                heroes={respawn.p1}
+                onDrop={(heroId) => setHeroPosition("p1", heroId, null)}
               />
             </div>
 

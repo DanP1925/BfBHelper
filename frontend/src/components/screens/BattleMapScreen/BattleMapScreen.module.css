@@ -36,10 +36,13 @@
   gap: 20px;
 }
 
+/* Status panel on top, respawn area below it (per the mockup) — one
+   narrow column per side, so the board gets the width. */
 .sideGroup {
+  width: 170px;
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .board {
