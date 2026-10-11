@@ -3,7 +3,7 @@ import type { Hero } from "../draft/types";
 import { BIT_STARTING_HP, HERO_HP_CEILING, TOWER_STARTING_HP } from "./constants";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
-import { battleReducer, createInitialBattleState } from "./reducer";
+import { battleReducer, createInitialBattleState, createInitialHeroState } from "./reducer";
 import type { BattleState } from "./types";
 
 const HERO_A: Hero = {
@@ -27,6 +27,16 @@ const HERO_B: Hero = {
 function baseState(): BattleState {
   return createInitialBattleState([HERO_A], [HERO_B]);
 }
+
+describe("createInitialHeroState", () => {
+  it("starts at baseHp + starting level, clamped to the HP ceiling", () => {
+    expect(createInitialHeroState({ ...HERO_A, baseHp: 10 })).toEqual({ hp: 11, level: 1 });
+    expect(createInitialHeroState({ ...HERO_A, baseHp: HERO_HP_CEILING })).toEqual({
+      hp: HERO_HP_CEILING,
+      level: 1,
+    });
+  });
+});
 
 describe("createInitialBattleState", () => {
   it("seeds each hero's hp as their own baseHp + starting level, not a flat default", () => {

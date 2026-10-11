@@ -1,7 +1,6 @@
 "use client";
 
-import { startingHeroHp } from "../../../lib/battle/bounds";
-import { HERO_STARTING_LEVEL } from "../../../lib/battle/constants";
+import { createInitialHeroState } from "../../../lib/battle/reducer";
 import type { BattleState } from "../../../lib/battle/types";
 import type { Hero, PlayerId } from "../../../lib/draft/types";
 import { HeroCard } from "../../HeroCard/HeroCard";
@@ -45,10 +44,7 @@ function WinTeamPanel({ label, side, heroes, battleState, emphasis }: WinTeamPan
           // Same graceful-fallback rationale as BattleTeamPanel's
           // identical lookup — normally guaranteed present by
           // useBattle's heroIdSetsMatch.
-          const heroState = team.heroes[hero.id] ?? {
-            hp: startingHeroHp(hero.baseHp),
-            level: HERO_STARTING_LEVEL,
-          };
+          const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
           return (
             <HeroCard key={hero.id} hero={hero} variant="battle" hp={heroState.hp} level={heroState.level} />
           );

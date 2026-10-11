@@ -1,12 +1,5 @@
 import type { Hero, HeroId, PlayerId } from "../draft/types";
-import {
-  clampGold,
-  clampGoldPile,
-  clampHeroHp,
-  clampHeroLevel,
-  clampStructureHp,
-  startingHeroHp,
-} from "./bounds";
+import { clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
 import {
   BIT_STARTING_HP,
   HERO_STARTING_LEVEL,
@@ -114,14 +107,18 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
   }
 }
 
+/** A fresh hero's stat block: starting HP is base HP plus starting level
+ * (rulebook, "Prepare the Hero Mats" step 3). Clamped like every other
+ * write path in this file — without that, a future hero whose starting HP
+ * exceeds HERO_HP_CEILING would create a battle state that
+ * loadBattleState's own validator would then reject as corrupt on the
+ * very next reload. */
+export function createInitialHeroState(hero: Hero): { hp: number; level: number } {
+  return { hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL), level: HERO_STARTING_LEVEL };
+}
+
 function createInitialTeamState(heroes: Hero[]): BattleTeamState {
-  // startingHeroHp clamps like every other write path in this file —
-  // without that, a future hero whose starting HP exceeds HERO_HP_CEILING
-  // would create a battle state that loadBattleState's own validator would
-  // then reject as corrupt on the very next reload.
-  const heroEntries = heroes.map(
-    (hero) => [hero.id, { hp: startingHeroHp(hero.baseHp), level: HERO_STARTING_LEVEL }] as const,
-  );
+  const heroEntries = heroes.map((hero) => [hero.id, createInitialHeroState(hero)] as const);
 
   return {
     gold: TEAM_STARTING_GOLD,

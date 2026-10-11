@@ -1,11 +1,10 @@
 import type { Hero, HeroId, PlayerId } from "../../lib/draft/types";
 import {
   BIT_STARTING_HP,
-  HERO_STARTING_LEVEL,
   TOWER_SLOTS,
   TOWER_STARTING_HP,
 } from "../../lib/battle/constants";
-import { startingHeroHp } from "../../lib/battle/bounds";
+import { createInitialHeroState } from "../../lib/battle/reducer";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, StructuresState } from "../../lib/battle/types";
 import { HeroCard } from "../HeroCard/HeroCard";
@@ -57,10 +56,7 @@ export function BattleTeamPanel({
           // — normally impossible (useBattle's heroIdSetsMatch enforces
           // it at hydrate time), but degrading gracefully beats a thrown
           // error if that invariant is ever violated post-hydration.
-          const heroState = team.heroes[hero.id] ?? {
-            hp: startingHeroHp(hero.baseHp),
-            level: HERO_STARTING_LEVEL,
-          };
+          const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
           return (
             <HeroCard
               key={hero.id}
