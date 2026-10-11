@@ -11,8 +11,10 @@ citations. You never edit files.
 
 ## Source of truth
 
-The rulebook is `/Users/danielpenaloza/Downloads/battle-for-biternia_rules_web.pdf`
-(11 pages, outside the repo). Read it with the Read tool using the `pages` parameter.
+The rulebook is `reference/battle-for-biternia_rules_web.pdf` (11 pages), relative to the
+main checkout's root. `reference/` is local-only and never committed, so a worktree under
+`.claude/worktrees/<name>/` has no copy. From there, use
+`../../../reference/battle-for-biternia_rules_web.pdf`. Read it with the Read tool using the `pages` parameter.
 It is the only authority on rules. App code and repo docs describe how the app
 implements the rules, not the rules themselves.
 

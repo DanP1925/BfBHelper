@@ -37,6 +37,10 @@
   too (e.g. architecture that no longer matches a simplified scope) — they drift silently.
 - A feature's UI mockup is a Claude design artifact linked from its spec under a
   "UI Design Reference" section; source art assets it uses live in `specs/<Feature Name>/`.
+- The rulebook PDF (source of truth for game rules) is at
+  `reference/battle-for-biternia_rules_web.pdf` in the main checkout. It's copyrighted,
+  so `reference/` is excluded via `.git/info/exclude` and never committed. A fresh clone
+  needs it copied in by hand, plus a `/reference/` line in that exclude file.
 - `plan/` holds one `NN_feature-name.md` per feature too, same numbering as its
   intent/spec. It's a living build checklist for the Build phase — written before
   implementation starts and checked off incrementally in the PR(s) that do that work.
