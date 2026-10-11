@@ -1,4 +1,5 @@
 import type { Hero, PlayerId } from "../../lib/draft/types";
+import { startingHeroHp } from "../../lib/battle/bounds";
 import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState } from "../../lib/battle/types";
 import styles from "./MapTeamStatusPanel.module.css";
@@ -41,7 +42,7 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Heroes</div>
         {heroes.map((hero) => {
-          const hp = team.heroes[hero.id]?.hp ?? hero.baseHp;
+          const hp = team.heroes[hero.id]?.hp ?? startingHeroHp(hero.baseHp);
           const isDefeated = hp === 0;
           return (
             <div

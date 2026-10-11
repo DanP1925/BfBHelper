@@ -24,11 +24,12 @@ Ken Obi.
   Initiative flips every round — the player without it gets it — so both
   screens need a display plus a "next round" control to pass it. Possibly a
   round counter too. *Size: small intent (05).*
-- [ ] **Bug: every hero starts 1 HP short.** Applies to all 19 heroes.
+- [x] **Bug: every hero starts 1 HP short.** Applies to all 19 heroes.
   `lib/battle/reducer.ts` starts each hero at `baseHp`, but the rulebook ("Prepare the Hero Mats", step 3) sets
   starting HP to base HP + level (1), e.g. Vladiator starts at 11, not 10.
   Fix only the starting HP. Keep the flat 15 HP ceiling and the manual HP
   bump on level-up as they are (decided 2026-10-10). *Size: small fix PR.*
+  Done in `fix/starting-hp-plus-level` (v0.4.2).
 - [ ] **+1 Attack tokens.** Not tracked anywhere; needed even by the heroes
   played in this game (e.g. Caligar's power card gives two). Per the rulebook,
   each token adds 1 to all of that hero's attacks; they're removed at the end

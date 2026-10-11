@@ -23,7 +23,9 @@
       hero id sets exactly match `p1Heroes`/`p2Heroes`, load it —
       handles a reload mid-battle.
     - Otherwise, build a fresh default `BattleState` from the heroes'
-      `baseHp` plus the existing intent-02 constants
+      starting HP (`baseHp` + `HERO_STARTING_LEVEL`, per the rulebook's
+      "Prepare the Hero Mats" step 3, via `startingHeroHp` in
+      `lib/battle/bounds.ts`) plus the existing intent-02 constants
       (`TOWER_STARTING_HP`, `BIT_STARTING_HP`, `HERO_STARTING_LEVEL`,
       `TEAM_STARTING_GOLD`) and persist it immediately — this is what
       "starting a battle" means now; there's no separate init action.
@@ -96,7 +98,7 @@
   reimplementing its own min/max check.
 - `Hero.baseHp` (`lib/draft/types.ts`) keeps its existing meaning
   unchanged — the printed card HP — but changes role: it's now only the
-  *initializer* for a fresh `BattleState`'s hero HP, not what the Battle
+  *initializer* (plus starting level) for a fresh `BattleState`'s hero HP, not what the Battle
   Board renders. Rendered HP comes from `BattleState` from this point on.
 - New persistence key and type, `lib/persistence/schema.ts`:
   `BATTLE_STATE_STORAGE_KEY = "bfbhelper:battle-state"`,

@@ -24,6 +24,12 @@ export function clampHeroHp(value: number): number {
   return clamp(value, 0, HERO_HP_CEILING);
 }
 
+/** A fresh hero's HP: base HP plus their starting level (rulebook,
+ * "Prepare the Hero Mats" step 3), clamped like any other HP write. */
+export function startingHeroHp(baseHp: number): number {
+  return clampHeroHp(baseHp + HERO_STARTING_LEVEL);
+}
+
 /** Hero level: floor 1, ceiling HERO_MAX_LEVEL (4). */
 export function clampHeroLevel(value: number): number {
   return clamp(value, HERO_STARTING_LEVEL, HERO_MAX_LEVEL);
