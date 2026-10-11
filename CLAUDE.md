@@ -42,6 +42,9 @@
   implementation starts and checked off incrementally in the PR(s) that do that work.
 
 ## Testing
+- Claude Code hooks (`.claude/settings.json`, scripts in `.claude/hooks/`) run ESLint on
+  every edited JS/TS file and `tsc --noEmit` at the end of a turn that left uncommitted
+  `frontend/` changes. They only run in Claude sessions; CI doesn't lint or type-check yet.
 - Manual QA and responsive/viewport-sensitive work is checked against two screens,
   given here as physical resolution (logical/CSS px in parentheses): a 13.3" laptop
   display, 2560x1600 (1280x800 at 2x scaling), and a 24" monitor, 2560x1440 (no
