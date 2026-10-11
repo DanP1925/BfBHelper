@@ -5,6 +5,15 @@ import { getHeroById, HERO_IDS } from "../data/heroes";
 import { battleReducer, createInitialBattleState } from "../lib/battle/reducer";
 import { saveBattleState, saveDraft, saveView } from "../lib/persistence/storage";
 
+/** Saves a finished draft (first 8 heroes, split 4/4) and returns a fresh
+ * battle state for it — callers save it as-is or after edits. */
+function seedDoneDraft() {
+  const p1Ids = HERO_IDS.slice(0, 4);
+  const p2Ids = HERO_IDS.slice(4, 8);
+  saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
+  return createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById));
+}
+
 beforeEach(() => {
   window.localStorage.clear();
 });
@@ -21,11 +30,7 @@ describe("Home", () => {
   });
 
   it("renders the Win Screen when a completed battle's persisted view is 'win'", () => {
-    const p1Ids = HERO_IDS.slice(0, 4);
-    const p2Ids = HERO_IDS.slice(4, 8);
-    saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
-
-    const fresh = createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById));
+    const fresh = seedDoneDraft();
     const p1BitDown = battleReducer(fresh, {
       type: "SET_STRUCTURE_HP",
       side: "p1",
@@ -43,12 +48,7 @@ describe("Home", () => {
   });
 
   it("keeps the Map's zoom when switching to the Board and back", () => {
-    const p1Ids = HERO_IDS.slice(0, 4);
-    const p2Ids = HERO_IDS.slice(4, 8);
-    saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
-    saveBattleState(
-      createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById)),
-    );
+    saveBattleState(seedDoneDraft());
     saveView("map");
 
     render(<Home />);
