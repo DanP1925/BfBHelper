@@ -23,7 +23,8 @@ Ken Obi.
   Draft Board (`draft.initiative`, decided by the pre-draft coin flip).
   Initiative flips every round — the player without it gets it — so both
   screens need a display plus a "next round" control to pass it. Possibly a
-  round counter too. *Size: small intent (05).*
+  round counter too. *Size: small intent (05).* Scoped in
+  `intent/05_initiative-indicator.md`.
 - [x] **Bug: every hero starts 1 HP short.** Applies to all 19 heroes.
   `lib/battle/reducer.ts` starts each hero at `baseHp`, but the rulebook ("Prepare the Hero Mats", step 3) sets
   starting HP to base HP + level (1), e.g. Vladiator starts at 11, not 10.
