@@ -1,5 +1,6 @@
 "use client";
 
+import { startingHeroHp } from "../../../lib/battle/bounds";
 import { HERO_STARTING_LEVEL } from "../../../lib/battle/constants";
 import type { BattleState } from "../../../lib/battle/types";
 import type { Hero, PlayerId } from "../../../lib/draft/types";
@@ -45,7 +46,7 @@ function WinTeamPanel({ label, side, heroes, battleState, emphasis }: WinTeamPan
           // identical lookup — normally guaranteed present by
           // useBattle's heroIdSetsMatch.
           const heroState = team.heroes[hero.id] ?? {
-            hp: hero.baseHp,
+            hp: startingHeroHp(hero.baseHp),
             level: HERO_STARTING_LEVEL,
           };
           return (

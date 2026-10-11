@@ -29,9 +29,9 @@ function baseState(): BattleState {
 }
 
 describe("createInitialBattleState", () => {
-  it("seeds each hero's hp from their own baseHp, not a flat default", () => {
+  it("seeds each hero's hp as their own baseHp + starting level, not a flat default", () => {
     const state = createInitialBattleState([HERO_A], []);
-    expect(state.p1.heroes[HERO_A.id]).toEqual({ hp: HERO_A.baseHp, level: 1 });
+    expect(state.p1.heroes[HERO_A.id]).toEqual({ hp: HERO_A.baseHp + 1, level: 1 });
   });
 
   it("seeds gold and structures at the intent-02 starting values", () => {
@@ -103,7 +103,7 @@ describe("battleReducer", () => {
       type: "SET_HERO_HP",
       side: "p1",
       heroId: HERO_A.id,
-      value: HERO_A.baseHp,
+      value: HERO_A.baseHp + 1,
     });
     expect(next).toBe(state);
   });

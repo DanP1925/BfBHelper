@@ -65,14 +65,14 @@ describe("useBattle", () => {
     expect(result.current.winner).toBeNull();
   });
 
-  it("builds and persists a fresh state from each hero's baseHp when nothing is persisted", () => {
+  it("builds and persists a fresh state from each hero's starting HP when nothing is persisted", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
 
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
-      hp: HERO_A.baseHp,
+      hp: HERO_A.baseHp + 1,
       level: 1,
     });
-    expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp);
+    expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
 
   it("hydrates a matching persisted state verbatim instead of rebuilding fresh", () => {
@@ -92,7 +92,7 @@ describe("useBattle", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B]));
 
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
-      hp: HERO_A.baseHp,
+      hp: HERO_A.baseHp + 1,
       level: 1,
     });
   });

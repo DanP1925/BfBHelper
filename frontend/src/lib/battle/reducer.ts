@@ -1,5 +1,12 @@
 import type { Hero, HeroId, PlayerId } from "../draft/types";
-import { clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
+import {
+  clampGold,
+  clampGoldPile,
+  clampHeroHp,
+  clampHeroLevel,
+  clampStructureHp,
+  startingHeroHp,
+} from "./bounds";
 import {
   BIT_STARTING_HP,
   HERO_STARTING_LEVEL,
@@ -108,13 +115,12 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 }
 
 function createInitialTeamState(heroes: Hero[]): BattleTeamState {
-  // Clamped through clampHeroHp like every other write path in this file,
-  // even though every current hero's baseHp is already under the ceiling
-  // — without this, a future hero with baseHp > HERO_HP_CEILING would
-  // create a battle state that loadBattleState's own validator would then
-  // reject as corrupt on the very next reload.
+  // startingHeroHp clamps like every other write path in this file —
+  // without that, a future hero whose starting HP exceeds HERO_HP_CEILING
+  // would create a battle state that loadBattleState's own validator would
+  // then reject as corrupt on the very next reload.
   const heroEntries = heroes.map(
-    (hero) => [hero.id, { hp: clampHeroHp(hero.baseHp), level: HERO_STARTING_LEVEL }] as const,
+    (hero) => [hero.id, { hp: startingHeroHp(hero.baseHp), level: HERO_STARTING_LEVEL }] as const,
   );
 
   return {
@@ -134,7 +140,8 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
 }
 
 /** Builds a fresh `BattleState` from each side's drafted heroes — each
- * hero's starting HP comes from their own `baseHp`, not a flat default;
+ * hero's starting HP is their own `baseHp` + starting level, not a flat
+ * default;
  * every hero starts in its team's respawn area, and every gold pile
  * starts full. */
 export function createInitialBattleState(p1Heroes: Hero[], p2Heroes: Hero[]): BattleState {

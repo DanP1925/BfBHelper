@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { clamp, clampGold, clampGoldPile, clampHeroHp, clampHeroLevel, clampStructureHp } from "./bounds";
+import {
+  clamp,
+  clampGold,
+  clampGoldPile,
+  clampHeroHp,
+  clampHeroLevel,
+  clampStructureHp,
+  startingHeroHp,
+} from "./bounds";
 import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "./constants";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 
@@ -44,6 +52,16 @@ describe("clampHeroHp", () => {
     [99, HERO_HP_CEILING],
   ])("clampHeroHp(%d) -> %d", (value, expected) => {
     expect(clampHeroHp(value)).toBe(expected);
+  });
+});
+
+describe("startingHeroHp", () => {
+  it.each([
+    [10, 11],
+    [HERO_HP_CEILING - 1, HERO_HP_CEILING],
+    [HERO_HP_CEILING, HERO_HP_CEILING],
+  ])("startingHeroHp(%d) -> %d", (baseHp, expected) => {
+    expect(startingHeroHp(baseHp)).toBe(expected);
   });
 });
 

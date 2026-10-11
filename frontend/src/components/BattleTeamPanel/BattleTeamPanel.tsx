@@ -5,6 +5,7 @@ import {
   TOWER_SLOTS,
   TOWER_STARTING_HP,
 } from "../../lib/battle/constants";
+import { startingHeroHp } from "../../lib/battle/bounds";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, StructuresState } from "../../lib/battle/types";
 import { HeroCard } from "../HeroCard/HeroCard";
@@ -57,7 +58,7 @@ export function BattleTeamPanel({
           // it at hydrate time), but degrading gracefully beats a thrown
           // error if that invariant is ever violated post-hydration.
           const heroState = team.heroes[hero.id] ?? {
-            hp: hero.baseHp,
+            hp: startingHeroHp(hero.baseHp),
             level: HERO_STARTING_LEVEL,
           };
           return (
