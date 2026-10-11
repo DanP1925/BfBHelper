@@ -29,14 +29,20 @@ This phase covers only:
   heroes were drafted.
 - **Shown and edited on the Battle Board.** The Board is where each
   hero's count lives and where players change it, next to HP and level.
-  - The control is a **compact token chip** (e.g. "⚔ +1 ×2") with small
-    − and + buttons and no direct numeric entry. It's smaller than the
+  - The control is a **compact token chip**: a swords icon plus the
+    count (e.g. "⚔ ×2"), with no "+1" label since +1 Attack is the only
+    attack token. It has no direct numeric entry. It's smaller than the
     HP and level steppers and reads as a token rather than a stat, which
     leaves room on the card for later tokens.
-  - **At 0, only a small "+" shows.** From 1 up, the chip shows the
-    count with − and +. Once more token types exist, revisit hiding the
-    control entirely at 0 (e.g. adding tokens from a tap on the hero
-    card) to cut clutter further.
+  - **Collapsed by default.** At 0 it's a muted swords icon, and from 1
+    up it's a gold icon with the count, so counts read at a glance.
+  - **Tapping the icon expands it** with a short animation to show − and
+    + (decided 2026-10-11). Tapping the icon again, tapping anywhere
+    else, or pressing Escape collapses it. Only one hero's chip is open
+    at a time: opening another closes the first.
+  - Once more token types exist, revisit hiding the control entirely at
+    0 (e.g. adding tokens from a tap on the hero card) to cut clutter
+    further.
   - **Always editable,** including when the hero is at 0 HP or in the
     respawn area. Tokens stay on defeat, and as in intent 03 the app
     never blocks a value from changing.
@@ -44,6 +50,11 @@ This phase covers only:
   optional. It's added only if it fits without crowding the board or
   the hero tokens on the 13.3" laptop. If it doesn't fit, the Map shows
   nothing and players check the Board.
+  - **Where (decided 2026-10-11):** in the team status panel, on its own
+    line under the hero's name (e.g. "⚔2"), shown only when the count is
+    above 0. The line leaves room for later token icons. Counts never go
+    on the hero tokens on the board, which already cluster when heroes
+    share a space. Display only.
 - **Manual only.** Players add and remove tokens by hand. The app never
   removes them on its own: not at the end of an activation, not on Stun,
   not on defeat. This is the same manual-tracker approach as intents
@@ -91,8 +102,8 @@ alongside the physical cards.
   placement are a spec/design decision. It has to fit next to the existing HP and
   level steppers without crowding them.
 - **Battle Map (optional).** No change unless there's space. If there
-  is, it only displays the count (e.g. a small badge on the `MapToken`
-  or in the `MapTeamStatusPanel`). It never edits it.
+  is, it only displays the count, in the `MapTeamStatusPanel` (see
+  Scope). It never edits it.
 - **Shared token pattern.** Confuse and Immobilize (and later the
   hero-specific tokens) will need space on the Board's hero cards too.
   The design for +1 Attack should leave room for more tokens next to
@@ -142,9 +153,3 @@ alongside the physical cards.
   read the same state.
 - A hero being defeated (HP to 0) or respawning doesn't clear its
   tokens. Players clear them by hand if the rules call for it.
-
-## Open Questions
-To settle before (or while) writing `specs/06_attack-tokens.md`:
-- **Is there room on the Map?** Decided in the spec/design: if a badge
-  on the hero's map token or an entry in the team status panel fits on
-  the 13.3" laptop, show it there; if not, leave the Map unchanged.
