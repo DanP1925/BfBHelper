@@ -2,29 +2,53 @@
 
 A companion web app for players of *Battle for Biternia*, a physical
 tabletop board game. The goal: a group should be able to play a full game
-with just the physical cards — everything else (draft order, life/level
-tracking, and any other non-card bookkeeping) is handled by this app. v1
-works toward that with two recurring pain points during play:
+with just the physical cards. Everything else (draft order, HP/level, gold,
+structures, positions on the board, initiative, tokens) is tracked by this
+app.
 
-1. **Hero Draft Picker** — walks two players through the game's official
-   2-player draft order (asymmetric, no bans) so it's set up correctly. Both
-   players share a single device/browser; draft state persists across
-   reloads via `localStorage`, no backend needed. Scoped in
-   [intent/01_hero-draft-picker.md](./intent/01_hero-draft-picker.md) /
-   [specs/01_hero-draft-picker.md](./specs/01_hero-draft-picker.md).
-2. **Life/Level Displayer** — a live scoreboard of each hero's current life
-   and level during a match. Also part of v1; its own intent/spec docs
-   haven't been written yet.
+Live at **https://bf-b-helper.vercel.app/**. Current version: see
+`"version"` in [`frontend/package.json`](./frontend/package.json).
 
-The 3-4 player variant is deferred to a later phase, after v1 (2-player)
-covers both features above.
+## Features
+
+All features target the 2-player game on a single shared device; state
+persists across reloads via `localStorage`, no backend needed.
+
+| # | Feature | Status |
+|---|---|---|
+| 01 | **Hero Draft Picker**: walks both players through the official 2-player draft order (asymmetric, no bans), after a coin flip for initiative. | Shipped (v0.1.0) |
+| 02 | **Battle Board**: both teams side by side, with their drafted heroes, 3 Towers, 1 Bit and gold. | Shipped (v0.2.0) |
+| 03 | **Battle Controls**: ±1 taps and direct entry for gold, hero HP/level and structure HP. | Shipped (v0.3.0) |
+| 04 | **Battle Map**: the shared game board, with draggable hero tokens, zoom/pan, and gold piles. | Shipped (v0.4.0) |
+| 05 | **Initiative Indicator**: a badge on both battle screens; tap it to pass initiative each round. | Shipped (v0.5.0) |
+| 06 | **+1 Attack tokens**: a per-hero token count. | Scoped |
+
+Each feature has an intent ([`intent/`](./intent)), a spec
+([`specs/`](./specs)) and a build checklist ([`plan/`](./plan)), all named
+`NN_feature-name.md`. Ideas and playtest feedback not yet scoped live in
+[`BACKLOG.md`](./BACKLOG.md); finishing it marks **v1.0.0**. The 3-4 player
+variant is deferred until after that.
 
 ## Structure
 
-- `frontend/` — React + TypeScript client.
-- `backend/` — placeholder; not needed for the Hero Draft Picker (single
-  device, client-side state only), but may be needed for the Life/Level
-  Displayer depending on how that feature is scoped.
+- `frontend/`: Next.js (App Router) + TypeScript client, statically
+  exported. Vitest for unit tests, Playwright for e2e. See
+  [`frontend/README.md`](./frontend/README.md) for scripts and deployment.
+- `backend/`: placeholder, not needed so far.
+- `intent/`, `specs/`, `plan/`: per-feature docs (see above).
 
-Both are placeholders pending scaffolding — see the design/spec work for
-stack decisions.
+## Getting started
+
+```sh
+cd frontend
+npm install
+npm run dev        # local dev server
+npm test           # Vitest
+npm run test:e2e   # Playwright
+```
+
+## Contributing
+
+See [`CLAUDE.md`](./CLAUDE.md) for the git workflow (branch + PR, Conventional
+Commits), Semantic Versioning rules and testing conventions. Enable the
+versioned git hooks once per clone with `git config core.hooksPath .githooks`.
