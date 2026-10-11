@@ -39,7 +39,7 @@ Ken Obi.
   of the hero's next activation or when it's stunned, and stay if the hero who
   placed them is defeated. Needs per-hero counts (2+), on allies too.
   Scoped in `intent/06_attack-tokens.md`.
-- [ ] **Confuse tokens.** Not tracked anywhere; needed even by the heroes
+- [x] **Confuse tokens.** Not tracked anywhere; needed even by the heroes
   played in this game. Per the rulebook, in the next round's Orders Phase a
   confused hero is assigned the top action-deck card instead of one from the
   hand, then the token is removed. It doesn't affect activation in the round

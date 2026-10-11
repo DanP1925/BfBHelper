@@ -28,7 +28,9 @@ import {
   type LegacyBattleTeamStateV2,
   type PersistedBattleStateV2,
   type PersistedBattleStateV3,
+  type LegacyBattleTeamStateV4,
   type PersistedBattleStateV4,
+  type PersistedBattleStateV5,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -120,13 +122,13 @@ function upgradeV3ToV4(data: unknown): PersistedBattleStateV4 | null {
   if (typeof data !== "object" || data === null) return null;
   const candidate = data as Record<string, unknown>;
 
-  const upgradeTeam = (team: unknown): BattleTeamState | null => {
+  const upgradeTeam = (team: unknown): LegacyBattleTeamStateV4 | null => {
     if (typeof team !== "object" || team === null) return null;
     const t = team as LegacyBattleTeamStateV2;
     if (typeof t.heroes !== "object" || t.heroes === null) return null;
     const heroes = Object.fromEntries(
       Object.entries(t.heroes).map(([heroId, hero]) => [heroId, { ...hero, attackTokens: 0 }]),
-    ) as BattleTeamState["heroes"];
+    ) as LegacyBattleTeamStateV4["heroes"];
     return { ...t, heroes };
   };
 
@@ -144,6 +146,39 @@ function upgradeV3ToV4(data: unknown): PersistedBattleStateV4 | null {
 }
 
 /**
+ * Upgrades a schema-4 battle payload to schema 5 by adding
+ * `confused: false` to every hero on both sides (intent/07: "upgrades in
+ * place", every hero unconfused). Everything else passes through
+ * unchanged; the current-shape validator checks it afterward.
+ */
+function upgradeV4ToV5(data: unknown): PersistedBattleStateV5 | null {
+  if (typeof data !== "object" || data === null) return null;
+  const candidate = data as Record<string, unknown>;
+
+  const upgradeTeam = (team: unknown): BattleTeamState | null => {
+    if (typeof team !== "object" || team === null) return null;
+    const t = team as LegacyBattleTeamStateV4;
+    if (typeof t.heroes !== "object" || t.heroes === null) return null;
+    const heroes = Object.fromEntries(
+      Object.entries(t.heroes).map(([heroId, hero]) => [heroId, { ...hero, confused: false }]),
+    ) as BattleTeamState["heroes"];
+    return { ...t, heroes };
+  };
+
+  const p1 = upgradeTeam(candidate.p1);
+  const p2 = upgradeTeam(candidate.p2);
+  if (p1 === null || p2 === null) return null;
+
+  return {
+    ...(data as PersistedBattleStateV4),
+    schemaVersion: 5,
+    p1,
+    p2,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
  * current one, so a schema bump adds just one entry.
@@ -152,6 +187,7 @@ const battleMigrations: MigrationSteps = {
   1: upgradeV1ToV2,
   2: upgradeV2ToV3,
   3: upgradeV3ToV4,
+  4: upgradeV4ToV5,
 };
 
 function isBrowser(): boolean {
@@ -303,7 +339,8 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * belongs to `useBattle`'s `heroIdSetsMatch`, which has the draft to
  * compare against): gold is non-negative, each structure is within its
  * own floor/ceiling, every `heroes` entry has a real hero id with hp/level/
- * attackTokens each within bounds, and every one of those hero ids also
+ * attackTokens each within bounds and a boolean `confused`, and every one
+ * of those hero ids also
  * has a `heroPositions` entry that's either `null` or a real map-space id.
  */
 function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
@@ -319,6 +356,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   for (const [heroId, heroValue] of Object.entries(heroes)) {
     const hv = heroValue as Record<string, unknown>;
     if (!isNumberInRange(hv.attackTokens, 0, HERO_ATTACK_TOKEN_CEILING)) return false;
+    if (typeof hv.confused !== "boolean") return false;
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
     if (position !== null && !isMapSpaceIdLike(position)) return false;
@@ -327,7 +365,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV4 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV5 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -505,7 +543,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV4 = {
+  const payload: PersistedBattleStateV5 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -534,7 +572,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,

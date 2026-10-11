@@ -106,13 +106,14 @@ describe("useBattle", () => {
       hp: HERO_A.baseHp + 1,
       level: 1,
       attackTokens: 0,
+      confused: false,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
 
   it("hydrates a matching persisted state verbatim instead of rebuilding fresh", () => {
     const persisted = createInitialBattleState([HERO_A], [HERO_B], "p1");
-    persisted.p1.heroes[HERO_A.id] = { hp: 2, level: 3, attackTokens: 4 };
+    persisted.p1.heroes[HERO_A.id] = { hp: 2, level: 3, attackTokens: 4, confused: true };
     saveBattleState(persisted);
 
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
@@ -121,6 +122,7 @@ describe("useBattle", () => {
       hp: 2,
       level: 3,
       attackTokens: 4,
+      confused: true,
     });
   });
 
@@ -134,6 +136,7 @@ describe("useBattle", () => {
       hp: HERO_A.baseHp + 1,
       level: 1,
       attackTokens: 0,
+      confused: false,
     });
   });
 
@@ -197,6 +200,39 @@ describe("useBattle", () => {
     });
 
     expect(result.current.state?.p1.heroes[HERO_A.id].attackTokens).toBe(2);
+  });
+
+  it("setHeroConfused persists the flag, which survives a reload and can be turned off", () => {
+    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroConfused("p2", HERO_B.id, true);
+    });
+    expect(result.current.state?.p2.heroes[HERO_B.id].confused).toBe(true);
+    expect(result.current.state?.p1.heroes[HERO_A.id].confused).toBe(false);
+    expect(readRawState().p2.heroes[HERO_B.id].confused).toBe(true);
+    unmount();
+
+    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+    expect(reloaded.current.state?.p2.heroes[HERO_B.id].confused).toBe(true);
+
+    act(() => {
+      reloaded.current.setHeroConfused("p2", HERO_B.id, false);
+    });
+    expect(reloaded.current.state?.p2.heroes[HERO_B.id].confused).toBe(false);
+    expect(readRawState().p2.heroes[HERO_B.id].confused).toBe(false);
+  });
+
+  it("setHeroHp to 0 and passInitiative keep the hero confused", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroConfused("p1", HERO_A.id, true);
+      result.current.setHeroHp("p1", HERO_A.id, 0);
+      result.current.passInitiative();
+    });
+
+    expect(result.current.state?.p1.heroes[HERO_A.id].confused).toBe(true);
   });
 
   it("derives winner from live state and clears it once Bit HP is raised back above 0", () => {

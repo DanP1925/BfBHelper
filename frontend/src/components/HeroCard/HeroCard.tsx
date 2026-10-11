@@ -8,6 +8,8 @@ import {
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { TokenChip } from "../TokenChip/TokenChip";
+import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
+import { TokenToggle } from "../TokenToggle/TokenToggle";
 import styles from "./HeroCard.module.css";
 
 type HeroCardCommonProps = {
@@ -42,6 +44,9 @@ type HeroCardProps =
        * is provided (the Battle Board), so the Win Screen's cards stay as
        * they are. */
       attackTokens?: HeroCardTokenProps;
+      /** Confuse token (intent/07), shown after the +1 Attack chip. Like
+       * `attackTokens`, only the Battle Board passes it. */
+      confused?: HeroCardToggleProps;
     });
 
 /** One counted token's value, setter and open state, passed all together
@@ -51,6 +56,12 @@ export type HeroCardTokenProps = {
   onChange: (value: number) => void;
   expanded: boolean;
   onExpandedChange: (next: boolean) => void;
+};
+
+/** One on/off token's value and setter. */
+export type HeroCardToggleProps = {
+  on: boolean;
+  onChange: (next: boolean) => void;
 };
 
 export function HeroCard(props: HeroCardProps) {
@@ -72,7 +83,7 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { hp, level, onHpChange, onLevelChange, attackTokens } = props;
+    const { hp, level, onHpChange, onLevelChange, attackTokens, confused } = props;
     const isDefeated = hp === 0;
     return (
       <div className={styles.battleCard}>
@@ -145,15 +156,26 @@ export function HeroCard(props: HeroCardProps) {
               </>
             )}
           </div>
-          {attackTokens && (
+          {(attackTokens || confused) && (
             <div className={styles.tokenRow}>
-              <TokenChip
-                {...attackTokens}
-                max={HERO_ATTACK_TOKEN_CEILING}
-                icon={<AttackTokenIcon size={12} />}
-                label="+1 Attack"
-                heroName={hero.name}
-              />
+              {attackTokens && (
+                <TokenChip
+                  {...attackTokens}
+                  max={HERO_ATTACK_TOKEN_CEILING}
+                  icon={<AttackTokenIcon size={12} />}
+                  label="+1 Attack"
+                  heroName={hero.name}
+                />
+              )}
+              {confused && (
+                <TokenToggle
+                  {...confused}
+                  icon={<ConfuseTokenIcon size={12} />}
+                  label="Confuse"
+                  heroName={hero.name}
+                  accent="var(--color-confuse)"
+                />
+              )}
             </div>
           )}
         </div>

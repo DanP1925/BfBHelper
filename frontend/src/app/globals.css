@@ -16,6 +16,9 @@
   --color-slot-empty-label: #5c5142;
 
   --color-hp: #e0564a;
+  /* The rulebook's purple Confuse token, lightened for the dark panels
+   * (intent/07). */
+  --color-confuse: #c06ad0;
 
   --background: var(--color-bg);
   --foreground: var(--color-text);

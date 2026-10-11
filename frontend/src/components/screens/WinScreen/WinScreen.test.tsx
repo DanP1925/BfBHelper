@@ -20,13 +20,13 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling"), makeHero("felix", "F
 
 function makeBattleState(): BattleState {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     initiative: "p1",
     p1: {
       gold: 5,
       heroes: {
-        boreas: { hp: 10, level: 2, attackTokens: 0 },
-        caligar: { hp: 0, level: 1, attackTokens: 0 },
+        boreas: { hp: 10, level: 2, attackTokens: 0, confused: false },
+        caligar: { hp: 0, level: 1, attackTokens: 0, confused: false },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
       heroPositions: { boreas: null, caligar: null },
@@ -34,8 +34,8 @@ function makeBattleState(): BattleState {
     p2: {
       gold: 3,
       heroes: {
-        sterling: { hp: 7, level: 3, attackTokens: 0 },
-        felix: { hp: 9, level: 1, attackTokens: 0 },
+        sterling: { hp: 7, level: 3, attackTokens: 0, confused: false },
+        felix: { hp: 9, level: 1, attackTokens: 0, confused: false },
       },
       structures: { top: 11, middle: 0, bottom: 11, bit: 0 },
       heroPositions: { sterling: null, felix: null },
@@ -57,6 +57,20 @@ describe("WinScreen", () => {
     );
     expect(screen.getByText("Player 1 Wins!")).toBeInTheDocument();
     expect(screen.getByText("Winner")).toBeInTheDocument();
+  });
+
+  it("shows no token controls on the cards (intents 06-07)", () => {
+    render(
+      <WinScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={makeBattleState()}
+        winner="p1"
+        onNewDraft={() => {}}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /^Confuse token on / })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+1 Attack token/ })).not.toBeInTheDocument();
   });
 
   it("renders a 'Player 2 Wins!' heading when p2 wins", () => {

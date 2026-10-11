@@ -14,6 +14,10 @@ export type HeroBattleState = {
   /** +1 Attack tokens on this hero (intent/06). 0..HERO_ATTACK_TOKEN_CEILING,
    * changed only by hand: never cleared on defeat, respawn or a new round. */
   attackTokens: number;
+  /** A Confuse token on this hero (intent/07). On/off, not a count:
+   * the rules give one top-of-deck card however many are stacked.
+   * Changed only by hand: never cleared on defeat, respawn or a new round. */
+  confused: boolean;
 };
 
 export type BattleTeamState = {
@@ -27,7 +31,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 4;
+  schemaVersion: 5;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

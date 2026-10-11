@@ -4,6 +4,7 @@ import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState } from "../../lib/battle/types";
 import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { tokenCountLabel } from "../TokenChip/TokenChip";
+import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
 import styles from "./MapTeamStatusPanel.module.css";
 
 type MapTeamStatusPanelProps = {
@@ -44,7 +45,8 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Heroes</div>
         {heroes.map((hero) => {
-          const { hp, attackTokens } = team.heroes[hero.id] ?? createInitialHeroState(hero);
+          const { hp, attackTokens, confused } =
+            team.heroes[hero.id] ?? createInitialHeroState(hero);
           const isDefeated = hp === 0;
           return (
             <div
@@ -64,17 +66,26 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                 </svg>
                 {hp}
               </span>
-              {/* Read-only token line (intent/06), only above 0. Its own
-                  line inside the row, so later tokens can sit beside it,
-                  names never truncate for it, and `.dimmed` covers it. */}
-              {attackTokens > 0 && (
-                <span
-                  className={styles.tokenLine}
-                  aria-label={tokenCountLabel(attackTokens, "+1 Attack")}
-                  title="+1 Attack tokens"
-                >
-                  <AttackTokenIcon size={13} />
-                  {attackTokens}
+              {/* Read-only token line (intents 06-07), only while the hero
+                  holds a token. Its own line inside the row, so names
+                  never truncate for it, and `.dimmed` covers it. */}
+              {(attackTokens > 0 || confused) && (
+                <span className={styles.tokenLine}>
+                  {attackTokens > 0 && (
+                    <span
+                      className={styles.attackTokens}
+                      aria-label={tokenCountLabel(attackTokens, "+1 Attack")}
+                      title="+1 Attack tokens"
+                    >
+                      <AttackTokenIcon size={13} />
+                      {attackTokens}
+                    </span>
+                  )}
+                  {confused && (
+                    <span className={styles.confused} aria-label="Confused" title="Confuse token">
+                      <ConfuseTokenIcon size={13} />
+                    </span>
+                  )}
                 </span>
               )}
             </div>

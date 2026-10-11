@@ -21,20 +21,20 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     initiative: "p1",
     p1: {
       gold: 0,
       heroes: {
-        boreas: { hp: 10, level: 1, attackTokens: 0 },
-        caligar: { hp: 0, level: 1, attackTokens: 0 },
+        boreas: { hp: 10, level: 1, attackTokens: 0, confused: false },
+        caligar: { hp: 0, level: 1, attackTokens: 0, confused: false },
       },
       structures: { top: 11, middle: 11, bottom: 0, bit: 16 },
       heroPositions: { boreas: MAP_SPACE_IDS[0], caligar: null },
     },
     p2: {
       gold: 0,
-      heroes: { sterling: { hp: 8, level: 1, attackTokens: 0 } },
+      heroes: { sterling: { hp: 8, level: 1, attackTokens: 0, confused: false } },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
       heroPositions: { sterling: null },
     },
@@ -105,7 +105,10 @@ describe("BattleMapScreen", () => {
           ...base,
           p1: {
             ...base.p1,
-            heroes: { ...base.p1.heroes, caligar: { hp: 0, level: 1, attackTokens: 2 } },
+            heroes: {
+              ...base.p1.heroes,
+              caligar: { hp: 0, level: 1, attackTokens: 2, confused: false },
+            },
           },
         }}
         winner={null}
@@ -121,6 +124,45 @@ describe("BattleMapScreen", () => {
     // Only Caligar has tokens, and a defeated hero keeps them (intent/06).
     expect(screen.getAllByLabelText(/\+1 Attack token/)).toHaveLength(1);
     expect(screen.getByLabelText("2 +1 Attack tokens")).toBeInTheDocument();
+  });
+
+  it("shows a hero's Confuse token in the status panel only while confused", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: {
+              ...base.p1.heroes,
+              caligar: { hp: 0, level: 1, attackTokens: 2, confused: true },
+            },
+          },
+          p2: {
+            ...base.p2,
+            heroes: {
+              ...base.p2.heroes,
+              sterling: { hp: 8, level: 1, attackTokens: 0, confused: true },
+            },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    // Caligar holds both tokens on one line; Sterling, with no +1 Attack
+    // tokens, still gets a token line for Confuse alone. Boreas has neither.
+    expect(screen.getAllByLabelText("Confused")).toHaveLength(2);
+    expect(screen.getAllByLabelText(/\+1 Attack token/)).toHaveLength(1);
   });
 
   it('shows "End Battle" in the menu only once a winner exists', () => {
@@ -246,12 +288,12 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 4,
+      schemaVersion: 5,
       initiative: "p1",
       p1: {
         gold: 0,
         heroes: Object.fromEntries(
-          crowdedHeroes.map((h) => [h.id, { hp: 10, level: 1, attackTokens: 0 }]),
+          crowdedHeroes.map((h) => [h.id, { hp: 10, level: 1, attackTokens: 0, confused: false }]),
         ),
         structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
         heroPositions: Object.fromEntries(crowdedHeroes.map((h) => [h.id, sharedSpace])),

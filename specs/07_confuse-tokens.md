@@ -146,7 +146,8 @@
   "Shared token pattern":
   - Props: `on: boolean`, `onChange: (next: boolean) => void`,
     `icon: ReactNode`, `label: string` (the token's name for aria and the
-    tooltip, e.g. `"Confuse"`), `heroName: string`. No `expanded` props:
+    tooltip, e.g. `"Confuse"`), `heroName: string`, `accent: string`
+    (see "Accent color" below). No `expanded` props:
     there's no expand step (intent's Scope, decided 2026-10-11).
   - One `<button>`. A tap calls `onChange(!on)`.
   - **Off:** a muted icon (`--color-muted`) with no border or fill, the
@@ -265,12 +266,23 @@ No change from v1-v6: same static Vercel deployment, no new infra.
   **Decided:** purple, `--color-confuse` `#c06ad0` (App Flow version 57).
   The BACKLOG's "Revisit every token's display" item reviews it again
   once Immobilize exists.
-- `ConfuseTokenIcon` drawing: the mockup's "?" with sparkles. Check it
-  reads at 12px in the browser.
-- Shared pill CSS (`tokenPill.module.css`) vs a copy in
-  `TokenToggle.module.css`.
-- Check the Board at 1280x800 with a chip expanded next to a lit toggle
-  on every hero: the token row should stay one line.
-- Check the Map at 1280x800 with all eight heroes holding both +1 Attack
+- ~~`ConfuseTokenIcon` drawing: the mockup's "?" with sparkles. Check it
+  reads at 12px in the browser.~~
+  **Decided:** the mockup's drawing as is. The "?" and sparkles read at
+  12px on the Board and 13px on the Map.
+- ~~Shared pill CSS (`tokenPill.module.css`) vs a copy in
+  `TokenToggle.module.css`.~~
+  **Decided:** a copy. The overlap is about six declarations, and the
+  chip is a `div` around a button with animated controls while the toggle
+  is one button. Routing the chip's always-gold accent through
+  `--token-accent` risked drift for little saved code. `TokenChip` is
+  unchanged.
+- ~~Check the Board at 1280x800 with a chip expanded next to a lit toggle
+  on every hero: the token row should stay one line.~~
+  **Decided:** fits. The lit toggle is ~24px, not ~22px. With a ×9 chip
+  expanded the row uses ~105px of 144px, and the Board doesn't scroll.
+- ~~Check the Map at 1280x800 with all eight heroes holding both +1 Attack
   tokens and Confuse: the token line should stay one line in the 170px
-  panel.
+  panel.~~
+  **Decided:** fits. Every token line stays one line and the page doesn't
+  scroll.
