@@ -12,7 +12,10 @@
 
 ## Versioning
 - Semantic Versioning. The source of truth is `"version"` in `frontend/package.json`
-  (keep `frontend/package-lock.json` in sync). Bump it in the PR that ships the change.
+  (keep `frontend/package-lock.json` in sync). Bump it in the PR that ships the change
+  with `cd frontend && npm version patch --no-git-tag-version` (or `minor`), which
+  updates both files. The `Version check` workflow fails a PR whose title type needs
+  a bump but whose `frontend/` changes left the version unchanged.
 - Pre-1.0 bump rules:
   - **Minor** (`0.X.0`): an intent is completed. If an intent spans several PRs,
     bump in the one that finishes it.
@@ -20,8 +23,8 @@
     new intent.
   - **No bump**: `docs:`, `chore:`, `ci:` or `test:`-only changes.
 - **1.0.0** = everything in `BACKLOG.md` is done.
-- After the PR merges, tag the merged commit on `main` with an annotated
-  `vX.Y.Z` tag. Pushing the tag needs confirmation, like any push.
+- After the PR merges, the `Tag release` workflow tags the merged commit on `main`
+  with an annotated `vX.Y.Z` tag (if that tag doesn't exist yet). Don't tag by hand.
 - Past intents were tagged after the fact: `v0.1.0`–`v0.3.0` for intents 01–03,
   and `v0.4.0` for intent 04, together with this scheme.
 
