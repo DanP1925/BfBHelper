@@ -42,6 +42,14 @@
   gap: 20px;
 }
 
+/* Board with the gold piles bar directly under it. */
+.boardColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
 /* Status panel on top, respawn area below it (per the mockup) — one
    narrow column per side, so the board gets the width. */
 .sideGroup {
