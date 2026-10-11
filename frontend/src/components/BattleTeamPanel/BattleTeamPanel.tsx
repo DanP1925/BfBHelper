@@ -18,7 +18,12 @@ type BattleTeamPanelProps = {
   onGoldChange: (value: number) => void;
   onHeroHpChange: (heroId: HeroId, value: number) => void;
   onHeroLevelChange: (heroId: HeroId, value: number) => void;
+  onHeroAttackTokensChange: (heroId: HeroId, value: number) => void;
   onStructureHpChange: (slot: keyof StructuresState, value: number) => void;
+  /** Which token chip on the Board is open, owned by `BattleBoardScreen` so
+   * opening one in this panel closes any open in the other (intent/06). */
+  openTokenKey: string | null;
+  onOpenTokenKeyChange: (key: string | null) => void;
 };
 
 export function BattleTeamPanel({
@@ -29,7 +34,10 @@ export function BattleTeamPanel({
   onGoldChange,
   onHeroHpChange,
   onHeroLevelChange,
+  onHeroAttackTokensChange,
   onStructureHpChange,
+  openTokenKey,
+  onOpenTokenKeyChange,
 }: BattleTeamPanelProps) {
   return (
     <div className={styles.panel}>
@@ -55,6 +63,8 @@ export function BattleTeamPanel({
           // it at hydrate time), but degrading gracefully beats a thrown
           // error if that invariant is ever violated post-hydration.
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
+          // Per token type, so later tokens on the same hero get their own key.
+          const attackTokenKey = `${side}:${hero.id}:attack`;
           return (
             <HeroCard
               key={hero.id}
@@ -64,6 +74,12 @@ export function BattleTeamPanel({
               level={heroState.level}
               onHpChange={(value) => onHeroHpChange(hero.id, value)}
               onLevelChange={(value) => onHeroLevelChange(hero.id, value)}
+              attackTokens={{
+                count: heroState.attackTokens,
+                onChange: (value) => onHeroAttackTokensChange(hero.id, value),
+                expanded: openTokenKey === attackTokenKey,
+                onExpandedChange: (open) => onOpenTokenKeyChange(open ? attackTokenKey : null),
+              }}
             />
           );
         })}

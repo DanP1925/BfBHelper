@@ -216,6 +216,16 @@
   padding-left: 2px;
 }
 
+/* Counted tokens (intent/06). Its own row under the level row, so an
+   expanding chip never pushes the level controls around, and later tokens
+   (Confuse, Immobilize) can sit beside it and wrap. */
+.tokenRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
 .levelLabel {
   font-size: 10px;
   font-weight: 600;

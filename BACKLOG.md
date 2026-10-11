@@ -33,7 +33,7 @@ Ken Obi.
   Fix only the starting HP. Keep the flat 15 HP ceiling and the manual HP
   bump on level-up as they are (decided 2026-10-10). *Size: small fix PR.*
   Done in `fix/starting-hp-plus-level` (v0.4.2).
-- [ ] **+1 Attack tokens.** Not tracked anywhere; needed even by the heroes
+- [x] **+1 Attack tokens.** Not tracked anywhere; needed even by the heroes
   played in this game (e.g. Caligar's power card gives two). Per the rulebook,
   each token adds 1 to all of that hero's attacks; they're removed at the end
   of the hero's next activation or when it's stunned, and stay if the hero who

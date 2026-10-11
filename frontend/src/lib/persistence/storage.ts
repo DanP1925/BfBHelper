@@ -10,6 +10,7 @@ import type { DraftState, HeroId, PlayerId } from "../draft/types";
 import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
   BIT_STARTING_HP,
+  HERO_ATTACK_TOKEN_CEILING,
   HERO_HP_CEILING,
   HERO_MAX_LEVEL,
   HERO_STARTING_LEVEL,
@@ -24,8 +25,10 @@ import {
   STORAGE_KEY,
   VIEW_STORAGE_KEY,
   type LegacyBattleTeamStateV1,
+  type LegacyBattleTeamStateV2,
   type PersistedBattleStateV2,
   type PersistedBattleStateV3,
+  type PersistedBattleStateV4,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -36,12 +39,19 @@ const KNOWN_HERO_IDS = new Set<string>(HERO_IDS);
 const KNOWN_MAP_SPACE_IDS = new Set<string>(MAP_SPACE_IDS);
 
 /**
- * Migrations from an older schema version to the current one. Empty for
- * now — schema v1 is the only version that has ever existed, so any older
- * version encountered at load time has no migration path and is treated as
- * corrupt.
+ * One-step migrations, keyed by the version each one upgrades from (see
+ * `MigrationSteps`). Empty for now — schema v1 is the only version that
+ * has ever existed, so any older version encountered at load time has no
+ * migration path and is treated as corrupt.
  */
-const migrations: Record<number, (data: unknown) => PersistedDraftV1 | null> = {};
+const migrations: MigrationSteps = {};
+
+/** Single-version upgrade steps, keyed by the schema version each one
+ * upgrades *from*. `loadPersisted` chains them up to the current version;
+ * a step returns `null` when the payload can't be migrated. The current
+ * version's validator checks the end result, so intermediate shapes stay
+ * `unknown` here. */
+type MigrationSteps = Record<number, (data: unknown) => unknown>;
 
 /**
  * Upgrades a schema-1 battle payload (no `heroPositions`/`goldPiles`) to
@@ -60,7 +70,7 @@ function upgradeV1ToV2(data: unknown): PersistedBattleStateV2 | null {
     return null;
   }
 
-  const upgradeTeam = (team: LegacyBattleTeamStateV1): BattleTeamState => ({
+  const upgradeTeam = (team: LegacyBattleTeamStateV1): LegacyBattleTeamStateV2 => ({
     ...team,
     heroPositions: seedHeroPositions(Object.keys(team.heroes) as HeroId[]) as Record<
       HeroId,
@@ -101,17 +111,47 @@ function upgradeV2ToV3(data: unknown): PersistedBattleStateV3 | null {
 }
 
 /**
- * Same idea as `migrations` above, for the battle-state payload.
- * `loadPersisted` runs exactly one migration step, so each entry must land
- * on the current schema: `[1]` composes both upgrades, `[2]` is just the
- * second.
+ * Upgrades a schema-3 battle payload to schema 4 by adding
+ * `attackTokens: 0` to every hero on both sides (intent/06: "upgrades in
+ * place", every count defaulting to 0). Everything else passes through
+ * unchanged; the current-shape validator checks it afterward.
  */
-const battleMigrations: Record<number, (data: unknown) => PersistedBattleStateV3 | null> = {
-  1: (data) => {
-    const v2 = upgradeV1ToV2(data);
-    return v2 === null ? null : upgradeV2ToV3(v2);
-  },
+function upgradeV3ToV4(data: unknown): PersistedBattleStateV4 | null {
+  if (typeof data !== "object" || data === null) return null;
+  const candidate = data as Record<string, unknown>;
+
+  const upgradeTeam = (team: unknown): BattleTeamState | null => {
+    if (typeof team !== "object" || team === null) return null;
+    const t = team as LegacyBattleTeamStateV2;
+    if (typeof t.heroes !== "object" || t.heroes === null) return null;
+    const heroes = Object.fromEntries(
+      Object.entries(t.heroes).map(([heroId, hero]) => [heroId, { ...hero, attackTokens: 0 }]),
+    ) as BattleTeamState["heroes"];
+    return { ...t, heroes };
+  };
+
+  const p1 = upgradeTeam(candidate.p1);
+  const p2 = upgradeTeam(candidate.p2);
+  if (p1 === null || p2 === null) return null;
+
+  return {
+    ...(data as PersistedBattleStateV3),
+    schemaVersion: 4,
+    p1,
+    p2,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Same idea as `migrations` above, for the battle-state payload.
+ * `loadPersisted` runs these in order from the stored version up to the
+ * current one, so a schema bump adds just one entry.
+ */
+const battleMigrations: MigrationSteps = {
+  1: upgradeV1ToV2,
   2: upgradeV2ToV3,
+  3: upgradeV3ToV4,
 };
 
 function isBrowser(): boolean {
@@ -262,9 +302,9 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * version and independent of any specific draft's hero-id set (that
  * belongs to `useBattle`'s `heroIdSetsMatch`, which has the draft to
  * compare against): gold is non-negative, each structure is within its
- * own floor/ceiling, every `heroes` entry has a real hero id with hp/level
- * each within bounds, and every one of those hero ids also has a
- * `heroPositions` entry that's either `null` or a real map-space id.
+ * own floor/ceiling, every `heroes` entry has a real hero id with hp/level/
+ * attackTokens each within bounds, and every one of those hero ids also
+ * has a `heroPositions` entry that's either `null` or a real map-space id.
  */
 function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   if (!hasValidLegacyBattleTeamShape(data)) return false;
@@ -276,7 +316,9 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   if (typeof heroPositions !== "object" || heroPositions === null) return false;
   const positions = heroPositions as Record<string, unknown>;
 
-  for (const heroId of Object.keys(heroes)) {
+  for (const [heroId, heroValue] of Object.entries(heroes)) {
+    const hv = heroValue as Record<string, unknown>;
+    if (!isNumberInRange(hv.attackTokens, 0, HERO_ATTACK_TOKEN_CEILING)) return false;
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
     if (position !== null && !isMapSpaceIdLike(position)) return false;
@@ -285,7 +327,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV3 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV4 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -362,11 +404,15 @@ function clearAndReturnNull(key: string): null {
  * — `loadDraft` and `loadBattleState` are independently versioned
  * (intent/04), so bumping one must never affect the other's migrate/reject
  * decision.
+ *
+ * Migration steps chain: a payload at version N runs `migrations[N]`,
+ * `migrations[N + 1]`, … up to `currentVersion`. A missing step or a step
+ * returning `null` treats the payload as corrupt.
  */
 function loadPersisted<T>(
   key: string,
   currentVersion: number,
-  migrations: Record<number, (data: unknown) => T | null>,
+  migrations: MigrationSteps,
   isValid: (data: unknown) => data is T,
 ): T | null {
   if (!isBrowser()) return null;
@@ -390,24 +436,22 @@ function loadPersisted<T>(
     return clearAndReturnNull(key);
   }
 
-  let data: unknown = parsed;
-  if (schemaVersion !== currentVersion) {
-    if (schemaVersion > currentVersion) {
-      // Newer version than this build understands — no downgrade path.
-      return clearAndReturnNull(key);
-    }
+  if (schemaVersion > currentVersion) {
+    // Newer version than this build understands — no downgrade path.
+    return clearAndReturnNull(key);
+  }
 
-    const migrate = migrations[schemaVersion];
+  let data: unknown = parsed;
+  for (let version = schemaVersion; version < currentVersion; version++) {
+    const migrate = migrations[version];
     if (!migrate) {
       // Older version with no migration path available — treat as corrupt.
       return clearAndReturnNull(key);
     }
-
-    const migrated = migrate(parsed);
-    if (migrated === null) {
+    data = migrate(data);
+    if (data === null) {
       return clearAndReturnNull(key);
     }
-    data = migrated;
   }
 
   if (!isValid(data)) {
@@ -461,7 +505,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV3 = {
+  const payload: PersistedBattleStateV4 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -490,7 +534,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,

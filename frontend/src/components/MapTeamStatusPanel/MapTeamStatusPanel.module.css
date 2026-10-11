@@ -56,6 +56,23 @@
   font-size: 0.9rem;
 }
 
+.heroRow {
+  flex-wrap: wrap;
+  row-gap: 3px;
+}
+
+.tokenLine {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 8px;
+  font-size: 0.8rem;
+  line-height: 14px;
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
 .dimmed {
   opacity: 0.5;
 }

@@ -1,0 +1,112 @@
+/* 20px tall, smaller than NumberStepper's 22px buttons, so it reads as a
+ * token rather than a stat (intent/06). At 0 and collapsed it's just the
+ * muted icon, no border or fill. */
+.chip {
+  box-sizing: border-box;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+
+.active {
+  border-color: var(--color-gold);
+  background: color-mix(in srgb, var(--color-gold) 14%, transparent);
+}
+
+.toggle {
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 3px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-muted);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.toggle:hover,
+.active .toggle {
+  color: var(--color-gold);
+}
+
+.active .toggle {
+  padding: 0 4px 0 6px;
+}
+
+.toggle:focus-visible,
+.step:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.count {
+  color: var(--color-text);
+}
+
+/* Always rendered so it can animate: the pill grows rightward from the
+ * count. Hidden (not just zero-width) while collapsed, so the buttons
+ * can't be tabbed to or clicked; on close, visibility flips only after the
+ * width animation ends. The only animation in the app, keep it here. */
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    max-width 150ms ease-out,
+    opacity 150ms ease-out,
+    visibility 0s linear 150ms;
+}
+
+.expanded .controls {
+  max-width: 48px;
+  opacity: 1;
+  visibility: visible;
+  padding-right: 1px;
+  transition:
+    max-width 150ms ease-out,
+    opacity 150ms ease-out,
+    visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls,
+  .expanded .controls {
+    transition: none;
+  }
+}
+
+.step {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-muted-strong);
+  background: none;
+  border: 1px solid var(--color-button-border);
+  border-radius: 999px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
