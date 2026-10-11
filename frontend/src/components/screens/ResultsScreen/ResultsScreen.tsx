@@ -23,22 +23,18 @@ type TeamResultsProps = {
 };
 
 function TeamResults({ label, side, picks }: TeamResultsProps) {
-  const { containerRef, columns, cardWidth, overflows } =
-    useHeightFitColumns<HTMLDivElement>({
-      itemCount: picks.length,
-      aspectRatio: CARD_ASPECT_RATIO,
-      gap: GAP,
-      columnOptions: COLUMN_OPTIONS,
-      minCardWidth: MIN_CARD_WIDTH,
-      maxCardWidth: MAX_CARD_WIDTH,
-    });
+  const { containerRef, columns, cardWidth, overflows } = useHeightFitColumns<HTMLDivElement>({
+    itemCount: picks.length,
+    aspectRatio: CARD_ASPECT_RATIO,
+    gap: GAP,
+    columnOptions: COLUMN_OPTIONS,
+    minCardWidth: MIN_CARD_WIDTH,
+    maxCardWidth: MAX_CARD_WIDTH,
+  });
 
   return (
     <div className={styles.team}>
-      <div
-        className={styles.teamHeader}
-        style={{ borderBottomColor: `var(--color-${side})` }}
-      >
+      <div className={styles.teamHeader} style={{ borderBottomColor: `var(--color-${side})` }}>
         {label}
       </div>
       <div
@@ -46,8 +42,7 @@ function TeamResults({ label, side, picks }: TeamResultsProps) {
         className={styles.grid}
         style={{
           overflowY: overflows ? "auto" : "hidden",
-          gridTemplateColumns:
-            cardWidth > 0 ? `repeat(${columns}, ${cardWidth}px)` : undefined,
+          gridTemplateColumns: cardWidth > 0 ? `repeat(${columns}, ${cardWidth}px)` : undefined,
         }}
       >
         {picks.map((hero) => (
@@ -65,12 +60,7 @@ type ResultsScreenProps = {
   onStartBattle: () => void;
 };
 
-export function ResultsScreen({
-  p1Picks,
-  p2Picks,
-  onNewDraft,
-  onStartBattle,
-}: ResultsScreenProps) {
+export function ResultsScreen({ p1Picks, p2Picks, onNewDraft, onStartBattle }: ResultsScreenProps) {
   return (
     <div className={styles.screen}>
       <div className={styles.scrollArea}>

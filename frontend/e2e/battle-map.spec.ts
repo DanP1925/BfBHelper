@@ -47,7 +47,12 @@ test("dragging a hero from the respawn area onto the board persists across reloa
   const boardBox = await board.boundingBox();
   if (boardBox === null) throw new Error("board has no bounding box");
 
-  await dragElementTo(page, heroDraggable, boardBox.x + boardBox.width / 2, boardBox.y + boardBox.height / 2);
+  await dragElementTo(
+    page,
+    heroDraggable,
+    boardBox.x + boardBox.width / 2,
+    boardBox.y + boardBox.height / 2,
+  );
 
   // The hero's name label now renders on the board, not inside a respawn
   // strip — querying by alt text (the token's <img alt={hero.name}>)

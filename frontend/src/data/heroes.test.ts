@@ -30,10 +30,9 @@ describe("HERO_ROSTER", () => {
     for (const hero of HERO_ROSTER) {
       const relativePath = hero.battleToken.replace(/^\//, "");
       const absolutePath = path.join(PUBLIC_DIR, relativePath);
-      expect(
-        existsSync(absolutePath),
-        `missing battleToken for ${hero.id}: ${absolutePath}`,
-      ).toBe(true);
+      expect(existsSync(absolutePath), `missing battleToken for ${hero.id}: ${absolutePath}`).toBe(
+        true,
+      );
     }
   });
 

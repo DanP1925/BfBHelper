@@ -40,10 +40,7 @@ export function StructureSlot({
   const isDestroyed = reactiveStyling && hp === 0;
 
   return (
-    <div
-      className={styles.slot}
-      style={accent ? { borderColor: accent } : undefined}
-    >
+    <div className={styles.slot} style={accent ? { borderColor: accent } : undefined}>
       {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
       <img
         src={icon}

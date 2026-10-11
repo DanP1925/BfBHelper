@@ -73,9 +73,7 @@ export function useFitGrid<T extends HTMLElement>({
       // Descending, so that when two column counts tie on cardWidth (e.g.
       // both hit maxCardWidth), the denser one (more columns, fewer rows)
       // wins instead of an arbitrary single column with wasted width.
-      const candidates = (
-        columnOptions ?? Array.from({ length: itemCount }, (_, i) => i + 1)
-      )
+      const candidates = (columnOptions ?? Array.from({ length: itemCount }, (_, i) => i + 1))
         .slice()
         .sort((a, b) => b - a);
 

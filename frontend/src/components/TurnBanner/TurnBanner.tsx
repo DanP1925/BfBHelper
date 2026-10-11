@@ -27,9 +27,7 @@ export function TurnBanner({
       <div
         className={styles.bannerText}
         style={{
-          color: isDone
-            ? "var(--color-gold)"
-            : `var(--color-${currentTurnPlayer})`,
+          color: isDone ? "var(--color-gold)" : `var(--color-${currentTurnPlayer})`,
         }}
       >
         {isDone

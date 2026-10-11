@@ -12,7 +12,10 @@ import { structureIcon } from "../../../lib/battle/structureDisplay";
 import { MapToken } from "../../MapToken/MapToken";
 import styles from "./BattleMapScreen.module.css";
 
-function structureHp(structures: Record<PlayerId, StructuresState>, space: MapSpaceDef): number | null {
+function structureHp(
+  structures: Record<PlayerId, StructuresState>,
+  space: MapSpaceDef,
+): number | null {
   if (space.kind === "bit") return structures[space.side].bit;
   if (space.kind === "tower") return structures[space.side][space.slot];
   return null;
@@ -67,7 +70,14 @@ type MapSpaceProps = {
  * a boolean would misread as leaving the space entirely and cause the
  * highlight to flicker off mid-hover.
  */
-export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDropHero }: MapSpaceProps) {
+export function MapSpace({
+  space,
+  heroesHere,
+  structures,
+  goldPiles,
+  zoom,
+  onDropHero,
+}: MapSpaceProps) {
   const hp = structureHp(structures, space);
   const isDestroyed = hp === 0;
   const goldCount = space.kind === "gold" ? goldPiles[space.id as GoldPileSpaceId] : null;
@@ -109,7 +119,10 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDro
         // The icon sits on its own dial, independent of the hero-standing
         // tile below — a separate absolutely-positioned element rather
         // than a child of `.space`, since the two have different centers.
-        <div className={styles.structureIconWrap} style={{ left: `${space.xPct}%`, top: `${space.yPct}%` }}>
+        <div
+          className={styles.structureIconWrap}
+          style={{ left: `${space.xPct}%`, top: `${space.yPct}%` }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
           <img
             src={structureIcon(space.kind, space.side)}
@@ -145,9 +158,17 @@ export function MapSpace({ space, heroesHere, structures, goldPiles, zoom, onDro
           );
         })}
         {goldCount !== null && goldCount > 0 && (
-          <div className={styles.goldMarker} style={{ transform: `translate(-50%, -50%) scale(${1 / zoom})` }}>
+          <div
+            className={styles.goldMarker}
+            style={{ transform: `translate(-50%, -50%) scale(${1 / zoom})` }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
-            <img src="/structures/gold.png" alt="" className={styles.goldMarkerIcon} draggable={false} />
+            <img
+              src="/structures/gold.png"
+              alt=""
+              className={styles.goldMarkerIcon}
+              draggable={false}
+            />
             <span>{goldCount}</span>
           </div>
         )}
