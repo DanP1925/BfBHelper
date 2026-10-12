@@ -48,13 +48,15 @@ Ken Obi.
 - [x] **Immobilize status.** General (not hero-specific). Per the rulebook,
   an immobilized hero's standee is laid on its side; the next time it would
   move, it stands back up instead of moving. In the app: an on/off toggle per
-  hero, shown on the Board and the Map (e.g. token tilted or greyed), cleared
-  by hand.
+  hero, shown on the Board and the Map, cleared by hand.
+  Scoped in `intent/08_immobilize.md`. Done in `feat/immobilize` (v0.8.0):
+  an ice-blue chain toggle on each hero card and a chain icon in the Map's
+  status panel. It never blocks a move and is never cleared automatically.
 
 ## Hero playability review
 
 What each hero needs for a game played with only the cards. Token rules are
-in the +1 Attack and Confuse items above. Other heroes need further
+in the +1 Attack, Confuse and Immobilize items above. Other heroes need further
 hero-specific features, listed per hero below.
 
 **Visibility rule (decided 2026-10-10):** hero-specific tokens and statuses
@@ -189,10 +191,15 @@ apply any rule automatically (expiry, defeat, damage absorption).
 ## Follow-ups
 
 - [ ] **Revisit every token's display once all tokens exist.** Do this after
-  +1 Attack, Confuse, Immobilize and the hero-specific tokens are all built.
+  the hero-specific tokens are built (+1 Attack, Confuse and Immobilize are
+  done).
   Each one is designed on its own first, so review them together for one
   consistent look and layout on the Board's hero cards (and on the Map, where
   they fit). Include the choice deferred in intent 06: today a hero with no
   +1 Attack tokens still shows a muted swords icon; consider hiding token controls
   entirely at 0 (e.g. adding tokens from a tap on the hero card) to cut
   clutter. Added 2026-10-11.
+  Also the state shape deferred in spec 08: each token is a plain field on
+  `HeroBattleState` today. One token registry covering counts, toggles and
+  the hero-specific visibility rule may pay off once the hero-specific
+  tokens exist (best decided with the first hero-specific token intent).
