@@ -38,13 +38,13 @@ Ken Obi.
   each token adds 1 to all of that hero's attacks; they're removed at the end
   of the hero's next activation or when it's stunned, and stay if the hero who
   placed them is defeated. Needs per-hero counts (2+), on allies too.
-  Scoped in `intent/06_attack-tokens.md`.
+  Scoped in `intent/06_attack-tokens.md`. Done in `feat/attack-tokens` (v0.6.0).
 - [x] **Confuse tokens.** Not tracked anywhere; needed even by the heroes
   played in this game. Per the rulebook, in the next round's Orders Phase a
   confused hero is assigned the top action-deck card instead of one from the
   hand, then the token is removed. It doesn't affect activation in the round
   it's applied, and stays if the hero who placed it is defeated.
-  Scoped in `intent/07_confuse-tokens.md`.
+  Scoped in `intent/07_confuse-tokens.md`. Done in `feat/confuse-tokens` (v0.7.0).
 - [ ] **Immobilize status.** General (not hero-specific). Per the rulebook,
   an immobilized hero's standee is laid on its side; the next time it would
   move, it stands back up instead of moving. In the app: an on/off toggle per
