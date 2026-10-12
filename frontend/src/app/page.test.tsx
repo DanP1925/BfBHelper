@@ -135,4 +135,25 @@ describe("Home", () => {
     fireEvent.click(confuse(p1Other));
     expect(confuse(p1Other)).toHaveAttribute("aria-pressed", "false");
   });
+
+  it("toggles one hero's Immobilize on the Board without touching others or its Confuse", () => {
+    saveBattleState(seedDoneDraft());
+    saveView("battle");
+    const p1Name = getHeroById(HERO_IDS[0]).name;
+    const p1Other = getHeroById(HERO_IDS[1]).name;
+    const immobilize = (name: string) =>
+      screen.getByRole("button", { name: `Immobilized on ${name}` });
+    const confuse = (name: string) =>
+      screen.getByRole("button", { name: `Confuse token on ${name}` });
+
+    render(<Home />);
+    expect(immobilize(p1Name)).toHaveAttribute("title", "Immobilized");
+    fireEvent.click(immobilize(p1Name));
+    expect(immobilize(p1Name)).toHaveAttribute("aria-pressed", "true");
+    expect(immobilize(p1Other)).toHaveAttribute("aria-pressed", "false");
+    expect(confuse(p1Name)).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(immobilize(p1Name));
+    expect(immobilize(p1Name)).toHaveAttribute("aria-pressed", "false");
+  });
 });

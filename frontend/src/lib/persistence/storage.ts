@@ -30,6 +30,7 @@ import {
   type PersistedBattleStateV3,
   type PersistedBattleStateV4,
   type PersistedBattleStateV5,
+  type PersistedBattleStateV6,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -157,6 +158,10 @@ const upgradeV3ToV4 = addHeroFieldsStep<PersistedBattleStateV4>(4, { attackToken
  * in place", every hero unconfused). */
 const upgradeV4ToV5 = addHeroFieldsStep<PersistedBattleStateV5>(5, { confused: false });
 
+/** Schema 5 → 6: every hero gets `immobilized: false` (intent/08:
+ * "upgrades in place", every hero not immobilized). */
+const upgradeV5ToV6 = addHeroFieldsStep<PersistedBattleStateV6>(6, { immobilized: false });
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -167,6 +172,7 @@ const battleMigrations: MigrationSteps = {
   2: upgradeV2ToV3,
   3: upgradeV3ToV4,
   4: upgradeV4ToV5,
+  5: upgradeV5ToV6,
 };
 
 function isBrowser(): boolean {
@@ -318,8 +324,8 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * belongs to `useBattle`'s `heroIdSetsMatch`, which has the draft to
  * compare against): gold is non-negative, each structure is within its
  * own floor/ceiling, every `heroes` entry has a real hero id with hp/level/
- * attackTokens each within bounds and a boolean `confused`, and every one
- * of those hero ids also
+ * attackTokens each within bounds and a boolean `confused` and
+ * `immobilized`, and every one of those hero ids also
  * has a `heroPositions` entry that's either `null` or a real map-space id.
  */
 function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
@@ -336,6 +342,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
     const hv = heroValue as Record<string, unknown>;
     if (!isNumberInRange(hv.attackTokens, 0, HERO_ATTACK_TOKEN_CEILING)) return false;
     if (typeof hv.confused !== "boolean") return false;
+    if (typeof hv.immobilized !== "boolean") return false;
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
     if (position !== null && !isMapSpaceIdLike(position)) return false;
@@ -344,7 +351,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV5 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV6 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -522,7 +529,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV5 = {
+  const payload: PersistedBattleStateV6 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -551,7 +558,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 5,
+    schemaVersion: 6,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,

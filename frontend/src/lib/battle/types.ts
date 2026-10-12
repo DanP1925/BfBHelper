@@ -18,6 +18,10 @@ export type HeroBattleState = {
    * the rules give one top-of-deck card however many are stacked.
    * Changed only by hand: never cleared on defeat, respawn or a new round. */
   confused: boolean;
+  /** Immobilized (intent/08): the standee lying on its side. On/off.
+   * The app shows it only, never blocks a move, and never clears it:
+   * not on a move, defeat, respawn or a new round. */
+  immobilized: boolean;
 };
 
 export type BattleTeamState = {
@@ -31,7 +35,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 5;
+  schemaVersion: 6;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

@@ -84,6 +84,11 @@
   color: var(--color-confuse);
 }
 
+.immobilized {
+  display: flex;
+  color: var(--color-immobilize);
+}
+
 .dimmed {
   opacity: 0.5;
 }

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ConfuseTokenIcon } from "./ConfuseTokenIcon";
+import { ImmobilizeIcon } from "./ImmobilizeIcon";
 import { TokenToggle } from "./TokenToggle";
 
 function renderToggle(on: boolean) {
@@ -10,7 +11,7 @@ function renderToggle(on: boolean) {
       on={on}
       onChange={onChange}
       icon={<ConfuseTokenIcon size={12} />}
-      label="Confuse"
+      label="Confuse token"
       heroName="Agatha Trunch"
       accent="var(--color-confuse)"
     />,
@@ -39,6 +40,21 @@ describe("TokenToggle", () => {
   it("keeps a fixed label and tooltip whatever the state", () => {
     const { button } = renderToggle(true);
     expect(button).toHaveAttribute("title", "Confuse token");
+  });
+
+  it("uses the label verbatim, so a non-token name reads right", () => {
+    render(
+      <TokenToggle
+        on={false}
+        onChange={vi.fn()}
+        icon={<ImmobilizeIcon size={12} />}
+        label="Immobilized"
+        heroName="Boreas"
+        accent="var(--color-immobilize)"
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Immobilized on Boreas" });
+    expect(button).toHaveAttribute("title", "Immobilized");
   });
 
   it("sets the accent as --token-accent", () => {

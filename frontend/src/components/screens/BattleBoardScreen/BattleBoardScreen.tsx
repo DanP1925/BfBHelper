@@ -21,6 +21,7 @@ type BattleBoardScreenProps = {
   setHeroLevel: (side: PlayerId, heroId: HeroId, value: number) => void;
   setHeroAttackTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
   setHeroConfused: (side: PlayerId, heroId: HeroId, value: boolean) => void;
+  setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
@@ -39,6 +40,7 @@ export function BattleBoardScreen({
   setHeroLevel,
   setHeroAttackTokens,
   setHeroConfused,
+  setHeroImmobilized,
   setStructureHp,
   onNewDraft,
   onEndBattle,
@@ -90,6 +92,9 @@ export function BattleBoardScreen({
                 setHeroAttackTokens(team.side, heroId, value)
               }
               onHeroConfusedChange={(heroId, value) => setHeroConfused(team.side, heroId, value)}
+              onHeroImmobilizedChange={(heroId, value) =>
+                setHeroImmobilized(team.side, heroId, value)
+              }
               onStructureHpChange={(slot, value) => setStructureHp(team.side, slot, value)}
               openTokenKey={openTokenKey}
               onOpenTokenKeyChange={setOpenTokenKey}

@@ -7,7 +7,8 @@ type TokenToggleProps = {
   /** Decorative icon (e.g. `<ConfuseTokenIcon size={12} />`): the only
    * visible label, so it should be `aria-hidden`. */
   icon: ReactNode;
-  /** The token's name for the aria label and the tooltip, e.g. "Confuse". */
+  /** The full name, used verbatim as the tooltip and in the aria label
+   * (`${label} on ${heroName}`), e.g. "Confuse token" or "Immobilized". */
   label: string;
   heroName: string;
   /** The lit color, any CSS color (e.g. `"var(--color-confuse)"`). */
@@ -28,8 +29,8 @@ export function TokenToggle({ on, onChange, icon, label, heroName, accent }: Tok
       className={`${styles.toggle} ${on ? styles.on : ""}`}
       style={{ "--token-accent": accent } as CSSProperties}
       aria-pressed={on}
-      aria-label={`${label} token on ${heroName}`}
-      title={`${label} token`}
+      aria-label={`${label} on ${heroName}`}
+      title={label}
       onClick={() => onChange(!on)}
     >
       {icon}
