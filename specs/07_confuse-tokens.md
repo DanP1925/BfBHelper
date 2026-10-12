@@ -90,8 +90,6 @@
   - New `PersistedBattleStateV5` = `PersistedBattleStateV4` with
     `p1`/`p2: BattleTeamState` and `schemaVersion: 5`. It's the shape
     `saveBattleState` writes and `isValidPersistedBattleState` narrows to.
-- `upgradeV3ToV4`'s `upgradeTeam` returns `LegacyBattleTeamStateV4`, not
-  `BattleTeamState`. That's a type-only change.
 - `saveBattleState` / `loadBattleState` (`storage.ts`) need no new field
   copying. `confused` rides inside `p1`/`p2`. Only the payload type and
   the `schemaVersion` literal in `loadBattleState`'s return change (to 5).
@@ -101,7 +99,9 @@
   clear-on-failure convention as the other hero fields.
 - **Migration.** `loadPersisted` already chains one-step migrations (spec
   06), so this is one new step and one new entry:
-  - New `upgradeV4ToV5(data)`: a copy of `upgradeV3ToV4`. It returns
+  - New `upgradeV4ToV5(data)`, the same as `upgradeV3ToV4` but for a
+    different field. Both are now built by one `addHeroFieldsStep(version,
+    defaults)` helper in `storage.ts` (a `/simplify` pass). It returns
     `null` unless `p1` and `p2` are objects with an object `heroes`.
     Otherwise it returns the payload with `confused: false` added to every
     hero on both sides, `schemaVersion: 5` and a fresh `updatedAt`.

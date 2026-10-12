@@ -71,7 +71,9 @@ frontend/e2e/confuse-tokens.spec.ts  # new
       returns `LegacyBattleTeamStateV4` (type only). += `upgradeV4ToV5`
       (copy of `upgradeV3ToV4`: every hero gets `confused: false`, `null`
       if `p1`/`p2`/`heroes` aren't objects, fresh `updatedAt`).
-      `battleMigrations` += `4: upgradeV4ToV5`.
+      `battleMigrations` += `4: upgradeV4ToV5`. (After `/simplify`, both
+      steps come from one `addHeroFieldsStep(version, defaults)` helper,
+      so `LegacyBattleTeamStateV4` is only used by the schema types.)
 - [x] M5. `storage.ts` validation: `hasValidBattleTeamShape` requires
       `typeof confused === "boolean"` on every hero.
       `loadBattleState` returns `schemaVersion: 5`.
