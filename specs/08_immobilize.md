@@ -185,7 +185,8 @@
   one line, so **no card gets taller** and the Board's height doesn't
   change. The margin is only ~11px, though. The row's `flex-wrap: wrap`
   stays as the fallback, and a wrap would add a row to every card, so
-  this needs a browser check (Open Items).
+  this needs a browser check (Open Items). Measured in the build: ~119px,
+  one line.
 - **Wiring:**
   - `BattleTeamPanel` gains `onHeroImmobilizedChange: (heroId, value: boolean) => void`
     and passes `heroState.immobilized` and the handler to each `HeroCard`.
@@ -258,11 +259,14 @@ No change from v1-v7: same static Vercel deployment, no new infra.
   token's display" item reviews it again with the other tokens.
 - ~~`ImmobilizeIcon` drawing: a standee lying on its side, or another
   sign.~~
-  **Decided:** a three-link chain (App Flow version 60). Check it reads at
-  12px on the Board and 13px on the Map.
-- Check the Board at 1280x800 with a ×9 chip expanded next to lit Confuse
+  **Decided:** a three-link chain (App Flow version 60). It reads fine at
+  12px on the Board and 13px on the Map (checked in the build).
+- ~~Check the Board at 1280x800 with a ×9 chip expanded next to lit Confuse
   and Immobilize toggles on every hero: the token row should stay one
-  line (~133px of 144px on paper).
-- Check the Map at 1280x800 with all eight heroes holding +1 Attack
+  line (~133px of 144px on paper).~~
+  **Decided:** fits. The worst row uses ~119px of 144px and stays one
+  20px line, with no Board scroll.
+- ~~Check the Map at 1280x800 with all eight heroes holding +1 Attack
   tokens, Confuse and Immobilize: every token line should stay one line
-  in the 170px panel, and the page shouldn't scroll.
+  in the 170px panel, and the page shouldn't scroll.~~
+  **Decided:** fits, every line one line, no page scroll.

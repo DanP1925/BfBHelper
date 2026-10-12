@@ -5,6 +5,7 @@ import type { BattleTeamState } from "../../lib/battle/types";
 import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { tokenCountLabel } from "../TokenChip/TokenChip";
 import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
+import { ImmobilizeIcon } from "../TokenToggle/ImmobilizeIcon";
 import styles from "./MapTeamStatusPanel.module.css";
 
 type MapTeamStatusPanelProps = {
@@ -45,7 +46,7 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Heroes</div>
         {heroes.map((hero) => {
-          const { hp, attackTokens, confused } =
+          const { hp, attackTokens, confused, immobilized } =
             team.heroes[hero.id] ?? createInitialHeroState(hero);
           const isDefeated = hp === 0;
           return (
@@ -66,10 +67,10 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                 </svg>
                 {hp}
               </span>
-              {/* Read-only token line (intents 06-07), only while the hero
-                  holds a token. Its own line inside the row, so names
-                  never truncate for it, and `.dimmed` covers it. */}
-              {(attackTokens > 0 || confused) && (
+              {/* Read-only token line (intents 06-08), only while the hero
+                  holds a token or is immobilized. Its own line inside the
+                  row, so names never truncate for it, and `.dimmed` covers it. */}
+              {(attackTokens > 0 || confused || immobilized) && (
                 <span className={styles.tokenLine}>
                   {attackTokens > 0 && (
                     <span
@@ -84,6 +85,15 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                   {confused && (
                     <span className={styles.confused} aria-label="Confused" title="Confuse token">
                       <ConfuseTokenIcon size={13} />
+                    </span>
+                  )}
+                  {immobilized && (
+                    <span
+                      className={styles.immobilized}
+                      aria-label="Immobilized"
+                      title="Immobilized"
+                    >
+                      <ImmobilizeIcon size={13} />
                     </span>
                   )}
                 </span>

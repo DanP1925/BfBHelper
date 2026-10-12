@@ -19,6 +19,7 @@
   /* The rulebook's purple Confuse token, lightened for the dark panels
    * (intent/07). */
   --color-confuse: #c06ad0;
+  --color-immobilize: #8fb4e0;
 
   --background: var(--color-bg);
   --foreground: var(--color-text);

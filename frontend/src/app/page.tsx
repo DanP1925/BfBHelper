@@ -106,6 +106,7 @@ export default function Home() {
           setHeroLevel={battle.setHeroLevel}
           setHeroAttackTokens={battle.setHeroAttackTokens}
           setHeroConfused={battle.setHeroConfused}
+          setHeroImmobilized={battle.setHeroImmobilized}
           setStructureHp={battle.setStructureHp}
           onNewDraft={draft.returnToStart}
           onEndBattle={() => {

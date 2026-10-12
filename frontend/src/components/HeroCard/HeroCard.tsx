@@ -9,6 +9,7 @@ import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { TokenChip } from "../TokenChip/TokenChip";
 import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
+import { ImmobilizeIcon } from "../TokenToggle/ImmobilizeIcon";
 import { TokenToggle } from "../TokenToggle/TokenToggle";
 import styles from "./HeroCard.module.css";
 
@@ -47,6 +48,9 @@ type HeroCardProps =
       /** Confuse token (intent/07), shown after the +1 Attack chip. Like
        * `attackTokens`, only the Battle Board passes it. */
       confused?: HeroCardToggleProps;
+      /** Immobilized (intent/08), shown after the Confuse toggle. Only the
+       * Battle Board passes it. */
+      immobilized?: HeroCardToggleProps;
     });
 
 /** One counted token's value, setter and open state, passed all together
@@ -83,7 +87,7 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { hp, level, onHpChange, onLevelChange, attackTokens, confused } = props;
+    const { hp, level, onHpChange, onLevelChange, attackTokens, confused, immobilized } = props;
     const isDefeated = hp === 0;
     return (
       <div className={styles.battleCard}>
@@ -156,7 +160,7 @@ export function HeroCard(props: HeroCardProps) {
               </>
             )}
           </div>
-          {(attackTokens || confused) && (
+          {(attackTokens || confused || immobilized) && (
             <div className={styles.tokenRow}>
               {attackTokens && (
                 <TokenChip
@@ -171,9 +175,18 @@ export function HeroCard(props: HeroCardProps) {
                 <TokenToggle
                   {...confused}
                   icon={<ConfuseTokenIcon size={12} />}
-                  label="Confuse"
+                  label="Confuse token"
                   heroName={hero.name}
                   accent="var(--color-confuse)"
+                />
+              )}
+              {immobilized && (
+                <TokenToggle
+                  {...immobilized}
+                  icon={<ImmobilizeIcon size={12} />}
+                  label="Immobilized"
+                  heroName={hero.name}
+                  accent="var(--color-immobilize)"
                 />
               )}
             </div>

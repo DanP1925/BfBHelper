@@ -107,13 +107,20 @@ describe("useBattle", () => {
       level: 1,
       attackTokens: 0,
       confused: false,
+      immobilized: false,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
 
   it("hydrates a matching persisted state verbatim instead of rebuilding fresh", () => {
     const persisted = createInitialBattleState([HERO_A], [HERO_B], "p1");
-    persisted.p1.heroes[HERO_A.id] = { hp: 2, level: 3, attackTokens: 4, confused: true };
+    persisted.p1.heroes[HERO_A.id] = {
+      hp: 2,
+      level: 3,
+      attackTokens: 4,
+      confused: true,
+      immobilized: true,
+    };
     saveBattleState(persisted);
 
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
@@ -123,6 +130,7 @@ describe("useBattle", () => {
       level: 3,
       attackTokens: 4,
       confused: true,
+      immobilized: true,
     });
   });
 
@@ -137,6 +145,7 @@ describe("useBattle", () => {
       level: 1,
       attackTokens: 0,
       confused: false,
+      immobilized: false,
     });
   });
 
@@ -233,6 +242,45 @@ describe("useBattle", () => {
     });
 
     expect(result.current.state?.p1.heroes[HERO_A.id].confused).toBe(true);
+  });
+
+  it("setHeroImmobilized persists the flag, which survives a reload and can be turned off", () => {
+    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroImmobilized("p1", HERO_A.id, true);
+    });
+    expect(result.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
+    expect(result.current.state?.p1.heroes[HERO_A.id].confused).toBe(false);
+    expect(result.current.state?.p2.heroes[HERO_B.id].immobilized).toBe(false);
+    expect(readRawState().p1.heroes[HERO_A.id].immobilized).toBe(true);
+    unmount();
+
+    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+    expect(reloaded.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
+
+    act(() => {
+      reloaded.current.setHeroImmobilized("p1", HERO_A.id, false);
+    });
+    expect(reloaded.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(false);
+    expect(readRawState().p1.heroes[HERO_A.id].immobilized).toBe(false);
+  });
+
+  it("setHeroPosition, setHeroHp to 0 and passInitiative keep the hero immobilized", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroImmobilized("p1", HERO_A.id, true);
+      result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+    });
+    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
+    expect(result.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
+
+    act(() => {
+      result.current.setHeroHp("p1", HERO_A.id, 0);
+      result.current.passInitiative();
+    });
+    expect(result.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
   });
 
   it("derives winner from live state and clears it once Bit HP is raised back above 0", () => {

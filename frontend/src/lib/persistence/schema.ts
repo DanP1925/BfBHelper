@@ -28,7 +28,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 5 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 6 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -83,7 +83,7 @@ export type PersistedBattleStateV3 = Omit<PersistedBattleStateV2, "schemaVersion
 /** One side's battle-team state in schema 4: per-hero attackTokens,
  * but no confused flag yet (intent/07). */
 export type LegacyBattleTeamStateV4 = Omit<BattleTeamState, "heroes"> & {
-  heroes: Record<HeroId, Omit<HeroBattleState, "confused">>;
+  heroes: Record<HeroId, Omit<HeroBattleState, "confused" | "immobilized">>;
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 4
@@ -95,10 +95,25 @@ export type PersistedBattleStateV4 = Omit<PersistedBattleStateV3, "schemaVersion
   p2: LegacyBattleTeamStateV4;
 };
 
+/** One side's battle-team state in schema 5: per-hero confused,
+ * but no immobilized flag yet (intent/08). */
+export type LegacyBattleTeamStateV5 = Omit<BattleTeamState, "heroes"> & {
+  heroes: Record<HeroId, Omit<HeroBattleState, "immobilized">>;
+};
+
 /** The on-disk (localStorage) shape of a persisted battle state, version 5
- * (intent/07: per-hero `confused`). */
+ * (intent/07: per-hero `confused`) — now only the migration source shape
+ * `battleMigrations[5]` upgrades from. */
 export type PersistedBattleStateV5 = Omit<PersistedBattleStateV4, "schemaVersion" | "p1" | "p2"> & {
   schemaVersion: 5;
+  p1: LegacyBattleTeamStateV5;
+  p2: LegacyBattleTeamStateV5;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 6
+ * (intent/08: per-hero `immobilized`). */
+export type PersistedBattleStateV6 = Omit<PersistedBattleStateV5, "schemaVersion" | "p1" | "p2"> & {
+  schemaVersion: 6;
   p1: BattleTeamState;
   p2: BattleTeamState;
 };

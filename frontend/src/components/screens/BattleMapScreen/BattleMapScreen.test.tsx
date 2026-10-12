@@ -21,20 +21,22 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 5,
+    schemaVersion: 6,
     initiative: "p1",
     p1: {
       gold: 0,
       heroes: {
-        boreas: { hp: 10, level: 1, attackTokens: 0, confused: false },
-        caligar: { hp: 0, level: 1, attackTokens: 0, confused: false },
+        boreas: { hp: 10, level: 1, attackTokens: 0, confused: false, immobilized: false },
+        caligar: { hp: 0, level: 1, attackTokens: 0, confused: false, immobilized: false },
       },
       structures: { top: 11, middle: 11, bottom: 0, bit: 16 },
       heroPositions: { boreas: MAP_SPACE_IDS[0], caligar: null },
     },
     p2: {
       gold: 0,
-      heroes: { sterling: { hp: 8, level: 1, attackTokens: 0, confused: false } },
+      heroes: {
+        sterling: { hp: 8, level: 1, attackTokens: 0, confused: false, immobilized: false },
+      },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
       heroPositions: { sterling: null },
     },
@@ -107,7 +109,7 @@ describe("BattleMapScreen", () => {
             ...base.p1,
             heroes: {
               ...base.p1.heroes,
-              caligar: { hp: 0, level: 1, attackTokens: 2, confused: false },
+              caligar: { hp: 0, level: 1, attackTokens: 2, confused: false, immobilized: false },
             },
           },
         }}
@@ -138,14 +140,14 @@ describe("BattleMapScreen", () => {
             ...base.p1,
             heroes: {
               ...base.p1.heroes,
-              caligar: { hp: 0, level: 1, attackTokens: 2, confused: true },
+              caligar: { hp: 0, level: 1, attackTokens: 2, confused: true, immobilized: false },
             },
           },
           p2: {
             ...base.p2,
             heroes: {
               ...base.p2.heroes,
-              sterling: { hp: 8, level: 1, attackTokens: 0, confused: true },
+              sterling: { hp: 8, level: 1, attackTokens: 0, confused: true, immobilized: false },
             },
           },
         }}
@@ -162,6 +164,49 @@ describe("BattleMapScreen", () => {
     // Caligar holds both tokens on one line; Sterling, with no +1 Attack
     // tokens, still gets a token line for Confuse alone. Boreas has neither.
     expect(screen.getAllByLabelText("Confused")).toHaveLength(2);
+    expect(screen.getAllByLabelText(/\+1 Attack token/)).toHaveLength(1);
+  });
+
+  it("shows a hero's Immobilize icon in the status panel only while immobilized", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: {
+              ...base.p1.heroes,
+              caligar: { hp: 0, level: 1, attackTokens: 2, confused: true, immobilized: true },
+            },
+          },
+          p2: {
+            ...base.p2,
+            heroes: {
+              ...base.p2.heroes,
+              sterling: { hp: 8, level: 1, attackTokens: 0, confused: false, immobilized: true },
+            },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    // Caligar holds all three on one line (and keeps it at 0 HP); Sterling,
+    // with no other token, still gets a token line for Immobilize alone.
+    // Boreas isn't immobilized.
+    const icons = screen.getAllByLabelText("Immobilized");
+    expect(icons).toHaveLength(2);
+    expect(icons[0]).toHaveAttribute("title", "Immobilized");
+    expect(screen.getAllByLabelText("Confused")).toHaveLength(1);
     expect(screen.getAllByLabelText(/\+1 Attack token/)).toHaveLength(1);
   });
 
@@ -288,12 +333,15 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       initiative: "p1",
       p1: {
         gold: 0,
         heroes: Object.fromEntries(
-          crowdedHeroes.map((h) => [h.id, { hp: 10, level: 1, attackTokens: 0, confused: false }]),
+          crowdedHeroes.map((h) => [
+            h.id,
+            { hp: 10, level: 1, attackTokens: 0, confused: false, immobilized: false },
+          ]),
         ),
         structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
         heroPositions: Object.fromEntries(crowdedHeroes.map((h) => [h.id, sharedSpace])),
