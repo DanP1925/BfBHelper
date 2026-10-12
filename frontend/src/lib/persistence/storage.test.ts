@@ -4,7 +4,7 @@ import { createInitialBattleState } from "../battle/reducer";
 import { BIT_STARTING_HP, TOWER_STARTING_HP } from "../battle/constants";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
-import type { BattleState } from "../battle/types";
+import type { BattleState, HeroBattleState } from "../battle/types";
 import {
   BATTLE_STATE_STORAGE_KEY,
   CURRENT_BATTLE_SCHEMA_VERSION,
@@ -62,27 +62,18 @@ const p2InitiativeDraft: DraftState = {
   picks: { p1: [], p2: ["baldwin"] },
 };
 
-/** One side's team as a pre-schema-4 save stored it: heroes without
- * `attackTokens` (intent/06). */
-function withoutAttackTokens(team: BattleState["p1"]) {
+/** One side's team as an older save stored it: heroes without the given
+ * fields (`attackTokens` before schema 4, intent/06; `confused` before
+ * schema 5, intent/07). */
+function withoutHeroFields(team: BattleState["p1"], ...fields: (keyof HeroBattleState)[]) {
   return {
     ...team,
     heroes: Object.fromEntries(
-      Object.entries(team.heroes).map(([id, { hp, level }]) => [id, { hp, level }]),
-    ),
-  };
-}
-
-/** One side's team as a schema-4 save stored it: heroes without
- * `confused` (intent/07). */
-function withoutConfused(team: BattleState["p1"]) {
-  return {
-    ...team,
-    heroes: Object.fromEntries(
-      Object.entries(team.heroes).map(([id, { hp, level, attackTokens }]) => [
-        id,
-        { hp, level, attackTokens },
-      ]),
+      Object.entries(team.heroes).map(([id, hero]) => {
+        const legacy: Partial<HeroBattleState> = { ...hero };
+        for (const field of fields) delete legacy[field];
+        return [id, legacy];
+      }),
     ),
   };
 }
@@ -448,8 +439,8 @@ describe("saveBattleState / loadBattleState", () => {
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...rest,
-          p1: withoutAttackTokens(rest.p1),
-          p2: withoutAttackTokens(rest.p2),
+          p1: withoutHeroFields(rest.p1, "attackTokens", "confused"),
+          p2: withoutHeroFields(rest.p2, "attackTokens", "confused"),
           schemaVersion: 2,
           updatedAt: new Date().toISOString(),
         }),
@@ -497,8 +488,8 @@ describe("saveBattleState / loadBattleState", () => {
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...state,
-          p1: withoutAttackTokens(state.p1),
-          p2: withoutAttackTokens(state.p2),
+          p1: withoutHeroFields(state.p1, "attackTokens", "confused"),
+          p2: withoutHeroFields(state.p2, "attackTokens", "confused"),
           schemaVersion: 3,
           updatedAt: new Date().toISOString(),
         }),
@@ -561,8 +552,8 @@ describe("saveBattleState / loadBattleState", () => {
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...state,
-          p1: withoutConfused(state.p1),
-          p2: withoutConfused(state.p2),
+          p1: withoutHeroFields(state.p1, "confused"),
+          p2: withoutHeroFields(state.p2, "confused"),
           schemaVersion: 4,
           updatedAt: new Date().toISOString(),
         }),

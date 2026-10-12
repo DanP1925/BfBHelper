@@ -28,7 +28,6 @@ import {
   type LegacyBattleTeamStateV2,
   type PersistedBattleStateV2,
   type PersistedBattleStateV3,
-  type LegacyBattleTeamStateV4,
   type PersistedBattleStateV4,
   type PersistedBattleStateV5,
   type PersistedDraftV1,
@@ -113,70 +112,50 @@ function upgradeV2ToV3(data: unknown): PersistedBattleStateV3 | null {
 }
 
 /**
- * Upgrades a schema-3 battle payload to schema 4 by adding
- * `attackTokens: 0` to every hero on both sides (intent/06: "upgrades in
- * place", every count defaulting to 0). Everything else passes through
- * unchanged; the current-shape validator checks it afterward.
+ * Builds a migration step to `schemaVersion` that adds `defaults` to every
+ * hero on both sides, for a new per-hero field. It returns `null` unless
+ * `p1`/`p2` are objects with an object `heroes`. Everything else passes
+ * through unchanged; the current-shape validator checks it afterward.
  */
-function upgradeV3ToV4(data: unknown): PersistedBattleStateV4 | null {
-  if (typeof data !== "object" || data === null) return null;
-  const candidate = data as Record<string, unknown>;
+function addHeroFieldsStep<T>(
+  schemaVersion: number,
+  defaults: Record<string, unknown>,
+): (data: unknown) => T | null {
+  return (data) => {
+    if (typeof data !== "object" || data === null) return null;
+    const candidate = data as Record<string, unknown>;
 
-  const upgradeTeam = (team: unknown): LegacyBattleTeamStateV4 | null => {
-    if (typeof team !== "object" || team === null) return null;
-    const t = team as LegacyBattleTeamStateV2;
-    if (typeof t.heroes !== "object" || t.heroes === null) return null;
-    const heroes = Object.fromEntries(
-      Object.entries(t.heroes).map(([heroId, hero]) => [heroId, { ...hero, attackTokens: 0 }]),
-    ) as LegacyBattleTeamStateV4["heroes"];
-    return { ...t, heroes };
-  };
+    const upgradeTeam = (team: unknown) => {
+      if (typeof team !== "object" || team === null) return null;
+      const t = team as { heroes?: unknown };
+      if (typeof t.heroes !== "object" || t.heroes === null) return null;
+      const heroes = Object.fromEntries(
+        Object.entries(t.heroes).map(([heroId, hero]) => [heroId, { ...hero, ...defaults }]),
+      );
+      return { ...t, heroes };
+    };
 
-  const p1 = upgradeTeam(candidate.p1);
-  const p2 = upgradeTeam(candidate.p2);
-  if (p1 === null || p2 === null) return null;
+    const p1 = upgradeTeam(candidate.p1);
+    const p2 = upgradeTeam(candidate.p2);
+    if (p1 === null || p2 === null) return null;
 
-  return {
-    ...(data as PersistedBattleStateV3),
-    schemaVersion: 4,
-    p1,
-    p2,
-    updatedAt: new Date().toISOString(),
+    return {
+      ...candidate,
+      schemaVersion,
+      p1,
+      p2,
+      updatedAt: new Date().toISOString(),
+    } as T;
   };
 }
 
-/**
- * Upgrades a schema-4 battle payload to schema 5 by adding
- * `confused: false` to every hero on both sides (intent/07: "upgrades in
- * place", every hero unconfused). Everything else passes through
- * unchanged; the current-shape validator checks it afterward.
- */
-function upgradeV4ToV5(data: unknown): PersistedBattleStateV5 | null {
-  if (typeof data !== "object" || data === null) return null;
-  const candidate = data as Record<string, unknown>;
+/** Schema 3 → 4: every hero gets `attackTokens: 0` (intent/06: "upgrades
+ * in place", every count defaulting to 0). */
+const upgradeV3ToV4 = addHeroFieldsStep<PersistedBattleStateV4>(4, { attackTokens: 0 });
 
-  const upgradeTeam = (team: unknown): BattleTeamState | null => {
-    if (typeof team !== "object" || team === null) return null;
-    const t = team as LegacyBattleTeamStateV4;
-    if (typeof t.heroes !== "object" || t.heroes === null) return null;
-    const heroes = Object.fromEntries(
-      Object.entries(t.heroes).map(([heroId, hero]) => [heroId, { ...hero, confused: false }]),
-    ) as BattleTeamState["heroes"];
-    return { ...t, heroes };
-  };
-
-  const p1 = upgradeTeam(candidate.p1);
-  const p2 = upgradeTeam(candidate.p2);
-  if (p1 === null || p2 === null) return null;
-
-  return {
-    ...(data as PersistedBattleStateV4),
-    schemaVersion: 5,
-    p1,
-    p2,
-    updatedAt: new Date().toISOString(),
-  };
-}
+/** Schema 4 → 5: every hero gets `confused: false` (intent/07: "upgrades
+ * in place", every hero unconfused). */
+const upgradeV4ToV5 = addHeroFieldsStep<PersistedBattleStateV5>(5, { confused: false });
 
 /**
  * Same idea as `migrations` above, for the battle-state payload.
