@@ -35,8 +35,9 @@
   intent doc and its spec share the same number and feature name.
 - When editing an `intent/NN_*.md`, check its paired `specs/NN_*.md` for staleness
   too (e.g. architecture that no longer matches a simplified scope) — they drift silently.
-- A feature's UI mockup is a Claude design artifact linked from its spec under a
+- A feature's UI design is on the canvas, a Claude design artifact linked from its spec under a
   "UI Design Reference" section; source art assets it uses live in `specs/<Feature Name>/`.
+  Screens on the canvas are "artboards". Older docs call the canvas "the mockup".
 - The rulebook PDF (source of truth for game rules) is at
   `reference/battle-for-biternia_rules_web.pdf` in the main checkout. It's copyrighted,
   so `reference/` is excluded via `.git/info/exclude` and never committed. A fresh clone

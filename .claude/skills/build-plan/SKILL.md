@@ -54,7 +54,7 @@ File: `plan/NN_<same-name-as-intent>.md`:
 > [NN-1_y.md](NN-1_y.md).
 
 ## Context
-(What's merged so far: intent/spec PR numbers, mockup state. What this
+(What's merged so far: intent/spec PR numbers, canvas state. What this
 extends. **Structure:** one PR or several, and why.)
 
 ## Architecture
