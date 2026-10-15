@@ -207,3 +207,9 @@ apply any rule automatically (expiry, defeat, damage absorption).
   - **State shape** (spec 09): plain fields per token, plus a small
     visibility table for hero-specific tokens. Is a fuller token registry
     worth it by then?
+- [ ] **Coin-flip animation at draft start.** Show the initiative coin flip
+  instead of just stating the result. Parked from intent 10 (draft pick
+  animation), added 2026-10-15.
+- [ ] **Turn-passing animation in the draft.** Animate the turn banner and
+  team panel highlight when the pick passes to the other player. Parked
+  from intent 10, added 2026-10-15.
