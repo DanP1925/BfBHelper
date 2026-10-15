@@ -7,8 +7,6 @@
    text. */
 
 .poolCard {
-  /* The draft pick's glide (intent/10) scales cards from their corner. */
-  transform-origin: top left;
   background: none;
   border-radius: 8px;
   overflow: hidden;
