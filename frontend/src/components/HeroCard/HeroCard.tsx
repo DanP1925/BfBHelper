@@ -270,8 +270,8 @@ export function HeroCard(props: HeroCardProps) {
 
   return (
     // data-slot-hero lets the draft's pick animation find the slot a hero
-    // just landed in (intent/10). Result cards don't animate, so they skip it.
-    <div className={cardClass} data-slot-hero={isResult ? undefined : hero.id}>
+    // just landed in (intent/10).
+    <div className={cardClass} data-slot-hero={hero.id}>
       <div className={wrapperClass}>
         {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
         <img src={hero.portrait} alt="" className={imageClass} />

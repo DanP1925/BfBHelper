@@ -1,13 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubMatchMedia } from "../test/stubMatchMedia";
 import { motionAllowed } from "./motion";
-
-function stubMatchMedia(reduce: boolean) {
-  const matchMedia = vi.fn((query: string) => ({
-    matches: reduce && query === "(prefers-reduced-motion: reduce)",
-  }));
-  vi.stubGlobal("matchMedia", matchMedia);
-  return matchMedia;
-}
 
 describe("motionAllowed", () => {
   const originalAnimate = Element.prototype.animate;

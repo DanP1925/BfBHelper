@@ -1,8 +1,9 @@
 import { render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getHeroById } from "../../../data/heroes";
+import { getHeroById, HERO_IDS } from "../../../data/heroes";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { PICK_FADE_MS, POOL_GLIDE_MS, SLOT_REVEAL_MS } from "../../../lib/motion";
+import { stubMatchMedia } from "../../../test/stubMatchMedia";
 import { useDraftPickAnimation } from "./useDraftPickAnimation";
 
 /** A recorded `element.animate` call, standing in for a real Animation. */
@@ -47,19 +48,35 @@ function poolCardAnimations(id: HeroId) {
   return animationsOn((element) => (element as HTMLElement).dataset.poolHero === id);
 }
 
+/** Lets a test call the hook's latest `beforePick` from outside. */
+type HookApi = {
+  beforePick: (heroId: HeroId) => void;
+  expose: (beforePick: (heroId: HeroId) => void) => void;
+};
+
+function makeApi(): HookApi {
+  const api: HookApi = {
+    beforePick: () => {},
+    expose: (beforePick) => {
+      api.beforePick = beforePick;
+    },
+  };
+  return api;
+}
+
 function Harness({
   pool,
   slots,
   currentTurnPlayer,
-  onReady,
+  api,
 }: {
   pool: Hero[];
   slots: HeroId[];
   currentTurnPlayer: PlayerId | null;
-  onReady: (beforePick: (heroId: HeroId) => void) => void;
+  api: HookApi;
 }) {
   const { rootRef, beforePick } = useDraftPickAnimation({ pool, currentTurnPlayer });
-  onReady(beforePick);
+  api.expose(beforePick);
   return (
     <div ref={rootRef}>
       <div>
@@ -77,42 +94,28 @@ function Harness({
   );
 }
 
-const [a, b, c, d] = (["runika", "cyrus", "dazeem", "kerrick"] as HeroId[]).map(getHeroById);
+const [a, b, c, d] = HERO_IDS.slice(0, 4).map(getHeroById);
 
-/** Renders the pool, taps `picked`, then commits the pick the way the
- * draft does: the hero leaves the pool and lands in a slot. */
+/** Renders the pool [a, b, c, d], taps `picked`, then commits the pick the
+ * way the draft does: the hero leaves the pool and lands in a slot. */
 function pick(
   picked: Hero,
-  { side = "p1", reduceMotion = false }: { side?: PlayerId; reduceMotion?: boolean } = {},
+  { side = "p1", reduceMotion = false }: { side?: PlayerId | null; reduceMotion?: boolean } = {},
 ) {
   stubMatchMedia(reduceMotion);
-  let beforePick: (heroId: HeroId) => void = () => {};
-  const onReady = (fn: (heroId: HeroId) => void) => {
-    beforePick = fn;
-  };
+  const api = makeApi();
   const pool = [a, b, c, d];
-  const view = render(
-    <Harness pool={pool} slots={[]} currentTurnPlayer={side} onReady={onReady} />,
-  );
-  beforePick(picked.id);
+  const view = render(<Harness pool={pool} slots={[]} currentTurnPlayer={side} api={api} />);
+  api.beforePick(picked.id);
   view.rerender(
     <Harness
       pool={pool.filter((hero) => hero.id !== picked.id)}
       slots={[picked.id]}
       currentTurnPlayer={side}
-      onReady={onReady}
+      api={api}
     />,
   );
-  return { view, beforePick: () => beforePick, onReady };
-}
-
-function stubMatchMedia(reduce: boolean) {
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn((query: string) => ({
-      matches: reduce && query === "(prefers-reduced-motion: reduce)",
-    })),
-  );
+  return { view, api };
 }
 
 describe("useDraftPickAnimation", () => {
@@ -185,8 +188,12 @@ describe("useDraftPickAnimation", () => {
     expect(poolCardAnimations(a.id)).toHaveLength(0);
     for (const hero of [c, d]) {
       const [glide] = poolCardAnimations(hero.id);
-      // Each moved one slot left, so it plays back from 100px to the right.
-      expect(glide.keyframes[0].transform).toBe("translate(100px, 0px) scale(1)");
+      // Each moved one slot left, so it plays back from 100px to the right,
+      // scaling from its corner.
+      expect(glide.keyframes[0]).toMatchObject({
+        transform: "translate(100px, 0px) scale(1)",
+        transformOrigin: "0 0",
+      });
       expect(glide.keyframes[1].transform).toBe("none");
       expect(glide.options).toMatchObject({
         duration: POOL_GLIDE_MS,
@@ -237,33 +244,18 @@ describe("useDraftPickAnimation", () => {
   });
 
   it("does nothing once the draft is done", () => {
-    stubMatchMedia(false);
-    let beforePick: (heroId: HeroId) => void = () => {};
-    const view = render(
-      <Harness
-        pool={[a, b, c]}
-        slots={[]}
-        currentTurnPlayer={null}
-        onReady={(fn) => (beforePick = fn)}
-      />,
-    );
-    beforePick(b.id);
-    view.rerender(
-      <Harness pool={[a, c]} slots={[b.id]} currentTurnPlayer={null} onReady={() => {}} />,
-    );
+    pick(b, { side: null });
     flushFrames();
     expect(animations).toHaveLength(0);
   });
 
   it("restarts a card's glide when the next pick lands mid-glide", () => {
-    const { view, onReady, beforePick } = pick(a);
+    const { view, api } = pick(a);
     flushFrames();
     const [firstGlide] = poolCardAnimations(d.id);
 
-    beforePick()(b.id);
-    view.rerender(
-      <Harness pool={[c, d]} slots={[a.id, b.id]} currentTurnPlayer="p1" onReady={onReady} />,
-    );
+    api.beforePick(b.id);
+    view.rerender(<Harness pool={[c, d]} slots={[a.id, b.id]} currentTurnPlayer="p1" api={api} />);
     flushFrames();
 
     expect(firstGlide.state).toBe("cancelled");
