@@ -85,9 +85,9 @@ Style:
 - Say what *doesn't* change, as well as what does.
 - **UI Design Reference:** link the shared Claude design artifact
   "BfbHelper — App Flow" (https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK).
-  Name the artboard(s) and describe what the mockup shows, plus the
-  "prototype for visual direction only; a revised mockup wins" caveat. If
-  the mockup hasn't been updated for this feature yet, write that in this
+  Name the artboard(s) and describe what the canvas shows, plus the
+  "prototype for visual direction only; a revised canvas wins" caveat. If
+  the canvas hasn't been updated for this feature yet, write that in this
   section and list it as an Open Item. Don't invent a description of art
   that doesn't exist.
 - **Deployment:** usually "No change from v1–vN-1".

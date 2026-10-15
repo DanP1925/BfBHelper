@@ -44,7 +44,7 @@ Optional arguments:
 
    Ask *whether* something is shown and *what it does*, but leave
    *where it sits* and *how it looks* (placement, size, styling) to the
-   spec and its design mockup — the user decides those by seeing them,
+   spec and its design on the canvas — the user decides those by seeing them,
    and answers given here tend to be reversed there. Only ask a
    layout question here if the answer changes scope (e.g. a feature
    only exists if it fits on a screen); otherwise record it as
