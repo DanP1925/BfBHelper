@@ -6,7 +6,7 @@ removes it from the grid instantly and it appears in a team slot at the
 same moment, while the rest of the pool jumps to fill the gap. On a
 shared screen, the players who didn't tap have to work out which hero
 just went where. The end of the draft is just as flat: the 8th pick
-switches straight to the Results screen, with nothing to mark that the
+switches straight to the Draft Results screen, with nothing to mark that the
 two teams are now set and about to fight.
 
 (v1 = Hero Draft Picker, intent 01. v2 = Battle Board, intent 02. v3 =
@@ -18,34 +18,49 @@ row, intent 09.)
 ## Scope for v10
 This phase covers only two moments, both in the draft:
 - **The pick, on the Draft Board.** When a hero is tapped in the pool:
-  - **The picked card travels** from its spot in the pool into its slot
-    in the current player's team panel, so everyone sees where it went.
-    There's no separate highlight when it lands.
-  - **The rest of the pool slides** into the gap instead of jumping,
-    including when the remaining cards change size as the pool shrinks.
-- **The versus finale, on the Results screen.** After the 8th card
-  lands, the Results screen's entrance is the "teams about to fight"
-  moment: each team sweeps in from its own side, a "VS" lands between
-  them, and then "Start Battle" appears. There's no separate splash
-  screen; the Results screen itself animates in.
+  - **The picked card fades out of the pool** where it was. Nothing
+    travels between the pool and the team panel (decided 2026-10-16,
+    replacing an earlier pool-to-slot flight).
+  - **The rest of the pool then slides** into the gap instead of
+    jumping, including when the remaining cards change size as the pool
+    shrinks.
+  - **The hero reappears in its slot** in the current player's team
+    panel, fading in with a brief flash in that team's color (Player 1
+    red, Player 2 teal). The flash is what shows everyone which side got
+    the hero.
+- **The versus finale, on the Draft Results screen.** After the 8th
+  hero appears in its slot, the Draft Results screen's entrance is the "teams about to
+  fight" moment: each team sweeps in from its own side, a "VS" lands
+  between them, and then "Start Battle" appears. There's no separate
+  splash screen; the Draft Results screen itself animates in. (It was
+  called the Results screen until 2026-10-15.)
+  - **The "VS" stays.** It becomes a permanent part of the Draft
+    Results screen, between the two teams, so the finished screen looks
+    the same whether or not the entrance played (decided 2026-10-15).
+  - **"Start Battle" is its only button.** The "← New Draft" button is
+    removed (decided 2026-10-15), so the screen leads only into the
+    fight. A new draft can still be started from the Battle Board's and
+    Battle Map's menus.
   - **It plays only right after the final pick.** Reloading on the
-    Results screen shows it as it is today, with no animation.
+    Draft Results screen shows the finished screen, "VS" included, with
+    no animation.
   - **Tapping anywhere skips it**, jumping straight to the finished
-    Results screen with "Start Battle" shown.
+    Draft Results screen with "Start Battle" shown.
 - **Animations never block input.** The pick is saved the instant it's
   tapped, as it is today, and the animation is cosmetic. Players can tap
   the next hero right away. Fast taps may overlap animations or cut them
   short, and a reload mid-animation loses nothing.
 - **Reduced motion is respected.** With the OS "reduce motion" setting
-  on, neither moment animates: the Draft Board and Results screen behave
-  exactly as they do today. This matches the token chip's existing
-  behavior.
+  on, neither moment animates: picks behave exactly as they do today,
+  and the Draft Results screen appears already finished, "VS" included. This
+  matches the token chip's existing behavior.
 - The exact motion (path, speed, easing, styling) and the versus layout
   are settled in the spec/design.
 
 ## Proposed Outcome
-A player taps a hero, and both players watch it fly into that team's
-panel while the pool closes up behind it. After the last pick, the two
+A player taps a hero. It fades out of the pool, the pool closes up behind
+it, and the hero flashes into that team's panel in the team's color.
+After the last pick, the two
 finished teams sweep in facing each other with a "VS" between them, and
 "Start Battle" appears. The draft feels like it builds up to the fight,
 without ever making anyone wait.
@@ -57,8 +72,9 @@ alongside the physical cards, sharing one screen during the draft.
 ## Affected Systems
 - **Draft Board.** The `HeroPool` grid and the `TeamPanel` slots
   animate a pick. The draft state and its pick logic don't change.
-- **Results screen.** Gains the versus entrance, played only when it's
-  reached from the final pick.
+- **Draft Results screen.** Gains a permanent "VS" between the teams
+  and the versus entrance, played only when it's reached from the final
+  pick. Loses its "← New Draft" button.
 
 ## Constraints
 - React + TypeScript frontend, consistent with intents 01-09. No backend.
@@ -71,15 +87,15 @@ alongside the physical cards, sharing one screen during the draft.
 - **A coin-flip animation** at draft start. Tracked in `BACKLOG.md`.
 - **A turn-passing animation** (the banner and team panel highlight
   switching players). Tracked in `BACKLOG.md`.
-- **A highlight on the team slot** when the card lands. The travel alone
-  should be enough; revisit if it isn't.
+- **A card travelling from the pool to its slot.** Tried on the canvas
+  and dropped on 2026-10-16 in favor of fading out and reappearing.
 - **Battle-screen animations** (Board, Map, Win Screen).
 - **Replaying the versus entrance** on reload or on any later visit to
-  the Results screen.
+  the Draft Results screen.
 - **3-4 player variant**, deferred along with intents 01-09.
 
 ## Session Lifecycle
 - Animations hold no state. A pick is persisted the moment it's tapped,
   so a reload mid-animation resumes the draft with that pick made.
 - The versus entrance plays once, right after the 8th pick. Reloading
-  on the Results screen shows it without animation.
+  on the Draft Results screen shows it without animation.
