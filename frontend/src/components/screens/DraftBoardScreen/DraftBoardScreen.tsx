@@ -4,6 +4,7 @@ import { HeroPool } from "../../HeroPool/HeroPool";
 import { TeamPanel } from "../../TeamPanel/TeamPanel";
 import { TurnBanner } from "../../TurnBanner/TurnBanner";
 import styles from "./DraftBoardScreen.module.css";
+import { useDraftPickAnimation } from "./useDraftPickAnimation";
 
 const TOTAL_STEPS = STEP_SEQUENCE.length;
 
@@ -31,9 +32,15 @@ export function DraftBoardScreen({
   onNewDraft,
 }: DraftBoardScreenProps) {
   const initiativeLabel = initiative === "p1" ? "Player 1" : "Player 2";
+  const { rootRef, beforePick } = useDraftPickAnimation({ pool, currentTurnPlayer });
+
+  function handlePick(heroId: HeroId) {
+    beforePick(heroId);
+    onPick(heroId);
+  }
 
   return (
-    <div className={styles.screen}>
+    <div ref={rootRef} className={styles.screen}>
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <span className={styles.title}>Battle for Biternia</span>
@@ -49,7 +56,7 @@ export function DraftBoardScreen({
 
       <div className={styles.body}>
         <TeamPanel label="Player 1" side="p1" active={currentTurnPlayer === "p1"} slots={p1Slots} />
-        <HeroPool heroes={pool} onPick={onPick} />
+        <HeroPool heroes={pool} onPick={handlePick} />
         <TeamPanel label="Player 2" side="p2" active={currentTurnPlayer === "p2"} slots={p2Slots} />
       </div>
 

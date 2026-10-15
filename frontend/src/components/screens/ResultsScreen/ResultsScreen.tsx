@@ -56,11 +56,12 @@ function TeamResults({ label, side, picks }: TeamResultsProps) {
 type ResultsScreenProps = {
   p1Picks: Hero[];
   p2Picks: Hero[];
-  onNewDraft: () => void;
   onStartBattle: () => void;
 };
 
-export function ResultsScreen({ p1Picks, p2Picks, onNewDraft, onStartBattle }: ResultsScreenProps) {
+/** The Draft Results screen (intent/10's name for it). It leads only into
+ * the fight: "Start Battle" is its one button. */
+export function ResultsScreen({ p1Picks, p2Picks, onStartBattle }: ResultsScreenProps) {
   return (
     <div className={styles.screen}>
       <div className={styles.scrollArea}>
@@ -71,14 +72,18 @@ export function ResultsScreen({ p1Picks, p2Picks, onNewDraft, onStartBattle }: R
 
         <div className={styles.teams}>
           <TeamResults label="Player 1" side="p1" picks={p1Picks} />
+          {/* Permanent (intent/10). Hidden from screen readers: the team
+              headers already say who's playing. */}
+          <div className={styles.vs} aria-hidden="true">
+            <span className={styles.vsRule} />
+            <span className={styles.vsText}>VS</span>
+            <span className={styles.vsRule} />
+          </div>
           <TeamResults label="Player 2" side="p2" picks={p2Picks} />
         </div>
       </div>
 
       <div className={styles.footer}>
-        <button type="button" className={styles.newDraftLink} onClick={onNewDraft}>
-          ← New Draft
-        </button>
         <button type="button" className={styles.startBattleButton} onClick={onStartBattle}>
           Start Battle →
         </button>

@@ -122,6 +122,7 @@ export function HeroCard(props: HeroCardProps) {
         className={styles.poolCard}
         onClick={onClick}
         aria-label={`Pick ${altText}`}
+        data-pool-hero={hero.id}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
         <img src={hero.portrait} alt={altText} className={styles.poolImage} />
@@ -268,7 +269,9 @@ export function HeroCard(props: HeroCardProps) {
   const classClass = isResult ? styles.resultClass : styles.slotClass;
 
   return (
-    <div className={cardClass}>
+    // data-slot-hero lets the draft's pick animation find the slot a hero
+    // just landed in (intent/10). Result cards don't animate, so they skip it.
+    <div className={cardClass} data-slot-hero={isResult ? undefined : hero.id}>
       <div className={wrapperClass}>
         {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
         <img src={hero.portrait} alt="" className={imageClass} />

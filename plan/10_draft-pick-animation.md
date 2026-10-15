@@ -86,17 +86,17 @@ frontend/e2e/
 
 ### PR B — Pick animation and static Draft Results
 
-- [ ] M1. `lib/motion.ts` (new): `motionAllowed()` is true only when
+- [x] M1. `lib/motion.ts` (new): `motionAllowed()` is true only when
       `window.matchMedia` and `Element.prototype.animate` exist and
       `(prefers-reduced-motion: reduce)` doesn't match. It's read at call
       time, never cached. Also `PICK_FADE_MS = 150`,
       `POOL_GLIDE_MS = 300`, `SLOT_REVEAL_MS = 600`, with the spec's doc
       comment.
-- [ ] M2. `HeroCard`: the `pool` variant's `<button>` gets
+- [x] M2. `HeroCard`: the `pool` variant's `<button>` gets
       `data-pool-hero={hero.id}`. The `slot` variant's root (the
       `cardClass` div, not the `result` variant) gets
       `data-slot-hero={hero.id}`. No visual change.
-- [ ] M3. `screens/DraftBoardScreen/useDraftPickAnimation.ts` (new), with
+- [x] M3. `screens/DraftBoardScreen/useDraftPickAnimation.ts` (new), with
       the spec's signature, minus `onFinalPickLanded` (PR C):
       - `beforePick(heroId)`: only if `motionAllowed()` and
         `currentTurnPlayer !== null`, snapshot every `[data-pool-hero]`
@@ -118,35 +118,53 @@ frontend/e2e/
           over `SLOT_REVEAL_MS`, same delay and fill.
       - Unmount: cancel every animation it started and remove any
         stand-ins.
-- [ ] M4. `DraftBoardScreen`: `rootRef` on the `.screen` div. The pool's
+      (The ring is an `outline` 3px inside the card, not a `box-shadow`
+      spread, which `.slotList` clipped on edge slots; only the glow is a
+      shadow. Easing is set per keyframe so the flash peaks at 40%.
+      `transform-origin: top left` lives on `.poolCard` in
+      `HeroCard.module.css`. Spec updated.)
+- [x] M4. `DraftBoardScreen`: `rootRef` on the `.screen` div. The pool's
       `onPick` calls `beforePick(heroId)` then `onPick(heroId)`.
       `HeroPool`'s and `TeamPanel`'s props don't change.
-- [ ] M5. `ResultsScreen`: drop the `onNewDraft` prop, the "← New Draft"
+- [x] M5. `ResultsScreen`: drop the `onNewDraft` prop, the "← New Draft"
       button and `.newDraftLink`; the footer keeps only "Start Battle →".
       `page.tsx` stops passing `draft.returnToStart` to it.
-- [ ] M6. `ResultsScreen`: the permanent
+- [x] M6. `ResultsScreen`: the permanent
       `<div className={styles.vs} aria-hidden="true">VS</div>` between the
       two `TeamResults`. It's 56px `--font-heading` in `--color-gold` with
       a soft glow and a thin `--color-border` rule above and below, as on
       the canvas, and centered vertically beside the grids.
-- [ ] M7. Spec open item: confirm in the browser that the
+- [x] M7. Spec open item: confirm in the browser that the
       `requestAnimationFrame` measurement runs after `useFitGrid`'s
       re-render and before the first paint, so there's no one-frame jump
       on a pick that changes the pool's card size (e.g. the pick that
       drops the pool to a new column count). If it does jump, measure
       again in a second frame or hook into `useFitGrid`'s result, and
       update the spec.
-- [ ] M8. Spec open item: rapid tapping. Three quick picks should overlap
+      **No jump.** Sampled every frame of all 7 glides in a draft at
+      1280x800, 2560x1440, 1100x900 and 1600x700: the first painted frame
+      always has each card at its old spot. The pool's card size never
+      changed during a draft at any of those sizes, so the `scale` path
+      is in place but rarely hit.
+- [x] M8. Spec open item: rapid tapping. Three quick picks should overlap
       cleanly, with no slot left invisible, no stand-in left on
       `document.body`, and each tap picking the card drawn under it.
-- [ ] M9. Spec open item: the slot flash against `TeamPanel`'s
+      **Clean.** Three taps 60ms apart picked the three cards under the
+      pointer, and left every slot at opacity 1 with no running animation
+      or stand-in.
+- [x] M9. Spec open item: the slot flash against `TeamPanel`'s
       `.slotList` `overflow: hidden`. The 3px ring should be fully visible
       and the soft glow not look cut off. If it does, shrink the glow or
       pad `.slotList` (without changing `useHeightFitColumns`' fit), and
       update the spec.
-- [ ] M10. Spec open item: Draft Results at 1280x800 with the "VS". No
+      **The shadow ring was clipped** on each panel's first slot (top and
+      left edges), so the ring became an inset `outline` (see M3). Checked
+      with the animation frozen at its peak: the ring shows on all four
+      sides, and the clipped soft glow reads fine.
+- [x] M10. Spec open item: Draft Results at 1280x800 with the "VS". No
       horizontal overflow, and the teams still fit without scrolling.
-- [ ] M11. Tests:
+      **Fits** at 1280x800 and 2560x1440, with no page or grid scroll.
+- [x] M11. Tests:
       - `motion.test.ts` (new): false without `matchMedia`, false
         without `Element.prototype.animate`, false when reduce matches,
         true otherwise; re-reads on each call
@@ -169,7 +187,7 @@ frontend/e2e/
         calls `onStartBattle`
       - `e2e/draft-to-battle.spec.ts`: still drafts 8 heroes with
         animations on; += the "VS" is visible on Draft Results
-- [ ] M12. PR B checks: `tsc --noEmit`, ESLint, full Vitest and Playwright
+- [x] M12. PR B checks: `tsc --noEmit`, ESLint, full Vitest and Playwright
       green. Manual QA at 1280x800 (`/qa-screens`, plus a screen recording
       or stepped screenshots for motion):
       - each pick: the card fades in place, then the gap closes, and the
@@ -182,6 +200,12 @@ frontend/e2e/
       Tune `PICK_FADE_MS`, `POOL_GLIDE_MS` and `SLOT_REVEAL_MS` here (spec
       open item): fast enough for full-speed tapping, slow enough that
       everyone sees the flash. Patch bump.
+      Checked by script on a dev server on port 3100 (port 3000 belonged
+      to another checkout): frame sampling, stepped and frozen-at-peak
+      screenshots, and reduced motion (no animations or stand-ins). The
+      starting durations are kept until a playtest says otherwise. The
+      `ResultsScreen` and hook tests stub `ResizeObserver`, `matchMedia`,
+      `animate` and `getBoundingClientRect`, since jsdom has none of them.
 
 ### PR C — Versus finale
 

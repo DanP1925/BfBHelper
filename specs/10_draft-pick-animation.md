@@ -186,15 +186,27 @@
      same `delay` and `fill: "backwards"` (so it's invisible during the
      fade):
      ```ts
+     const ring = { outlineStyle: "solid", outlineWidth: "3px", outlineOffset: "-3px" };
+     const off = { ...ring, outlineColor: "transparent", boxShadow: "0 0 0 0 transparent" };
      el.animate(
        [
-         { opacity: 0, boxShadow: "0 0 0 0 transparent" },
-         { opacity: 1, boxShadow: `0 0 0 3px ${color}, 0 0 18px 4px ${color}`, offset: 0.4 },
-         { opacity: 1, boxShadow: "0 0 0 0 transparent" },
+         { ...off, opacity: 0, easing: "ease-out" },
+         { ...ring, outlineColor: color, boxShadow: `0 0 18px 4px ${color}`, opacity: 1, offset: 0.4, easing: "ease-in-out" },
+         { ...off, opacity: 1 },
        ],
-       { duration: SLOT_REVEAL_MS, delay: PICK_FADE_MS, easing: "ease-out", fill: "backwards" },
+       { duration: SLOT_REVEAL_MS, delay: PICK_FADE_MS, fill: "backwards" },
      );
      ```
+     - **The ring is an outline drawn 3px inside the card**, not a
+       `box-shadow` spread. It was first built as a shadow ring, but
+       `TeamPanel`'s `.slotList` (`overflow: hidden`) clipped it on any
+       slot touching the panel's left or top edge, which is the first
+       slot on either side. Outlines paint over the card's own content, so
+       the inset ring shows on all four sides. Only the soft glow spills
+       outside, where clipping doesn't matter.
+     - **Easing is per segment**, so the flash peaks at exactly 40% of
+       the reveal. An `ease-out` on the whole effect moved the peak to
+       about 125ms in.
      - `color` is the picking side's `--color-p1` or `--color-p2`, read
        once with `getComputedStyle(document.documentElement)`, so it
        stays the app's token (intent: "a brief flash in that team's
@@ -292,9 +304,9 @@
     scrolled pool still fades out where the card is drawn.
   - The slot's glow is a `box-shadow` of up to ~22px. `TeamPanel`'s
     `.slotList` is `overflow: hidden`, so the outer glow is clipped
-    where the slot meets the panel's edge. The 3px ring stays inside the
-    10px gaps and is always visible. Whether the clipped soft glow reads
-    well enough is checked in the browser (Open Items).
+    where the slot meets the panel's edge. That's fine for a soft glow.
+    The 3px ring is an inset outline, so it's never clipped (see Pick
+    Logic).
 - **Draft Results screen:** the "VS" adds one item to `.teams`' row. At
   1280x800, two teams of 2 columns at up to 180px (372px each), plus
   the 96px "VS" column and two 48px gaps, come to about 936px, well
@@ -352,20 +364,34 @@ No change from v1-v9: same static Vercel deployment, no new infra.
   **Decided:** done. Version 67 shows the pick as a looping fade-out,
   glide and slot flash, replacing version 66's flight. See UI Design
   Reference.
-- Tune `PICK_FADE_MS`, `POOL_GLIDE_MS`, `SLOT_REVEAL_MS` and the versus
-  timings in the browser at 1280x800. They should be fast enough that a
-  player tapping at full speed never feels held up, and slow enough
-  that everyone sees the flash.
-- Confirm in the browser that the `requestAnimationFrame` measurement
+- Tune the versus timings in the browser at 1280x800 (PR C).
+  ~~`PICK_FADE_MS`, `POOL_GLIDE_MS`, `SLOT_REVEAL_MS`~~ **Decided:**
+  the starting values (150 / 300 / 600ms) are kept for now. A pick
+  settles in ~750ms and never blocks the next tap. Revisit after a
+  playtest if they feel slow.
+- ~~Confirm in the browser that the `requestAnimationFrame` measurement
   runs after `useFitGrid`'s re-render and before the first paint: no
-  one-frame jump of the pool on a pick that changes the card size.
-- Check rapid tapping: three quick picks should overlap cleanly, with no
-  slot left invisible and no stand-in left on screen.
-- Check the slot flash against `TeamPanel`'s `overflow: hidden`: the
-  ring should be fully visible and the soft glow shouldn't look cut off.
-  If it does, shrink the glow or give `.slotList` a few px of padding.
-- Check the Draft Results screen at 1280x800 with the "VS": no
-  horizontal overflow, and the teams still fit without scrolling.
+  one-frame jump of the pool on a pick that changes the card size.~~
+  **Decided:** no jump. Sampled frame by frame on all 7 glides of a
+  draft, at 1280x800, 2560x1440, 1100x900 and 1600x700. The first
+  painted frame always shows each card at its old spot. The card size
+  never changed during a draft at any of those sizes (`useFitGrid`
+  keeps the same columns from 19 cards down to 12), so the
+  `scale(s)` part is in place but rarely exercised.
+- ~~Check rapid tapping: three quick picks should overlap cleanly, with no
+  slot left invisible and no stand-in left on screen.~~
+  **Decided:** clean. Three taps 60ms apart picked the three cards under
+  the pointer, left every slot at opacity 1, and left no running
+  animation or stand-in.
+- ~~Check the slot flash against `TeamPanel`'s `overflow: hidden`: the
+  ring should be fully visible and the soft glow shouldn't look cut off.~~
+  **Decided:** a `box-shadow` ring was clipped on the first slot of
+  either panel, so the ring is now an inset outline (see Pick Logic).
+  The soft glow being clipped at the panel edge reads fine.
+- ~~Check the Draft Results screen at 1280x800 with the "VS": no
+  horizontal overflow, and the teams still fit without scrolling.~~
+  **Decided:** fits at 1280x800 and 2560x1440, with no page or grid
+  scroll.
 - `e2e/draft-to-battle.spec.ts` clicks the first pool card 8 times, then
   waits for "Draft Complete" and "Start Battle →". Playwright waits for
   moving elements to settle and for "Start Battle →" to become visible,

@@ -14,6 +14,9 @@ test("completing a draft and starting battle renders the Battle Board", async ({
   }
 
   await expect(page.getByText("Draft Complete")).toBeVisible();
+  // Draft Results (intent/10): the permanent "VS", and no way back to a new draft.
+  await expect(page.getByText("VS", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /New Draft/ })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Start Battle →" }).click();
 

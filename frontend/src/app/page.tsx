@@ -165,7 +165,6 @@ export default function Home() {
       <ResultsScreen
         p1Picks={p1Picks}
         p2Picks={p2Picks}
-        onNewDraft={draft.returnToStart}
         onStartBattle={() => {
           setView("battle");
           saveView("battle");
