@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "./page";
 import { getHeroById, HERO_IDS } from "../data/heroes";
 import { battleReducer, createInitialBattleState } from "../lib/battle/reducer";
@@ -24,6 +24,27 @@ describe("Home", () => {
     render(<Home />);
     expect(screen.getByRole("heading", { name: /battle for biternia/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /start draft/i })).toBeInTheDocument();
+  });
+
+  it("moves a picked hero from the pool to its team at once (no motion in jsdom)", () => {
+    // The Draft Board's grids size themselves with a ResizeObserver, which jsdom lacks.
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    saveDraft({ initiative: "p1", picks: { p1: [], p2: [] } });
+    render(<Home />);
+
+    const hero = getHeroById(HERO_IDS[0]);
+    fireEvent.click(screen.getByRole("button", { name: `Pick ${hero.name}, ${hero.className}` }));
+
+    expect(screen.queryByRole("button", { name: new RegExp(`^Pick ${hero.name},`) })).toBeNull();
+    expect(screen.getByText(hero.name)).toBeInTheDocument();
+    expect(document.body.querySelector(":scope > img")).toBeNull();
+    vi.unstubAllGlobals();
   });
 
   it("renders the Win Screen when a completed battle's persisted view is 'win'", () => {
