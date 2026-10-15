@@ -190,16 +190,20 @@ apply any rule automatically (expiry, defeat, damage absorption).
 
 ## Follow-ups
 
-- [ ] **Revisit every token's display once all tokens exist.** Do this after
-  the hero-specific tokens are built (+1 Attack, Confuse and Immobilize are
-  done).
-  Each one is designed on its own first, so review them together for one
-  consistent look and layout on the Board's hero cards (and on the Map, where
-  they fit). Include the choice deferred in intent 06: today a hero with no
-  +1 Attack tokens still shows a muted swords icon; consider hiding token controls
-  entirely at 0 (e.g. adding tokens from a tap on the hero card) to cut
-  clutter. Added 2026-10-11.
-  Also the state shape deferred in spec 08: each token is a plain field on
-  `HeroBattleState` today. One token registry covering counts, toggles and
-  the hero-specific visibility rule may pay off once the hero-specific
-  tokens exist (best decided with the first hero-specific token intent).
+- [ ] **Review every token's display again once all tokens exist.** Do this
+  after the hero-specific tokens are built, Runika's Artifacts last. Added
+  2026-10-11, updated 2026-10-15.
+  Intent 09 already redesigned the Board's token row and settled the state
+  shape, but each later token is still designed on its own. So once they all
+  exist, review them together for one consistent look and layout:
+  - **Board token row and picker** (intent 09): held tokens only, plus a
+    "+" picker, sized for at most 8 tokens per hero. Does it still hold up
+    with Shield, Chill, Stone and Favored Enemy in real games? How often do
+    cards wrap?
+  - **Colors and icons** of every token side by side.
+  - **The Map**, read-only for now: does the status panel still read well,
+    and is editing there worth adding?
+  - **Runika's Artifacts:** where they sit on her card, next to the row.
+  - **State shape** (spec 09): plain fields per token, plus a small
+    visibility table for hero-specific tokens. Is a fuller token registry
+    worth it by then?
