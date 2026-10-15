@@ -1,3 +1,4 @@
+import { Fragment, type ComponentType, type ReactNode } from "react";
 import type { Hero } from "../../lib/draft/types";
 import {
   HERO_ATTACK_TOKEN_CEILING,
@@ -8,6 +9,7 @@ import {
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { TokenChip } from "../TokenChip/TokenChip";
+import { TokenPicker, type TokenPickerOption } from "../TokenPicker/TokenPicker";
 import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
 import { ImmobilizeIcon } from "../TokenToggle/ImmobilizeIcon";
 import { TokenToggle } from "../TokenToggle/TokenToggle";
@@ -41,15 +43,15 @@ type HeroCardProps =
       level: number;
       onHpChange?: (value: number) => void;
       onLevelChange?: (value: number) => void;
-      /** +1 Attack tokens (intent/06). The token row renders only when this
-       * is provided (the Battle Board), so the Win Screen's cards stay as
-       * they are. */
+      /** The "+" picker's open state (intent/09). The token row renders only
+       * when this is provided (the Battle Board), so the Win Screen's cards
+       * stay as they are. */
+      tokenPicker?: HeroCardPickerProps;
+      /** +1 Attack tokens (intent/06). Only the Battle Board passes it. */
       attackTokens?: HeroCardTokenProps;
-      /** Confuse token (intent/07), shown after the +1 Attack chip. Like
-       * `attackTokens`, only the Battle Board passes it. */
+      /** Confuse token (intent/07). Only the Battle Board passes it. */
       confused?: HeroCardToggleProps;
-      /** Immobilized (intent/08), shown after the Confuse toggle. Only the
-       * Battle Board passes it. */
+      /** Immobilized (intent/08). Only the Battle Board passes it. */
       immobilized?: HeroCardToggleProps;
     });
 
@@ -67,6 +69,49 @@ export type HeroCardToggleProps = {
   on: boolean;
   onChange: (next: boolean) => void;
 };
+
+/** The "+" picker's open state, owned by the Board like a chip's. */
+export type HeroCardPickerProps = {
+  expanded: boolean;
+  onExpandedChange: (next: boolean) => void;
+};
+
+/** One token in the row: its held chip (or `null` while not held) and its
+ * picker option (or `null` while it can't be added). */
+type TokenEntry = { key: string; chip: ReactNode; option: TokenPickerOption | null };
+
+/** An on/off token's entry: a lit chip while held, an option while not. */
+function toggleEntry(
+  key: string,
+  toggle: HeroCardToggleProps,
+  heroName: string,
+  Icon: ComponentType<{ size: number }>,
+  chipLabel: string,
+  optionLabel: string,
+  accent: string,
+): TokenEntry {
+  return {
+    key,
+    chip: toggle.on ? (
+      <TokenToggle
+        {...toggle}
+        icon={<Icon size={12} />}
+        label={chipLabel}
+        heroName={heroName}
+        accent={accent}
+      />
+    ) : null,
+    option: toggle.on
+      ? null
+      : {
+          key,
+          icon: <Icon size={14} />,
+          label: optionLabel,
+          accent,
+          onPick: () => toggle.onChange(true),
+        },
+  };
+}
 
 export function HeroCard(props: HeroCardProps) {
   const { hero, variant, onClick } = props;
@@ -87,8 +132,67 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { hp, level, onHpChange, onLevelChange, attackTokens, confused, immobilized } = props;
+    const { hp, level, onHpChange, onLevelChange, tokenPicker } = props;
+    const { attackTokens, confused, immobilized } = props;
     const isDefeated = hp === 0;
+
+    // The fixed order (intent/09): +1 Attack, Confuse, Immobilize. The row's
+    // chips and the picker's options both come from this one list, so they
+    // can't disagree, and a row never reshuffles by the order of adding.
+    const tokenEntries: TokenEntry[] = [];
+    if (attackTokens) {
+      const { count, onChange } = attackTokens;
+      tokenEntries.push({
+        key: "attack",
+        // Stays while its stepper is open at 0, gone once it closes there.
+        chip:
+          count > 0 || attackTokens.expanded ? (
+            <TokenChip
+              {...attackTokens}
+              max={HERO_ATTACK_TOKEN_CEILING}
+              icon={<AttackTokenIcon size={12} />}
+              label="+1 Attack"
+              heroName={hero.name}
+            />
+          ) : null,
+        // Always offered, 1 per tap.
+        option: {
+          key: "attack",
+          icon: <AttackTokenIcon size={14} />,
+          label: "+1 Attack",
+          accent: "var(--color-gold)",
+          count,
+          disabled: count >= HERO_ATTACK_TOKEN_CEILING,
+          onPick: () => onChange(count + 1),
+        },
+      });
+    }
+    if (confused) {
+      tokenEntries.push(
+        toggleEntry(
+          "confused",
+          confused,
+          hero.name,
+          ConfuseTokenIcon,
+          "Confuse token",
+          "Confuse",
+          "var(--color-confuse)",
+        ),
+      );
+    }
+    if (immobilized) {
+      tokenEntries.push(
+        toggleEntry(
+          "immobilized",
+          immobilized,
+          hero.name,
+          ImmobilizeIcon,
+          "Immobilized",
+          "Immobilize",
+          "var(--color-immobilize)",
+        ),
+      );
+    }
     return (
       <div className={styles.battleCard}>
         <div className={styles.battleTokenWrapper}>
@@ -160,35 +264,16 @@ export function HeroCard(props: HeroCardProps) {
               </>
             )}
           </div>
-          {(attackTokens || confused || immobilized) && (
+          {tokenPicker && (
             <div className={styles.tokenRow}>
-              {attackTokens && (
-                <TokenChip
-                  {...attackTokens}
-                  max={HERO_ATTACK_TOKEN_CEILING}
-                  icon={<AttackTokenIcon size={12} />}
-                  label="+1 Attack"
-                  heroName={hero.name}
-                />
+              {tokenEntries.map((entry) =>
+                entry.chip ? <Fragment key={entry.key}>{entry.chip}</Fragment> : null,
               )}
-              {confused && (
-                <TokenToggle
-                  {...confused}
-                  icon={<ConfuseTokenIcon size={12} />}
-                  label="Confuse token"
-                  heroName={hero.name}
-                  accent="var(--color-confuse)"
-                />
-              )}
-              {immobilized && (
-                <TokenToggle
-                  {...immobilized}
-                  icon={<ImmobilizeIcon size={12} />}
-                  label="Immobilized"
-                  heroName={hero.name}
-                  accent="var(--color-immobilize)"
-                />
-              )}
+              <TokenPicker
+                {...tokenPicker}
+                heroName={hero.name}
+                options={tokenEntries.flatMap((entry) => (entry.option ? [entry.option] : []))}
+              />
             </div>
           )}
         </div>

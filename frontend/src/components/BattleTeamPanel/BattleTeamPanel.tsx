@@ -22,8 +22,9 @@ type BattleTeamPanelProps = {
   onHeroConfusedChange: (heroId: HeroId, value: boolean) => void;
   onHeroImmobilizedChange: (heroId: HeroId, value: boolean) => void;
   onStructureHpChange: (slot: keyof StructuresState, value: number) => void;
-  /** Which token chip on the Board is open, owned by `BattleBoardScreen` so
-   * opening one in this panel closes any open in the other (intent/06). */
+  /** Which token chip or "+" picker on the Board is open, owned by
+   * `BattleBoardScreen` so opening one in this panel closes any open in the
+   * other (intent/06, intent/09). */
   openTokenKey: string | null;
   onOpenTokenKeyChange: (key: string | null) => void;
 };
@@ -69,6 +70,8 @@ export function BattleTeamPanel({
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
           // Per token type, so later tokens on the same hero get their own key.
           const attackTokenKey = `${side}:${hero.id}:attack`;
+          // The "+" picker shares the same one-open rule (intent/09).
+          const pickerKey = `${side}:${hero.id}:picker`;
           return (
             <HeroCard
               key={hero.id}
@@ -78,6 +81,10 @@ export function BattleTeamPanel({
               level={heroState.level}
               onHpChange={(value) => onHeroHpChange(hero.id, value)}
               onLevelChange={(value) => onHeroLevelChange(hero.id, value)}
+              tokenPicker={{
+                expanded: openTokenKey === pickerKey,
+                onExpandedChange: (open) => onOpenTokenKeyChange(open ? pickerKey : null),
+              }}
               attackTokens={{
                 count: heroState.attackTokens,
                 onChange: (value) => onHeroAttackTokensChange(hero.id, value),

@@ -27,9 +27,11 @@ type TokenChipProps = {
 };
 
 /**
- * A compact counted-token control for a hero card (intent/06). Collapsed
- * it's just the icon (muted at 0) or a pill with "×N"; tapping the icon
- * slides in − / +. Taps on − / + leave it open, so adding three tokens is
+ * A compact counted-token control for a hero card (intent/06). It's a pill
+ * with the icon and "×N"; tapping it slides in − / +. Since intent/09 the
+ * card only renders it while the hero holds one or it's open (adding goes
+ * through TokenPicker), so it stays at 0 while open and is gone once it
+ * closes there. Taps on − / + leave it open, so adding three tokens is
  * three taps. Closes on a second tap of the icon, a click outside, or
  * Escape, like OverflowMenu. Generic on purpose, so later counted tokens
  * reuse it with their own icon and label. No count state of its own:
@@ -52,13 +54,8 @@ export function TokenChip({
   useDismiss(expanded, () => onExpandedChange(false), containerRef, toggleRef);
 
   const toggleLabel = `${heroName}: ${tokenCountLabel(count, label)}. ${expanded ? "Hide" : "Show"} controls`;
-  const active = expanded || count > 0;
-
   return (
-    <div
-      ref={containerRef}
-      className={`${styles.chip} ${active ? styles.active : ""} ${expanded ? styles.expanded : ""}`}
-    >
+    <div ref={containerRef} className={`${styles.chip} ${expanded ? styles.expanded : ""}`}>
       <button
         type="button"
         ref={toggleRef}
@@ -70,7 +67,7 @@ export function TokenChip({
         onClick={() => onExpandedChange(!expanded)}
       >
         {icon}
-        {active && <span className={styles.count}>×{count}</span>}
+        <span className={styles.count}>×{count}</span>
       </button>
       {/* `inert` while collapsed backs up the CSS `visibility: hidden`: the
           zero-width buttons can't be tabbed to, clicked or read out. */}

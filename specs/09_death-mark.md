@@ -197,7 +197,10 @@
   - It finds the owner's side from the drafted rosters (`p1Heroes` /
     `p2Heroes`, which `BattleBoardScreen` already gets). For `"enemies"` it
     returns `otherPlayer(ownerSide)`, and for `"allies"` the owner's side.
-    It's pure, with no battle state, and unit-tested.
+    It's pure, with no battle state, and unit-tested. The lookup itself
+    is an exported `targetSideForRule(rule, rosters)` that
+    `heroSpecificTokenSide` calls, so the `"allies"` branch is tested
+    before any table row uses it.
   - "In the battle" means drafted, so Kunoichi at 0 HP or in the respawn
     area still counts (intent's Scope). Rosters don't change mid-battle,
     so the result is fixed for a whole battle.
@@ -248,9 +251,11 @@
   /** One row in the picker: a token this hero can take right now. */
   export type TokenPickerOption = {
     key: string; // "attack" | "confused" | "immobilized" | "deathMarked"
-    icon: ReactNode; // the token's 12px icon
+    icon: ReactNode; // the token's 14px icon
     label: string; // "+1 Attack", "Confuse", "Immobilize", "Death Mark"
     accent: string; // the token's color, for the row's icon
+    count?: number; // how many a counted token's hero holds ("×2")
+    disabled?: boolean; // a counted token at its ceiling
     onPick: () => void;
   };
 
@@ -270,9 +275,11 @@
     fixed order. Each row calls `onPick` and the popover **stays open**
     (intent's Scope). On/off rows disappear once picked, because the
     caller stops listing a held one. The +1 Attack row stays and adds 1 per
-    tap, and its label shows the current count ("+1 Attack ×2") so
-    repeated taps have visible feedback. It's disabled at
-    `HERO_ATTACK_TOKEN_CEILING`.
+    tap, and the row shows the current count ("×2", right-aligned in gold,
+    as on the canvas) so repeated taps have visible feedback. It's disabled
+    at `HERO_ATTACK_TOKEN_CEILING`. Each row's accessible name is
+    "Add {label}", plus ", N held" once the hero holds any. The popover is
+    `role="group"`, named "Add a token to {hero}".
   - **Closing:** a tap outside, a second tap of "+", or Escape, through
     the existing `useDismiss` hook (focus returns to "+"), like
     `TokenChip` and `OverflowMenu`.
@@ -437,12 +444,25 @@ No change from v1-v8: same static Vercel deployment, no new infra.
   nothing held (just "+"), the widest typical card, and one heavy card
   that wraps. Then update UI Design Reference above.~~
   **Decided:** done (App Flow version 64). See UI Design Reference.
-- Check that the picker isn't clipped and doesn't scroll the Board at
+- ~~Check that the picker isn't clipped and doesn't scroll the Board at
   1280x800, including on a bottom-row card, where it should flip above
-  the "+".
-- Check the Board's height at 1280x800 with one wrapped card in each
+  the "+".~~
+  **Decided:** not clipped, and nothing scrolls. At 1280x800 even a
+  bottom-row card's picker (3 rows, 110px tall) fits below its "+", ending
+  at y≈657, so the flip only triggers on shorter screens. It's covered by
+  a unit test. No ancestor's `transform` or `filter` moves the fixed
+  popover, so no portal was needed. `e2e/token-row.spec.ts` opens all 8
+  pickers at 1280x800 and checks each one is inside the viewport.
+- ~~Check the Board's height at 1280x800 with one wrapped card in each
   panel. If even one wrap scrolls the Board, rethink the row (e.g. the
-  "+" as an icon alone) before building the hero-specific tokens.
+  "+" as an icon alone) before building the hero-specific tokens.~~
+  **Decided:** it fits. Today's three tokens don't wrap at all
+  (×9 + Confuse + Immobilize + "+" stays one 20px line). The only wrap
+  is a card holding all three with its ×9 stepper open: the "+" drops to
+  a second line, the row grows to 44px and the card from 172px to 196px.
+  The Board still doesn't scroll at 1280x800 or 2560x1440. Since the
+  panels sit side by side, one wrapped card per panel adds the same
+  height. The centered Board shifts up ~12px while that stepper is open.
 - ~~Add the Death Mark toggle to the "Battle Board" artboard and its icon
   to the "Battle Map" artboard (Player 2 only, after Immobilize in
   both), then rewrite UI Design Reference above to describe what's

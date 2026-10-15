@@ -1,17 +1,13 @@
 /* 20px tall, smaller than NumberStepper's 22px buttons, so it reads as a
- * token rather than a stat (intent/06). At 0 and collapsed it's just the
- * muted icon, no border or fill. */
+ * token rather than a stat (intent/06). Only rendered while held or open
+ * (intent/09), so it's always the lit gold pill. */
 .chip {
   box-sizing: border-box;
   height: 20px;
   display: inline-flex;
   align-items: center;
-  border: 1px solid transparent;
+  border: 1px solid var(--color-gold);
   border-radius: 999px;
-}
-
-.active {
-  border-color: var(--color-gold);
   background: color-mix(in srgb, var(--color-gold) 14%, transparent);
 }
 
@@ -20,25 +16,16 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 0 3px;
+  padding: 0 4px 0 6px;
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  color: var(--color-muted);
+  color: var(--color-gold);
   background: none;
   border: none;
   border-radius: 999px;
   cursor: pointer;
-}
-
-.toggle:hover,
-.active .toggle {
-  color: var(--color-gold);
-}
-
-.active .toggle {
-  padding: 0 4px 0 6px;
 }
 
 .toggle:focus-visible,

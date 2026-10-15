@@ -4,11 +4,12 @@ import { ConfuseTokenIcon } from "./ConfuseTokenIcon";
 import { ImmobilizeIcon } from "./ImmobilizeIcon";
 import { TokenToggle } from "./TokenToggle";
 
-function renderToggle(on: boolean) {
+// Only ever rendered while held since intent/09, so always `on`.
+function renderToggle() {
   const onChange = vi.fn();
   render(
     <TokenToggle
-      on={on}
+      on
       onChange={onChange}
       icon={<ConfuseTokenIcon size={12} />}
       label="Confuse token"
@@ -23,29 +24,22 @@ function renderToggle(on: boolean) {
 }
 
 describe("TokenToggle", () => {
-  it("is not pressed when off, and a tap turns it on", () => {
-    const { onChange, button } = renderToggle(false);
-    expect(button).toHaveAttribute("aria-pressed", "false");
-    fireEvent.click(button);
-    expect(onChange).toHaveBeenCalledWith(true);
-  });
-
-  it("is pressed when on, and a tap turns it off", () => {
-    const { onChange, button } = renderToggle(true);
+  it("is pressed, and a tap removes the token", () => {
+    const { onChange, button } = renderToggle();
     expect(button).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(button);
     expect(onChange).toHaveBeenCalledWith(false);
   });
 
-  it("keeps a fixed label and tooltip whatever the state", () => {
-    const { button } = renderToggle(true);
-    expect(button).toHaveAttribute("title", "Confuse token");
+  it("says in its tooltip that a tap removes it", () => {
+    const { button } = renderToggle();
+    expect(button).toHaveAttribute("title", "Confuse token (tap to remove)");
   });
 
   it("uses the label verbatim, so a non-token name reads right", () => {
     render(
       <TokenToggle
-        on={false}
+        on
         onChange={vi.fn()}
         icon={<ImmobilizeIcon size={12} />}
         label="Immobilized"
@@ -54,16 +48,16 @@ describe("TokenToggle", () => {
       />,
     );
     const button = screen.getByRole("button", { name: "Immobilized on Boreas" });
-    expect(button).toHaveAttribute("title", "Immobilized");
+    expect(button).toHaveAttribute("title", "Immobilized (tap to remove)");
   });
 
   it("sets the accent as --token-accent", () => {
-    const { button } = renderToggle(false);
+    const { button } = renderToggle();
     expect(button.style.getPropertyValue("--token-accent")).toBe("var(--color-confuse)");
   });
 
   it("renders the icon as decoration only", () => {
-    const { button } = renderToggle(false);
+    const { button } = renderToggle();
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 });

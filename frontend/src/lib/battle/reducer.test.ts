@@ -41,6 +41,7 @@ describe("createInitialHeroState", () => {
       attackTokens: 0,
       confused: false,
       immobilized: false,
+      deathMarked: false,
     });
     expect(createInitialHeroState({ ...HERO_A, baseHp: HERO_HP_CEILING })).toEqual({
       hp: HERO_HP_CEILING,
@@ -48,6 +49,7 @@ describe("createInitialHeroState", () => {
       attackTokens: 0,
       confused: false,
       immobilized: false,
+      deathMarked: false,
     });
   });
 });
@@ -61,6 +63,7 @@ describe("createInitialBattleState", () => {
       attackTokens: 0,
       confused: false,
       immobilized: false,
+      deathMarked: false,
     });
   });
 
@@ -86,9 +89,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 6", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 7", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(6);
+    expect(state.schemaVersion).toBe(7);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -375,6 +378,99 @@ describe("battleReducer", () => {
       state = battleReducer(state, { type: "PASS_INITIATIVE" });
       expect(state.p1.heroes[HERO_A.id].immobilized).toBe(true);
       expect(state.p1.heroes[HERO_A.id].confused).toBe(true);
+    });
+  });
+
+  describe("SET_HERO_DEATH_MARKED", () => {
+    function mark(state: BattleState, side: "p1" | "p2", value: boolean): BattleState {
+      return battleReducer(state, {
+        type: "SET_HERO_DEATH_MARKED",
+        side,
+        heroId: side === "p1" ? HERO_A.id : HERO_B.id,
+        value,
+      });
+    }
+
+    it("turns the flag on and off, changing nothing but that hero's flag", () => {
+      const state = baseState();
+      const on = mark(state, "p1", true);
+      expect(on.p1.heroes[HERO_A.id]).toEqual({
+        ...state.p1.heroes[HERO_A.id],
+        deathMarked: true,
+      });
+      expect(on.p1.heroPositions).toBe(state.p1.heroPositions);
+      expect(on.p2).toBe(state.p2);
+
+      const off = mark(on, "p1", false);
+      expect(off.p1.heroes[HERO_A.id].deathMarked).toBe(false);
+      expect(off).not.toBe(on);
+    });
+
+    it("doesn't check visibility: any hero on either side can be marked", () => {
+      // Neither roster has Kunoichi; the UI alone decides who gets a control.
+      const state = mark(mark(baseState(), "p1", true), "p2", true);
+      expect(state.p1.heroes[HERO_A.id].deathMarked).toBe(true);
+      expect(state.p2.heroes[HERO_B.id].deathMarked).toBe(true);
+    });
+
+    it("is a no-op for an unknown heroId", () => {
+      const state = baseState();
+      const next = battleReducer(state, {
+        type: "SET_HERO_DEATH_MARKED",
+        side: "p1",
+        heroId: "sterling",
+        value: true,
+      });
+      expect(next).toBe(state);
+    });
+
+    it("is a no-op (same reference) when the value is unchanged", () => {
+      const state = baseState();
+      expect(mark(state, "p1", false)).toBe(state);
+      const on = mark(state, "p1", true);
+      expect(mark(on, "p1", true)).toBe(on);
+    });
+
+    it("survives SET_HERO_HP to 0, a move, the other tokens and PASS_INITIATIVE", () => {
+      let state = mark(baseState(), "p1", true);
+      state = battleReducer(state, {
+        type: "SET_HERO_HP",
+        side: "p1",
+        heroId: HERO_A.id,
+        value: 0,
+      });
+      state = battleReducer(state, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: MAP_SPACE_IDS[0],
+      });
+      state = battleReducer(state, {
+        type: "SET_HERO_ATTACK_TOKENS",
+        side: "p1",
+        heroId: HERO_A.id,
+        value: 2,
+      });
+      state = battleReducer(state, {
+        type: "SET_HERO_CONFUSED",
+        side: "p1",
+        heroId: HERO_A.id,
+        value: true,
+      });
+      state = battleReducer(state, {
+        type: "SET_HERO_IMMOBILIZED",
+        side: "p1",
+        heroId: HERO_A.id,
+        value: true,
+      });
+      state = battleReducer(state, { type: "PASS_INITIATIVE" });
+      expect(state.p1.heroes[HERO_A.id]).toMatchObject({
+        hp: 0,
+        attackTokens: 2,
+        confused: true,
+        immobilized: true,
+        deathMarked: true,
+      });
     });
   });
 

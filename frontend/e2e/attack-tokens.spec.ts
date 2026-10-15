@@ -15,40 +15,46 @@ test("+1 Attack tokens count up and down, stay one-open, and survive a Board/Map
   await expect(page.getByText("Draft Complete")).toBeVisible();
   await page.getByRole("button", { name: "Start Battle →" }).click();
 
-  // Every hero card has a collapsed chip at 0. Read the first two heroes'
-  // names off their toggles rather than hardcoding the draft order.
-  const toggles = page.getByRole("button", { name: /: \d \+1 Attack tokens?\. / });
-  await expect(toggles).toHaveCount(8);
+  // Every hero card has a "+" and no chip yet. Read the first two heroes'
+  // names off their "+" rather than hardcoding the draft order.
+  const addButtons = page.getByRole("button", { name: /^Add a token to / });
+  await expect(addButtons).toHaveCount(8);
   const nameOf = async (index: number) => {
-    const label = await toggles.nth(index).getAttribute("aria-label");
-    return label!.slice(0, label!.indexOf(":"));
+    const label = await addButtons.nth(index).getAttribute("aria-label");
+    return label!.slice("Add a token to ".length);
   };
   const hero = await nameOf(0);
   const other = await nameOf(1);
 
   const heroToggle = page.getByRole("button", { name: new RegExp(`^${hero}: \\d`) });
-  const otherToggle = page.getByRole("button", { name: new RegExp(`^${other}: \\d`) });
-  await expect(heroToggle).toHaveAccessibleName(`${hero}: 0 +1 Attack tokens. Show controls`);
+  await expect(heroToggle).toHaveCount(0);
 
-  // Three taps on +, one on −, without the chip closing in between.
+  // Three tokens in one open of the picker (intent/09), which stays open.
+  await page.getByRole("button", { name: `Add a token to ${hero}` }).click();
+  const heroPicker = page.getByRole("group", { name: `Add a token to ${hero}` });
+  for (let i = 0; i < 3; i++) {
+    await heroPicker.getByRole("button", { name: /^Add \+1 Attack/ }).click();
+  }
+  await expect(heroPicker.getByRole("button", { name: "Add +1 Attack, 3 held" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(heroPicker).toHaveCount(0);
+
+  // One tap on − in the chip's stepper.
   await heroToggle.click();
   await expect(heroToggle).toHaveAttribute("aria-expanded", "true");
-  const add = page.getByRole("button", { name: `Add +1 Attack token to ${hero}` });
-  for (let i = 0; i < 3; i++) {
-    await add.click();
-  }
   await page.getByRole("button", { name: `Remove +1 Attack token from ${hero}` }).click();
   await expect(heroToggle).toHaveAccessibleName(`${hero}: 2 +1 Attack tokens. Hide controls`);
   await expect(heroToggle).toHaveText("×2");
 
-  // Opening another hero's chip closes the first, in one tap.
-  await otherToggle.click();
-  await expect(otherToggle).toHaveAttribute("aria-expanded", "true");
+  // Opening another hero's picker closes the chip, in one tap.
+  await page.getByRole("button", { name: `Add a token to ${other}` }).click();
+  const otherPicker = page.getByRole("group", { name: `Add a token to ${other}` });
+  await expect(otherPicker).toBeVisible();
   await expect(heroToggle).toHaveAttribute("aria-expanded", "false");
 
   // Escape closes it.
   await page.keyboard.press("Escape");
-  await expect(otherToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(otherPicker).toHaveCount(0);
 
   // The Map shows the count read-only in the team status panel.
   await page.getByRole("button", { name: "Map" }).click();

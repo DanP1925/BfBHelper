@@ -25,20 +25,21 @@ and the redesign has its own risks (popover clipping, Board height) that
 are easier to judge without Death Mark mixed in. Following 04's order:
 
 - **PR A, this plan** (`docs:`), on its own.
-- **PR B, data & state layer:** schema 7, `SET_HERO_DEATH_MARKED`,
-  `setHeroDeathMarked`, and `heroSpecificTokens.ts`. Nothing visible
-  changes yet. Patch bump (→ 0.8.1).
-- **PR C, token row redesign** for the three tokens that exist today:
-  held-only chips, the "+" and `TokenPicker`. This is the tracer slice: it
-  proves the new row end to end (picker, `openTokenKey`, positioning, Board
-  height) before Death Mark depends on it. Patch bump (→ 0.8.2).
+- **PR B, data & state layer and token row redesign** (M1-M18). The data
+  layer is schema 7, `SET_HERO_DEATH_MARKED`, `setHeroDeathMarked`, and
+  `heroSpecificTokens.ts`, with nothing visible. The redesign covers the
+  three tokens that exist today: held-only chips, the "+" and
+  `TokenPicker`. It's the tracer slice: it proves the new row end to end
+  (picker, `openTokenKey`, positioning, Board height) before Death Mark
+  depends on it. Patch bump (→ 0.8.1).
+  (Planned as two PRs, B and C. Folded into one at the user's request
+  once the data layer was built, since it's small and has no UI.)
 - **PR D, Death Mark UI:** icon, color, `HeroCard`/Board wiring, the Map
   icon, the e2e test and the intent-closing minor bump (→ 0.9.0).
 
-**Parallel-safe split.** PR B only touches `lib/`, and PR C only touches
-`components/` (plus their tests and e2e specs). Neither imports
-anything the other adds, so B and C can be built side by side and merged
-in either order. Inside PR D, `DeathMarkIcon` and `--color-death-mark`
+**Parallel-safe split.** Inside PR B, the data layer (M1-M9) only touches
+`lib/`, and the redesign (M10-M18) only touches `components/` (plus their
+tests and e2e specs). Neither imports anything the other adds. Inside PR D, `DeathMarkIcon` and `--color-death-mark`
 (M19-M20) import nothing and can be built alongside the wiring, which
 needs both B and C.
 
@@ -49,29 +50,29 @@ frontend/src/
   app/globals.css               # += --color-death-mark: #d04a7a                        (D)
   app/page.tsx                  # passes battle.setHeroDeathMarked                      (D)
   lib/
-    battle/types.ts             # HeroBattleState += deathMarked: boolean; schemaVersion 7 (B)
+    battle/types.ts             # HeroBattleState += deathMarked: boolean; schemaVersion 7 (B: data)
     battle/reducer.ts           # += SET_HERO_DEATH_MARKED (one setHeroField call);
-                                #   createInitialHeroState → deathMarked: false        (B)
-    battle/heroSpecificTokens.ts  # new: HERO_SPECIFIC_TOKENS { deathMark }, heroSpecificTokenSide (B)
+                                #   createInitialHeroState → deathMarked: false        (B: data)
+    battle/heroSpecificTokens.ts  # new: HERO_SPECIFIC_TOKENS { deathMark }, heroSpecificTokenSide (B: data)
     persistence/schema.ts       # CURRENT_BATTLE_SCHEMA_VERSION = 7; += LegacyBattleTeamStateV6,
-                                #   PersistedBattleStateV7; V4/V5 legacy omit deathMarked (B)
+                                #   PersistedBattleStateV7; V4/V5 legacy omit deathMarked (B: data)
     persistence/storage.ts      # += upgradeV6ToV7 = addHeroFieldsStep(7, { deathMarked: false }),
-                                #   battleMigrations[6]; validate typeof deathMarked    (B)
-    useBattle.ts                # += setHeroDeathMarked                                 (B)
+                                #   battleMigrations[6]; validate typeof deathMarked    (B: data)
+    useBattle.ts                # += setHeroDeathMarked                                 (B: data)
   components/
-    TokenPicker/TokenPicker.tsx   # new: "+" pill + position: fixed popover, useDismiss (C)
-    TokenPicker/TokenPicker.module.css  # new                                          (C)
-    TokenChip/                  # rendered only while count > 0 || expanded; muted 0 look deleted (C)
-    TokenToggle/                # rendered only while on; "off" styles deleted          (C)
+    TokenPicker/TokenPicker.tsx   # new: "+" pill + position: fixed popover, useDismiss (B: row)
+    TokenPicker/TokenPicker.module.css  # new                                          (B: row)
+    TokenChip/                  # rendered only while count > 0 || expanded; muted 0 look deleted (B: row)
+    TokenToggle/                # rendered only while on; "off" styles deleted          (B: row)
     TokenToggle/DeathMarkIcon.tsx # new: diagonal dagger + drop, 16px stroke SVG       (D)
-    HeroCard/                   # battle variant: += tokenPicker (C), deathMarked (D);
-                                #   one ordered token list builds chips + options     (C)
-    BattleTeamPanel/            # += tokenPicker per hero, key `${side}:${id}:picker` (C);
+    HeroCard/                   # battle variant: += tokenPicker (B: row), deathMarked (D);
+                                #   one ordered token list builds chips + options     (B: row)
+    BattleTeamPanel/            # += tokenPicker per hero, key `${side}:${id}:picker` (B: row);
                                 #   += showDeathMark, onHeroDeathMarkedChange          (D)
     MapTeamStatusPanel/         # .tokenLine += deathMarked, flex-wrap; += .deathMarked span (D)
     screens/BattleBoardScreen/  # += deathMarkSide, setHeroDeathMarked forwarded per side (D)
 frontend/e2e/
-  token-row.spec.ts             # new                                                   (C)
+  token-row.spec.ts             # new                                                   (B: row)
   death-mark.spec.ts            # new                                                   (D)
 ```
 
@@ -79,9 +80,9 @@ frontend/e2e/
 
 ### PR B — Data & state layer
 
-- [ ] M1. `lib/battle/types.ts`: `HeroBattleState` += `deathMarked: boolean`
+- [x] M1. `lib/battle/types.ts`: `HeroBattleState` += `deathMarked: boolean`
       (with the spec's doc comment), `BattleState.schemaVersion: 7`.
-- [ ] M2. `lib/battle/reducer.ts`: += `SET_HERO_DEATH_MARKED { side, heroId,
+- [x] M2. `lib/battle/reducer.ts`: += `SET_HERO_DEATH_MARKED { side, heroId,
       value: boolean }`, one `setHeroField(..., "deathMarked", value)` call
       with a manual-only comment like the Confuse and Immobilize branches.
       No visibility check. `createInitialHeroState` returns
@@ -90,30 +91,33 @@ frontend/e2e/
       (including to 0), `SET_HERO_POSITION`, `SET_HERO_ATTACK_TOKENS`,
       `SET_HERO_CONFUSED`, `SET_HERO_IMMOBILIZED` and `PASS_INITIATIVE`
       leave the flag alone.
-- [ ] M3. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION = 7`.
+- [x] M3. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION = 7`.
       += `LegacyBattleTeamStateV6` (heroes without `deathMarked`);
       `PersistedBattleStateV6.p1/p2` use it, doc comment says it's only the
       source for `battleMigrations[6]`. `LegacyBattleTeamStateV4` omits
       `"confused" | "immobilized" | "deathMarked"`, `LegacyBattleTeamStateV5`
       omits `"immobilized" | "deathMarked"`. += `PersistedBattleStateV7`.
-- [ ] M4. `lib/persistence/storage.ts`: += `upgradeV6ToV7 =
+- [x] M4. `lib/persistence/storage.ts`: += `upgradeV6ToV7 =
       addHeroFieldsStep<PersistedBattleStateV7>(7, { deathMarked: false })`;
       `battleMigrations` += `6: upgradeV6ToV7`. `saveBattleState` writes
       `PersistedBattleStateV7`.
-- [ ] M5. `storage.ts` validation: `hasValidBattleTeamShape` requires
+- [x] M5. `storage.ts` validation: `hasValidBattleTeamShape` requires
       `typeof deathMarked === "boolean"` on every hero (doc comment lists
       it), and doesn't check who's marked. `loadBattleState` returns
       `schemaVersion: 7`.
-- [ ] M6. `lib/useBattle.ts`: += `setHeroDeathMarked(side, heroId, value)`,
+- [x] M6. `lib/useBattle.ts`: += `setHeroDeathMarked(side, heroId, value)`,
       same shape as `setHeroImmobilized`.
-- [ ] M7. `lib/battle/heroSpecificTokens.ts` (new): `HeroSpecificTarget`,
+- [x] M7. `lib/battle/heroSpecificTokens.ts` (new): `HeroSpecificTarget`,
       `HERO_SPECIFIC_TOKENS = { deathMark: { owner: "kunoichi", targets:
       "enemies" } }` (`as const satisfies …`), `HeroSpecificTokenId`, and
       `heroSpecificTokenSide(token, rosters)`: the owner's side from the
       rosters, `otherPlayer` of it for `"enemies"`, the side itself for
       `"allies"`, `null` when the owner wasn't drafted. Pure, reusing
       `otherPlayer` from `lib/draft/selectors.ts`.
-- [ ] M8. Fixtures bumped to schema 7 with `deathMarked: false`
+      (Built with the lookup in an exported `targetSideForRule(rule,
+      rosters)`, which `heroSpecificTokenSide` calls, so the `"allies"`
+      branch is tested without a fake table row. Spec updated.)
+- [x] M8. Fixtures bumped to schema 7 with `deathMarked: false`
       (`storage.test.ts`, `selectors.test.ts`, `useBattle.test.tsx`,
       `BattleMapScreen.test.tsx`, `WinScreen.test.tsx`, `reducer.test.ts`'s
       `createInitialHeroState` expectations, and any other test that builds
@@ -130,15 +134,14 @@ frontend/e2e/
       - `useBattle`: `setHeroDeathMarked` updates and persists; reload
         keeps it
       - `heroSpecificTokens.test.ts` (new): Kunoichi on p1 → `"p2"`, on p2
-        → `"p1"`, not drafted → `null`; an `"allies"` row (test-only
-        table or a cast) returns the owner's side
-- [ ] M9. PR B checks: `tsc --noEmit`, ESLint, full Vitest and Playwright
-      green (no UI change, so existing e2e must pass untouched). Patch bump
-      (→ 0.8.1).
+        → `"p1"`, not drafted → `null`; an `"allies"` rule passed to
+        `targetSideForRule` returns the owner's side
+- [x] M9. Data layer checks: `tsc --noEmit`, ESLint, full Vitest and Playwright
+      green (no UI change, so existing e2e must pass untouched).
 
-### PR C — Token row redesign
+### PR B, continued — Token row redesign
 
-- [ ] M10. `components/TokenPicker/TokenPicker.tsx` (new) and its CSS
+- [x] M10. `components/TokenPicker/TokenPicker.tsx` (new) and its CSS
       module, with the spec's `TokenPickerOption` / `TokenPickerProps`:
       - the "+" is a 20px dashed pill, muted until hover or open, with
         `aria-expanded`, `aria-haspopup="true"`, `aria-label`
@@ -154,44 +157,63 @@ frontend/e2e/
         when there's no room, clamped to the viewport, z-index above the
         Board panels; closes on scroll or resize
       Generic: no token names in the component.
-- [ ] M11. `TokenChip`: rendered only while `count > 0 || expanded` (stays
+      (Options also take `count` and `disabled`, for the +1 Attack row's
+      "×N" and its ceiling. The popover is placed in a layout effect,
+      straight on the DOM node, anchored by `bottom` when flipped so it
+      stays against the "+" as rows drop out. Spec updated.)
+- [x] M11. `TokenChip`: rendered only while `count > 0 || expanded` (stays
       while its stepper is open at 0, gone once it closes at 0). Delete the
       muted "0, collapsed" styles.
-- [ ] M12. `TokenToggle`: only ever rendered lit; a tap calls
+- [x] M12. `TokenToggle`: only ever rendered lit; a tap calls
       `onChange(false)`. Props, `aria-pressed` and label unchanged; tooltip
       gains "(tap to remove)" as on the canvas, if the label tests allow
       it without changing accessible names. Delete the "off" look and its
       hover styles.
-- [ ] M13. `HeroCard` battle variant: += `tokenPicker?: { expanded,
+      (Tooltip changed; accessible names didn't.)
+- [x] M13. `HeroCard` battle variant: += `tokenPicker?: { expanded,
       onExpandedChange }`. `.tokenRow` renders when `tokenPicker` is
       provided. One ordered list of token entries (+1 Attack, Confuse,
       Immobilize) builds both the held chips and the picker options:
-      +1 Attack always an option, label "+1 Attack ×N" once held, disabled
+      +1 Attack always an option, "×N" shown once held, disabled
       at `HERO_ATTACK_TOKEN_CEILING`, adding 1 per tap; on/off tokens an
       option only while off. "+" last. `.tokenRow` wraps. `WinScreen`
       passes neither prop and stays unchanged.
-- [ ] M14. `BattleTeamPanel`: passes `tokenPicker` per hero, keyed
+      (Option labels are "Confuse" and "Immobilize"; the chips keep "Confuse
+      token" and "Immobilized". Each option's accessible name is
+      "Add {label}", with ", N held" for +1 Attack.)
+- [x] M14. `BattleTeamPanel`: passes `tokenPicker` per hero, keyed
       `` `${side}:${hero.id}:picker` `` against `openTokenKey`, next to
       `attackTokenKey`, so one picker or chip is open across both panels.
       `BattleBoardScreen` and `page.tsx` don't change in this PR.
-- [ ] M15. Spec open item: the picker isn't clipped and doesn't scroll the
+- [x] M15. Spec open item: the picker isn't clipped and doesn't scroll the
       Board at 1280x800, including on a bottom-row card, where it flips
       above the "+". Also check that no ancestor's `transform` or `filter`
       breaks `position: fixed` (`HeroCard`'s `.tokenDefeated` filter is on
       the portrait; confirm it stays off the row's ancestors), and add a
       portal only if one does. Decide in the browser.
-- [ ] M16. Spec open item: Board height at 1280x800 with one card holding
+      **Not clipped, no scroll.** At 1280x800 even the bottom-row cards'
+      pickers fit below the "+" (ending at y≈657), so the flip only runs on
+      shorter screens; it's unit-tested. The popover lands exactly at the
+      "+", so no ancestor breaks `position: fixed`, and no portal was
+      needed. `e2e/token-row.spec.ts` checks all 8 pickers stay in the
+      viewport. Spec updated.
+- [x] M16. Spec open item: Board height at 1280x800 with one card holding
       all three of today's tokens plus an open ×9 stepper in each panel.
       Does that row wrap, and does the Board still fit without scrolling?
       If even one wrap scrolls the Board, rethink the row (e.g. "+" as an
       icon alone) before PR D, and update the spec.
-- [ ] M17. Tests:
+      **Fits.** ×9 + Confuse + Immobilize + "+" stays one 20px line. Only
+      with the ×9 stepper open does the "+" wrap: row 44px, card 172 → 196px,
+      and the Board still doesn't scroll at 1280x800 or 2560x1440. The
+      centered Board shifts up ~12px while that stepper is open. Spec
+      updated.
+- [x] M17. Tests:
       - `TokenPicker.test.tsx` (new): "+" always rendered with its
         aria-label; opening lists the options in order; a pick calls
         `onPick` and stays open; a disabled option doesn't fire; Escape,
         an outside click and a second "+" click close it and return focus
-      - `TokenChip`: hidden at 0 when collapsed, kept at 0 while expanded;
-        the muted-zero case removed
+      - `TokenChip`: the muted-zero case removed (hiding at 0 is
+        `HeroCard`'s job, tested there)
       - `TokenToggle`: the "off" rendering case removed; a tap sends
         `false`
       - `HeroCard`: an empty row shows only "+"; held chips in the fixed
@@ -208,7 +230,10 @@ frontend/e2e/
         three +1 Attack in one open (picker stays open), Confuse and
         Immobilize; the row survives a Board⇄Map switch and a reload;
         tap Confuse off; Escape and an outside tap close the picker
-- [ ] M18. PR C checks: `tsc --noEmit`, ESLint, full Vitest and Playwright
+      (Also: `HeroCard.test.tsx` is new, `TokenPicker` tests scroll-close
+      and the flip, `WinScreen` checks there's no "+", and
+      `token-row.spec.ts` runs at 1280x800 and opens all 8 pickers.)
+- [x] M18. PR B checks: `tsc --noEmit`, ESLint, full Vitest and Playwright
       green; manual QA at 1280x800 (`/qa-screens`):
       - empty card shows just "+", typical 0-3-token rows stay one line
       - picker opens over the Board on top-row and bottom-row cards
@@ -216,7 +241,12 @@ frontend/e2e/
       - Board height with wrapped cards (M16)
       - hover and focus outlines on "+", picker rows and the lit chips
       - Win Screen cards unchanged
-      Patch bump (→ 0.8.2).
+      Patch bump (→ 0.8.1).
+      Checked by script at 1280x800 (and 2560x1440 for fit): empty cards
+      show just "+", rows one line, pickers on top- and bottom-row cards,
+      Board fit with the wrapped card, focus outlines on the chips, "+"
+      and picker rows. The Win Screen is covered by `WinScreen.test.tsx`
+      (no "+").
 
 ### PR D — Death Mark UI
 
