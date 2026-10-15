@@ -83,7 +83,7 @@ export type PersistedBattleStateV3 = Omit<PersistedBattleStateV2, "schemaVersion
 /** One side's battle-team state in schema 4: per-hero attackTokens,
  * but no confused flag yet (intent/07). */
 export type LegacyBattleTeamStateV4 = Omit<BattleTeamState, "heroes"> & {
-  heroes: Record<HeroId, Omit<HeroBattleState, "confused" | "immobilized" | "deathMarked">>;
+  heroes: Record<HeroId, Omit<LegacyHeroBattleStateV5, "confused">>;
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 4
@@ -98,8 +98,13 @@ export type PersistedBattleStateV4 = Omit<PersistedBattleStateV3, "schemaVersion
 /** One side's battle-team state in schema 5: per-hero confused,
  * but no immobilized flag yet (intent/08). */
 export type LegacyBattleTeamStateV5 = Omit<BattleTeamState, "heroes"> & {
-  heroes: Record<HeroId, Omit<HeroBattleState, "immobilized" | "deathMarked">>;
+  heroes: Record<HeroId, LegacyHeroBattleStateV5>;
 };
+
+/** Each schema's hero is the next one's minus the field that schema added,
+ * so a new schema only touches the newest legacy type. */
+type LegacyHeroBattleStateV6 = Omit<HeroBattleState, "deathMarked">;
+type LegacyHeroBattleStateV5 = Omit<LegacyHeroBattleStateV6, "immobilized">;
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 5
  * (intent/07: per-hero `confused`) — now only the migration source shape
@@ -113,7 +118,7 @@ export type PersistedBattleStateV5 = Omit<PersistedBattleStateV4, "schemaVersion
 /** One side's battle-team state in schema 6: per-hero immobilized,
  * but no deathMarked flag yet (intent/09). */
 export type LegacyBattleTeamStateV6 = Omit<BattleTeamState, "heroes"> & {
-  heroes: Record<HeroId, Omit<HeroBattleState, "deathMarked">>;
+  heroes: Record<HeroId, LegacyHeroBattleStateV6>;
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 6

@@ -1,4 +1,4 @@
-import { Fragment, type ComponentType, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { Hero } from "../../lib/draft/types";
 import {
   HERO_ATTACK_TOKEN_CEILING,
@@ -10,9 +10,7 @@ import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { TokenChip } from "../TokenChip/TokenChip";
 import { TokenPicker, type TokenPickerOption } from "../TokenPicker/TokenPicker";
-import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
-import { DeathMarkIcon } from "../TokenToggle/DeathMarkIcon";
-import { ImmobilizeIcon } from "../TokenToggle/ImmobilizeIcon";
+import { ON_OFF_TOKENS, type OnOffToken } from "../TokenToggle/onOffTokens";
 import { TokenToggle } from "../TokenToggle/TokenToggle";
 import styles from "./HeroCard.module.css";
 
@@ -86,16 +84,12 @@ type TokenEntry = { key: string; chip: ReactNode; option: TokenPickerOption | nu
 
 /** An on/off token's entry: a lit chip while held, an option while not. */
 function toggleEntry(
-  key: string,
+  { field, Icon, chipLabel, optionLabel, accent }: OnOffToken,
   toggle: HeroCardToggleProps,
   heroName: string,
-  Icon: ComponentType<{ size: number }>,
-  chipLabel: string,
-  optionLabel: string,
-  accent: string,
 ): TokenEntry {
   return {
-    key,
+    key: field,
     chip: toggle.on ? (
       <TokenToggle
         {...toggle}
@@ -108,7 +102,7 @@ function toggleEntry(
     option: toggle.on
       ? null
       : {
-          key,
+          key: field,
           icon: <Icon size={14} />,
           label: optionLabel,
           accent,
@@ -172,44 +166,10 @@ export function HeroCard(props: HeroCardProps) {
         },
       });
     }
-    if (confused) {
-      tokenEntries.push(
-        toggleEntry(
-          "confused",
-          confused,
-          hero.name,
-          ConfuseTokenIcon,
-          "Confuse token",
-          "Confuse",
-          "var(--color-confuse)",
-        ),
-      );
-    }
-    if (immobilized) {
-      tokenEntries.push(
-        toggleEntry(
-          "immobilized",
-          immobilized,
-          hero.name,
-          ImmobilizeIcon,
-          "Immobilized",
-          "Immobilize",
-          "var(--color-immobilize)",
-        ),
-      );
-    }
-    if (deathMarked) {
-      tokenEntries.push(
-        toggleEntry(
-          "deathMarked",
-          deathMarked,
-          hero.name,
-          DeathMarkIcon,
-          "Death Mark token",
-          "Death Mark",
-          "var(--color-death-mark)",
-        ),
-      );
+    const toggles = { confused, immobilized, deathMarked };
+    for (const token of ON_OFF_TOKENS) {
+      const toggle = toggles[token.field];
+      if (toggle) tokenEntries.push(toggleEntry(token, toggle, hero.name));
     }
     return (
       <div className={styles.battleCard}>
