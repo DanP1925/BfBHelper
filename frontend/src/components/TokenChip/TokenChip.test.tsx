@@ -46,23 +46,17 @@ function StatefulChip({ count = 2 }: { count?: number }) {
 }
 
 describe("TokenChip", () => {
-  it("collapsed at 0 shows only the icon, with the count in its label", () => {
-    renderChip({ count: 0 });
-
-    const toggle = screen.getByRole("button", {
-      name: "Caligar: 0 +1 Attack tokens. Show controls",
-    });
-    expect(toggle).toHaveTextContent("");
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(toggle).toHaveAttribute("title", "+1 Attack tokens");
-  });
-
-  it("collapsed from 1 up shows ×N", () => {
+  // A collapsed chip at 0 isn't rendered at all since intent/09; HeroCard's
+  // tests cover that.
+  it("collapsed shows ×N, with the count in its label", () => {
     renderChip({ count: 2 });
 
-    expect(
-      screen.getByRole("button", { name: "Caligar: 2 +1 Attack tokens. Show controls" }),
-    ).toHaveTextContent("×2");
+    const toggle = screen.getByRole("button", {
+      name: "Caligar: 2 +1 Attack tokens. Show controls",
+    });
+    expect(toggle).toHaveTextContent("×2");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveAttribute("title", "+1 Attack tokens");
   });
 
   it("uses the singular for one token", () => {

@@ -22,6 +22,12 @@ export type HeroBattleState = {
    * The app shows it only, never blocks a move, and never clears it:
    * not on a move, defeat, respawn or a new round. */
   immobilized: boolean;
+  /** A Death Mark token on this hero (intent/09), placed by Kunoichi's
+   * Know Your Enemy. On/off: the card only marks unmarked enemies. Only
+   * the UI limits it to Kunoichi's enemies (heroSpecificTokens.ts).
+   * Changed only by hand: never cleared on defeat (either hero's),
+   * respawn or a new round. */
+  deathMarked: boolean;
 };
 
 export type BattleTeamState = {
@@ -35,7 +41,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 6;
+  schemaVersion: 7;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

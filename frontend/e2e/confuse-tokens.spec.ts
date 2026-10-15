@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("Confuse toggles on and off, and survives a Board/Map switch, reload and defeat", async ({
+test("Confuse is added and removed, and survives a Board/Map switch, reload and defeat", async ({
   page,
 }) => {
   await page.goto("/");
@@ -15,21 +15,26 @@ test("Confuse toggles on and off, and survives a Board/Map switch, reload and de
   await expect(page.getByText("Draft Complete")).toBeVisible();
   await page.getByRole("button", { name: "Start Battle →" }).click();
 
-  // Every hero card has a Confuse toggle, off. Read the first hero's name
-  // off its label rather than hardcoding the draft order.
+  // No hero holds Confuse yet. Read the first hero's name off its "+"
+  // rather than hardcoding the draft order.
   const toggles = page.getByRole("button", { name: /^Confuse token on / });
-  await expect(toggles).toHaveCount(8);
-  for (let i = 0; i < 8; i++) {
-    await expect(toggles.nth(i)).toHaveAttribute("aria-pressed", "false");
-  }
-  const label = await toggles.first().getAttribute("aria-label");
-  const hero = label!.slice("Confuse token on ".length);
+  await expect(toggles).toHaveCount(0);
+  const label = await page
+    .getByRole("button", { name: /^Add a token to / })
+    .first()
+    .getAttribute("aria-label");
+  const hero = label!.slice("Add a token to ".length);
   const heroToggle = page.getByRole("button", { name: `Confuse token on ${hero}` });
 
-  // One tap turns it on, and only for that hero.
-  await heroToggle.click();
+  // Added through the "+" picker (intent/09), and only for that hero.
+  await page.getByRole("button", { name: `Add a token to ${hero}` }).click();
+  await page
+    .getByRole("group", { name: `Add a token to ${hero}` })
+    .getByRole("button", { name: "Add Confuse" })
+    .click();
+  await page.keyboard.press("Escape");
   await expect(heroToggle).toHaveAttribute("aria-pressed", "true");
-  await expect(toggles.nth(1)).toHaveAttribute("aria-pressed", "false");
+  await expect(toggles).toHaveCount(1);
 
   // The Map shows it read-only in the team status panel.
   await page.getByRole("button", { name: "Map" }).click();
@@ -50,9 +55,9 @@ test("Confuse toggles on and off, and survives a Board/Map switch, reload and de
   await expect(page.getByLabel(`${hero} HP`, { exact: true })).toHaveValue("0");
   await expect(heroToggle).toHaveAttribute("aria-pressed", "true");
 
-  // Another tap turns it off, on both screens.
+  // A tap on the chip removes it, on both screens.
   await heroToggle.click();
-  await expect(heroToggle).toHaveAttribute("aria-pressed", "false");
+  await expect(heroToggle).toHaveCount(0);
   await page.getByRole("button", { name: "Map" }).click();
   await expect(page.getByRole("button", { name: "Map" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByLabel("Confused")).toHaveCount(0);

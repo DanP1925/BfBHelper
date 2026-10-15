@@ -108,6 +108,7 @@ describe("useBattle", () => {
       attackTokens: 0,
       confused: false,
       immobilized: false,
+      deathMarked: false,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
@@ -120,6 +121,7 @@ describe("useBattle", () => {
       attackTokens: 4,
       confused: true,
       immobilized: true,
+      deathMarked: true,
     };
     saveBattleState(persisted);
 
@@ -131,6 +133,7 @@ describe("useBattle", () => {
       attackTokens: 4,
       confused: true,
       immobilized: true,
+      deathMarked: true,
     });
   });
 
@@ -146,6 +149,7 @@ describe("useBattle", () => {
       attackTokens: 0,
       confused: false,
       immobilized: false,
+      deathMarked: false,
     });
   });
 
@@ -281,6 +285,43 @@ describe("useBattle", () => {
       result.current.passInitiative();
     });
     expect(result.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
+  });
+
+  it("setHeroDeathMarked persists the flag, which survives a reload and can be turned off", () => {
+    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroDeathMarked("p2", HERO_B.id, true);
+    });
+    expect(result.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
+    expect(result.current.state?.p2.heroes[HERO_B.id].immobilized).toBe(false);
+    expect(result.current.state?.p1.heroes[HERO_A.id].deathMarked).toBe(false);
+    expect(readRawState().p2.heroes[HERO_B.id].deathMarked).toBe(true);
+    unmount();
+
+    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+    expect(reloaded.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
+
+    act(() => {
+      reloaded.current.setHeroDeathMarked("p2", HERO_B.id, false);
+    });
+    expect(reloaded.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(false);
+    expect(readRawState().p2.heroes[HERO_B.id].deathMarked).toBe(false);
+  });
+
+  it("setHeroHp to 0 (with its move to respawn) and passInitiative keep the mark", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroDeathMarked("p2", HERO_B.id, true);
+      result.current.setHeroPosition("p2", HERO_B.id, MAP_SPACE_IDS[0]);
+    });
+    act(() => {
+      result.current.setHeroHp("p2", HERO_B.id, 0);
+      result.current.passInitiative();
+    });
+    expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBeNull();
+    expect(result.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
   });
 
   it("derives winner from live state and clears it once Bit HP is raised back above 0", () => {

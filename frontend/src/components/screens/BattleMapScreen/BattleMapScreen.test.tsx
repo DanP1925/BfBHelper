@@ -21,13 +21,27 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 6,
+    schemaVersion: 7,
     initiative: "p1",
     p1: {
       gold: 0,
       heroes: {
-        boreas: { hp: 10, level: 1, attackTokens: 0, confused: false, immobilized: false },
-        caligar: { hp: 0, level: 1, attackTokens: 0, confused: false, immobilized: false },
+        boreas: {
+          hp: 10,
+          level: 1,
+          attackTokens: 0,
+          confused: false,
+          immobilized: false,
+          deathMarked: false,
+        },
+        caligar: {
+          hp: 0,
+          level: 1,
+          attackTokens: 0,
+          confused: false,
+          immobilized: false,
+          deathMarked: false,
+        },
       },
       structures: { top: 11, middle: 11, bottom: 0, bit: 16 },
       heroPositions: { boreas: MAP_SPACE_IDS[0], caligar: null },
@@ -35,7 +49,14 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
     p2: {
       gold: 0,
       heroes: {
-        sterling: { hp: 8, level: 1, attackTokens: 0, confused: false, immobilized: false },
+        sterling: {
+          hp: 8,
+          level: 1,
+          attackTokens: 0,
+          confused: false,
+          immobilized: false,
+          deathMarked: false,
+        },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
       heroPositions: { sterling: null },
@@ -109,7 +130,14 @@ describe("BattleMapScreen", () => {
             ...base.p1,
             heroes: {
               ...base.p1.heroes,
-              caligar: { hp: 0, level: 1, attackTokens: 2, confused: false, immobilized: false },
+              caligar: {
+                hp: 0,
+                level: 1,
+                attackTokens: 2,
+                confused: false,
+                immobilized: false,
+                deathMarked: false,
+              },
             },
           },
         }}
@@ -140,14 +168,28 @@ describe("BattleMapScreen", () => {
             ...base.p1,
             heroes: {
               ...base.p1.heroes,
-              caligar: { hp: 0, level: 1, attackTokens: 2, confused: true, immobilized: false },
+              caligar: {
+                hp: 0,
+                level: 1,
+                attackTokens: 2,
+                confused: true,
+                immobilized: false,
+                deathMarked: false,
+              },
             },
           },
           p2: {
             ...base.p2,
             heroes: {
               ...base.p2.heroes,
-              sterling: { hp: 8, level: 1, attackTokens: 0, confused: true, immobilized: false },
+              sterling: {
+                hp: 8,
+                level: 1,
+                attackTokens: 0,
+                confused: true,
+                immobilized: false,
+                deathMarked: false,
+              },
             },
           },
         }}
@@ -179,14 +221,28 @@ describe("BattleMapScreen", () => {
             ...base.p1,
             heroes: {
               ...base.p1.heroes,
-              caligar: { hp: 0, level: 1, attackTokens: 2, confused: true, immobilized: true },
+              caligar: {
+                hp: 0,
+                level: 1,
+                attackTokens: 2,
+                confused: true,
+                immobilized: true,
+                deathMarked: false,
+              },
             },
           },
           p2: {
             ...base.p2,
             heroes: {
               ...base.p2.heroes,
-              sterling: { hp: 8, level: 1, attackTokens: 0, confused: false, immobilized: true },
+              sterling: {
+                hp: 8,
+                level: 1,
+                attackTokens: 0,
+                confused: false,
+                immobilized: true,
+                deathMarked: false,
+              },
             },
           },
         }}
@@ -333,14 +389,21 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 6,
+      schemaVersion: 7,
       initiative: "p1",
       p1: {
         gold: 0,
         heroes: Object.fromEntries(
           crowdedHeroes.map((h) => [
             h.id,
-            { hp: 10, level: 1, attackTokens: 0, confused: false, immobilized: false },
+            {
+              hp: 10,
+              level: 1,
+              attackTokens: 0,
+              confused: false,
+              immobilized: false,
+              deathMarked: false,
+            },
           ]),
         ),
         structures: { top: 11, middle: 11, bottom: 11, bit: 16 },

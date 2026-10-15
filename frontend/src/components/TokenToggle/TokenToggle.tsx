@@ -17,20 +17,22 @@ type TokenToggleProps = {
 
 /**
  * A one-tap on/off token control for a hero card (intent/07), the
- * counterpart of TokenChip for tokens that don't stack. Muted icon when
- * off, a lit pill in `accent` when on. `aria-pressed` carries the state,
- * so the label stays fixed. Generic on purpose, so Immobilize reuses it
- * with its own icon, label and accent. No state of its own.
+ * counterpart of TokenChip for tokens that don't stack: a lit pill in
+ * `accent`. Since intent/09 the card only renders it while the token is
+ * held (adding goes through TokenPicker), so a tap removes it.
+ * `aria-pressed` carries the state, so the label stays fixed. Generic on
+ * purpose: each on/off token passes its own icon, label and accent. No
+ * state of its own.
  */
 export function TokenToggle({ on, onChange, icon, label, heroName, accent }: TokenToggleProps) {
   return (
     <button
       type="button"
-      className={`${styles.toggle} ${on ? styles.on : ""}`}
+      className={styles.toggle}
       style={{ "--token-accent": accent } as CSSProperties}
       aria-pressed={on}
       aria-label={`${label} on ${heroName}`}
-      title={label}
+      title={`${label} (tap to remove)`}
       onClick={() => onChange(!on)}
     >
       {icon}
