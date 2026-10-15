@@ -21,6 +21,10 @@ type BattleTeamPanelProps = {
   onHeroAttackTokensChange: (heroId: HeroId, value: number) => void;
   onHeroConfusedChange: (heroId: HeroId, value: boolean) => void;
   onHeroImmobilizedChange: (heroId: HeroId, value: boolean) => void;
+  /** Whether this side's heroes can carry a Death Mark: true only for
+   * Kunoichi's enemies (intent/09, see heroSpecificTokens.ts). */
+  showDeathMark: boolean;
+  onHeroDeathMarkedChange: (heroId: HeroId, value: boolean) => void;
   onStructureHpChange: (slot: keyof StructuresState, value: number) => void;
   /** Which token chip or "+" picker on the Board is open, owned by
    * `BattleBoardScreen` so opening one in this panel closes any open in the
@@ -40,6 +44,8 @@ export function BattleTeamPanel({
   onHeroAttackTokensChange,
   onHeroConfusedChange,
   onHeroImmobilizedChange,
+  showDeathMark,
+  onHeroDeathMarkedChange,
   onStructureHpChange,
   openTokenKey,
   onOpenTokenKeyChange,
@@ -99,6 +105,14 @@ export function BattleTeamPanel({
                 on: heroState.immobilized,
                 onChange: (value) => onHeroImmobilizedChange(hero.id, value),
               }}
+              deathMarked={
+                showDeathMark
+                  ? {
+                      on: heroState.deathMarked,
+                      onChange: (value) => onHeroDeathMarkedChange(hero.id, value),
+                    }
+                  : undefined
+              }
             />
           );
         })}

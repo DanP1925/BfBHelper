@@ -20,6 +20,9 @@
    * (intent/07). */
   --color-confuse: #c06ad0;
   --color-immobilize: #8fb4e0;
+  /* Kunoichi's Death Mark (intent/09): a raspberry crimson, so it reads
+   * apart from --color-hp, --color-p1 and --color-confuse. */
+  --color-death-mark: #d04a7a;
 
   --background: var(--color-bg);
   --foreground: var(--color-text);

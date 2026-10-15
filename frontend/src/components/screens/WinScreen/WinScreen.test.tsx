@@ -87,7 +87,7 @@ describe("WinScreen", () => {
     expect(screen.getByText("Winner")).toBeInTheDocument();
   });
 
-  it("shows no token controls on the cards (intents 06-08)", () => {
+  it("shows no token controls on the cards (intents 06-09)", () => {
     render(
       <WinScreen
         p1Heroes={p1Heroes}
@@ -101,6 +101,7 @@ describe("WinScreen", () => {
     expect(screen.queryByRole("button", { name: /^Immobilized on / })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /\+1 Attack token/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Add a token to / })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Death Mark token on / })).not.toBeInTheDocument();
   });
 
   it("renders a 'Player 2 Wins!' heading when p2 wins", () => {

@@ -137,6 +137,9 @@ when the hero who uses them is in the battle, on either team.
   hero (at most one), applied and cleared by hand, including when the marked
   hero is defeated (rulebook discards it on defeat). No other tokens on
   Kunoichi's cards. Needs Death Mark (hero-specific).
+  **Done:** scoped in `intent/09_death-mark.md`, built in v0.9.0. A crimson
+  dagger chip, added through the "+" picker on Kunoichi's enemies only, and
+  a dagger icon in the Map's status panel. Never cleared automatically.
 - **Longshanks (Pirate):** *Pirate Booty* (pay 1 gold for +1 Attack this
   action) uses the existing team gold stepper. Power cards stun, immobilize,
   and confuse. Stun (discard the hero's assigned action cards) is resolved
@@ -178,7 +181,7 @@ Hero-specific (only when that hero is in the battle):
 | Chill | count per hero | Dazeem |
 | Ice Wall | single marker on a map space | Dazeem |
 | "To the Pain" Arena | isolated space for Felix + one enemy | Felix |
-| Death Mark | on/off per hero | Kunoichi |
+| Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
 | Artifacts (x3) | named on/off toggles on Runika | Runika |
 | Stone | count per hero | Sedusa |
 

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import Home from "./page";
 import { getHeroById, HERO_IDS } from "../data/heroes";
 import { battleReducer, createInitialBattleState } from "../lib/battle/reducer";
+import type { HeroId } from "../lib/draft/types";
 import { saveBattleState, saveDraft, saveView } from "../lib/persistence/storage";
 
 /** Saves a finished draft (first 8 heroes, split 4/4) and returns a fresh
@@ -199,6 +200,88 @@ describe("Home", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     fireEvent.click(immobilize(p1Name)!);
     expect(immobilize(p1Name)).toBeNull();
+  });
+});
+
+describe("Home: Death Mark (intent/09)", () => {
+  /** Saves a finished draft with these rosters and its fresh battle state. */
+  function seedDraft(p1Ids: HeroId[], p2Ids: HeroId[]) {
+    saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
+    saveBattleState(createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById), "p1"));
+    saveView("battle");
+  }
+  const offersDeathMark = (heroId: HeroId) => {
+    const name = getHeroById(heroId).name;
+    fireEvent.click(addButton(name));
+    const offered = within(picker(name)!).queryByRole("button", { name: "Add Death Mark" });
+    fireEvent.click(addButton(name));
+    return offered !== null;
+  };
+
+  it("offers it only on Kunoichi's enemies when she's on Player 1", () => {
+    seedDraft(
+      ["kunoichi", "baldwin", "boreas", "caligar"],
+      ["ceralin", "cynthia", "cyrus", "dazeem"],
+    );
+    render(<Home />);
+
+    for (const id of ["ceralin", "cynthia", "cyrus", "dazeem"] as const) {
+      expect(offersDeathMark(id)).toBe(true);
+    }
+    for (const id of ["kunoichi", "baldwin", "boreas", "caligar"] as const) {
+      expect(offersDeathMark(id)).toBe(false);
+    }
+  });
+
+  it("offers it only on Player 1 when Kunoichi is on Player 2", () => {
+    seedDraft(
+      ["baldwin", "boreas", "caligar", "ceralin"],
+      ["cynthia", "cyrus", "dazeem", "kunoichi"],
+    );
+    render(<Home />);
+
+    expect(offersDeathMark("baldwin")).toBe(true);
+    expect(offersDeathMark("cynthia")).toBe(false);
+    expect(offersDeathMark("kunoichi")).toBe(false);
+  });
+
+  it("offers it to nobody without Kunoichi", () => {
+    saveBattleState(seedDoneDraft());
+    saveView("battle");
+    render(<Home />);
+
+    for (const id of HERO_IDS.slice(0, 8)) {
+      expect(offersDeathMark(id)).toBe(false);
+    }
+  });
+
+  it("marks one enemy only, leaves its other tokens, and still works with Kunoichi at 0 HP", () => {
+    seedDraft(
+      ["kunoichi", "baldwin", "boreas", "caligar"],
+      ["ceralin", "cynthia", "cyrus", "dazeem"],
+    );
+    render(<Home />);
+    const kunoichi = getHeroById("kunoichi").name;
+    const ceralin = getHeroById("ceralin").name;
+    const mark = (name: string) =>
+      screen.queryByRole("button", { name: `Death Mark token on ${name}` });
+
+    // Kunoichi at 0 HP still counts as in the battle.
+    const decreaseHp = screen.getByRole("button", { name: `Decrease ${kunoichi} HP` });
+    while (!decreaseHp.hasAttribute("disabled")) fireEvent.click(decreaseHp);
+    expect(screen.getByLabelText(`${kunoichi} HP`, { exact: true })).toHaveValue(0);
+
+    fireEvent.click(addButton(ceralin));
+    fireEvent.click(option(ceralin, "Add Confuse"));
+    fireEvent.click(option(ceralin, "Add Death Mark"));
+    expect(mark(ceralin)).toHaveAttribute("aria-pressed", "true");
+    expect(mark(getHeroById("cynthia").name)).toBeNull();
+    expect(screen.getByRole("button", { name: `Confuse token on ${ceralin}` })).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(mark(ceralin)!);
+    expect(mark(ceralin)).toBeNull();
+    expect(screen.getByRole("button", { name: `Confuse token on ${ceralin}` })).toBeInTheDocument();
   });
 });
 

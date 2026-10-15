@@ -61,11 +61,14 @@
   row-gap: 3px;
 }
 
+/* Wraps (intent/09) so a hero holding 6 or more tokens gets a second token
+ * line instead of overflowing the panel. */
 .tokenLine {
   flex-basis: 100%;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 2px 6px;
   padding-left: 8px;
   font-size: 0.8rem;
   line-height: 14px;
@@ -87,6 +90,11 @@
 .immobilized {
   display: flex;
   color: var(--color-immobilize);
+}
+
+.deathMarked {
+  display: flex;
+  color: var(--color-death-mark);
 }
 
 .dimmed {

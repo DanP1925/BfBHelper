@@ -250,41 +250,44 @@ frontend/e2e/
 
 ### PR D — Death Mark UI
 
-- [ ] M19. `app/globals.css`: += `--color-death-mark: #d04a7a`.
-- [ ] M20. `components/TokenToggle/DeathMarkIcon.tsx` (new): the diagonal
+- [x] M19. `app/globals.css`: += `--color-death-mark: #d04a7a`.
+- [x] M20. `components/TokenToggle/DeathMarkIcon.tsx` (new): the diagonal
       dagger (blade up and right, short crossguard, handle down-left) with
       one drop under the tip, 16px-viewBox stroke SVG in `currentColor`,
       `aria-hidden`, `size` prop (12px on the Board, 13px on the Map). Copy
       the canvas's drawing (v62).
-- [ ] M21. `HeroCard` battle variant: += optional
+- [x] M21. `HeroCard` battle variant: += optional
       `deathMarked?: HeroCardToggleProps`, as the fourth entry in the
       ordered token list (after Immobilize), with `DeathMarkIcon`,
       `label="Death Mark token"` and `accent="var(--color-death-mark)"`.
       Only listed when the prop is passed.
-- [ ] M22. `BattleTeamPanel`: += `showDeathMark: boolean` and
+- [x] M22. `BattleTeamPanel`: += `showDeathMark: boolean` and
       `onHeroDeathMarkedChange(heroId, value)`; passes
       `deathMarked={{ on, onChange }}` only when `showDeathMark`.
-- [ ] M23. `BattleBoardScreen`: `const deathMarkSide =
+- [x] M23. `BattleBoardScreen`: `const deathMarkSide =
       heroSpecificTokenSide("deathMark", { p1: p1Heroes, p2: p2Heroes })`,
       `showDeathMark={deathMarkSide === team.side}` per panel; +=
       `setHeroDeathMarked` prop, forwarded per side. `app/page.tsx` passes
       `battle.setHeroDeathMarked`. Map props unchanged.
-- [ ] M24. `MapTeamStatusPanel`: `.tokenLine` renders when
+- [x] M24. `MapTeamStatusPanel`: `.tokenLine` renders when
       `attackTokens > 0 || confused || immobilized || deathMarked`, gains
       `flex-wrap: wrap` with a 2px row gap. New span after Immobilize: the
       13px `DeathMarkIcon` alone, `aria-label="Death Mark"`,
       `title="Death Mark token"`, new `.deathMarked` class
       (`color: var(--color-death-mark)`). Inside the row, so `.dimmed`
       covers it. No roster logic.
-- [ ] M25. Spec open item: is the dagger legible at 12px on the Board and
+- [x] M25. Spec open item: is the dagger legible at 12px on the Board and
       13px on the Map? Check in the browser at 1280x800; simplify the
       drawing (e.g. drop the drop) if it blurs, and update the spec.
-- [ ] M26. Spec open item: Map at 1280x800 with every hero holding
+      **Reads fine**, small but a distinct crimson dagger; canvas drawing
+      kept. Spec updated.
+- [x] M26. Spec open item: Map at 1280x800 with every hero holding
       +1 Attack ×9, Confuse and Immobilize, and
       every enemy of Kunoichi also marked. Every token line should stay
       one line in the 170px panel and the page shouldn't scroll. Decide in
       the browser.
-- [ ] M27. Tests:
+      **Fits**, all eight lines one 14px line, no page scroll. Spec updated.
+- [x] M27. Tests:
       - `HeroCard`: Death Mark option only when `deathMarked` is passed,
         after Immobilize; chip shown when on, a tap sends `false`
       - Board wiring (`page.test.tsx`): with Kunoichi on p1, only p2's
@@ -299,8 +302,10 @@ frontend/e2e/
         Map panel) and a reload; the mark stays when the marked hero's HP
         and Kunoichi's HP go to 0; Kunoichi's allies' pickers have no
         Death Mark; tapping the chip clears it on both screens
-- [ ] M28. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green.
-- [ ] M29. Manual QA at 1280x800 (`/qa-screens`):
+      (The e2e drafts Kunoichi first and finds her enemies from which
+      pickers offer Death Mark, since the coin flip decides her side.)
+- [x] M28. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green.
+- [x] M29. Manual QA at 1280x800 (`/qa-screens`):
       - Death Mark offered only on Kunoichi's enemies, crimson pill reads
         apart from the HP red, the P1 color and the purple Confuse pill;
         hover and focus outline in crimson
@@ -311,7 +316,17 @@ frontend/e2e/
       - an existing schema-6 battle upgrades in place with no hero marked
         and its Immobilize, Confuse and +1 Attack values kept
       - New Draft resets every mark
-- [ ] M30. `npm version minor --no-git-tag-version` (→ 0.9.0) in the same
+      Checked by script at 1280x800: offered only on Kunoichi's 4 enemies;
+      the crimson pill reads apart from the HP red, P1 and Confuse; dagger
+      legible (M25); with every hero holding ×9, Confuse and Immobilize and
+      every enemy marked, the Board fits with all four marked cards wrapped
+      (172 → 196px) and the Map fits (M26); a schema-6 save upgrades to 7
+      with no hero marked and every ×9, Confuse and Immobilize kept; New
+      Draft clears the stored battle. The crimson focus outline is the
+      shared `--token-accent` rule, and Map dimming comes from the icon
+      sitting inside the row (as for Immobilize); neither was screenshotted.
+      Win Screen covered by `WinScreen.test.tsx`.
+- [x] M30. `npm version minor --no-git-tag-version` (→ 0.9.0) in the same
       PR. In `BACKLOG.md`, mark Death Mark done in Kunoichi's entry and the
       hero-specific table (it has no checkbox), linking intent 09 and
       v0.9.0, as `4b88f58` did for Immobilize.
