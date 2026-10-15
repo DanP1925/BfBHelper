@@ -11,6 +11,7 @@ import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { TokenChip } from "../TokenChip/TokenChip";
 import { TokenPicker, type TokenPickerOption } from "../TokenPicker/TokenPicker";
 import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
+import { DeathMarkIcon } from "../TokenToggle/DeathMarkIcon";
 import { ImmobilizeIcon } from "../TokenToggle/ImmobilizeIcon";
 import { TokenToggle } from "../TokenToggle/TokenToggle";
 import styles from "./HeroCard.module.css";
@@ -53,6 +54,9 @@ type HeroCardProps =
       confused?: HeroCardToggleProps;
       /** Immobilized (intent/08). Only the Battle Board passes it. */
       immobilized?: HeroCardToggleProps;
+      /** Death Mark (intent/09). The Battle Board passes it only on
+       * Kunoichi's enemies, which is how its visibility reaches the picker. */
+      deathMarked?: HeroCardToggleProps;
     });
 
 /** One counted token's value, setter and open state, passed all together
@@ -133,12 +137,13 @@ export function HeroCard(props: HeroCardProps) {
 
   if (variant === "battle") {
     const { hp, level, onHpChange, onLevelChange, tokenPicker } = props;
-    const { attackTokens, confused, immobilized } = props;
+    const { attackTokens, confused, immobilized, deathMarked } = props;
     const isDefeated = hp === 0;
 
-    // The fixed order (intent/09): +1 Attack, Confuse, Immobilize. The row's
-    // chips and the picker's options both come from this one list, so they
-    // can't disagree, and a row never reshuffles by the order of adding.
+    // The fixed order (intent/09): +1 Attack, Confuse, Immobilize, then the
+    // hero-specific tokens (Death Mark first). The row's chips and the
+    // picker's options both come from this one list, so they can't disagree,
+    // and a row never reshuffles by the order of adding.
     const tokenEntries: TokenEntry[] = [];
     if (attackTokens) {
       const { count, onChange } = attackTokens;
@@ -190,6 +195,19 @@ export function HeroCard(props: HeroCardProps) {
           "Immobilized",
           "Immobilize",
           "var(--color-immobilize)",
+        ),
+      );
+    }
+    if (deathMarked) {
+      tokenEntries.push(
+        toggleEntry(
+          "deathMarked",
+          deathMarked,
+          hero.name,
+          DeathMarkIcon,
+          "Death Mark token",
+          "Death Mark",
+          "var(--color-death-mark)",
         ),
       );
     }

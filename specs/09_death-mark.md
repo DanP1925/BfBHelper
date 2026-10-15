@@ -475,10 +475,17 @@ No change from v1-v8: same static Vercel deployment, no new infra.
   pinker than `--color-hp` `#e0564a` and `--color-p1` `#c1665a`, and
   redder than `--color-confuse` `#c06ad0`. The BACKLOG's "Revisit every
   token's display" item reviews it again with the other tokens.
-- `DeathMarkIcon` drawing: settled on the canvas as the diagonal dagger
+- ~~`DeathMarkIcon` drawing: settled on the canvas as the diagonal dagger
   with a drop (version 62). Still to check for legibility at 12px on the
-  Board and 13px on the Map, in the build.
-- Check the Map at 1280x800 with every hero holding +1 Attack tokens,
+  Board and 13px on the Map, in the build.~~
+  **Decided:** the canvas drawing is kept as is. At 12px and 13px it's
+  small but reads as a crimson dagger, apart from the other icons. The
+  "review every token's display" backlog item looks at it again.
+- ~~Check the Map at 1280x800 with every hero holding +1 Attack tokens,
   Confuse and Immobilize, and every enemy of Kunoichi also marked: every
   token line should stay one line in the 170px panel, and the page
-  shouldn't scroll.
+  shouldn't scroll.~~
+  **Decided:** it fits. With every hero holding ×9, Confuse and
+  Immobilize, and every enemy also marked, each token line stays one 14px
+  line and the page doesn't scroll. The Board fits too, with all four
+  marked enemies' rows wrapped (each card 172 → 196px).

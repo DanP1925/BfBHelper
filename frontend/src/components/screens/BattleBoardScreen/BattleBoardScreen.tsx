@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
+import { heroSpecificTokenSide } from "../../../lib/battle/heroSpecificTokens";
 import type { BattleState, StructuresState } from "../../../lib/battle/types";
 import { BattleTeamPanel } from "../../BattleTeamPanel/BattleTeamPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
@@ -22,6 +23,7 @@ type BattleBoardScreenProps = {
   setHeroAttackTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
   setHeroConfused: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
+  setHeroDeathMarked: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
@@ -41,6 +43,7 @@ export function BattleBoardScreen({
   setHeroAttackTokens,
   setHeroConfused,
   setHeroImmobilized,
+  setHeroDeathMarked,
   setStructureHp,
   onNewDraft,
   onEndBattle,
@@ -56,6 +59,9 @@ export function BattleBoardScreen({
     { label: "Player 1", side: "p1", heroes: p1Heroes },
     { label: "Player 2", side: "p2", heroes: p2Heroes },
   ];
+  // Only Kunoichi's enemies can be marked, and only while she's drafted
+  // (intent/09). Rosters don't change mid-battle, so this is fixed.
+  const deathMarkSide = heroSpecificTokenSide("deathMark", { p1: p1Heroes, p2: p2Heroes });
 
   // "New Draft" and "End Battle" are both exceptional, rarely-tapped
   // actions next to the continuous HP/level/gold adjustments on this
@@ -94,6 +100,10 @@ export function BattleBoardScreen({
               onHeroConfusedChange={(heroId, value) => setHeroConfused(team.side, heroId, value)}
               onHeroImmobilizedChange={(heroId, value) =>
                 setHeroImmobilized(team.side, heroId, value)
+              }
+              showDeathMark={deathMarkSide === team.side}
+              onHeroDeathMarkedChange={(heroId, value) =>
+                setHeroDeathMarked(team.side, heroId, value)
               }
               onStructureHpChange={(slot, value) => setStructureHp(team.side, slot, value)}
               openTokenKey={openTokenKey}

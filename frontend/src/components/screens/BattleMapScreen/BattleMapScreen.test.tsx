@@ -266,6 +266,61 @@ describe("BattleMapScreen", () => {
     expect(screen.getAllByLabelText(/\+1 Attack token/)).toHaveLength(1);
   });
 
+  it("shows a hero's Death Mark icon in the status panel only while marked", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: {
+              ...base.p1.heroes,
+              caligar: {
+                hp: 0,
+                level: 1,
+                attackTokens: 2,
+                confused: true,
+                immobilized: true,
+                deathMarked: true,
+              },
+            },
+          },
+          p2: {
+            ...base.p2,
+            heroes: {
+              ...base.p2.heroes,
+              sterling: {
+                hp: 8,
+                level: 1,
+                attackTokens: 0,
+                confused: false,
+                immobilized: false,
+                deathMarked: true,
+              },
+            },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    // Caligar holds all four (and keeps them at 0 HP); Sterling, with no
+    // other token, still gets a token line for the Death Mark alone. Boreas
+    // isn't marked.
+    const icons = screen.getAllByLabelText("Death Mark");
+    expect(icons).toHaveLength(2);
+    expect(icons[0]).toHaveAttribute("title", "Death Mark token");
+  });
+
   it('shows "End Battle" in the menu only once a winner exists', () => {
     const { rerender } = render(
       <BattleMapScreen

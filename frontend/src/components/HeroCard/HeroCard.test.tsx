@@ -39,6 +39,50 @@ const optionNames = () =>
     .getAllByRole("button")
     .map((row) => row.getAttribute("aria-label"));
 
+function renderMarkable(deathMarked: boolean, open: boolean) {
+  const onChange = vi.fn();
+  render(
+    <HeroCard
+      hero={boreas}
+      variant="battle"
+      hp={0}
+      level={1}
+      tokenPicker={{ expanded: open, onExpandedChange: vi.fn() }}
+      attackTokens={{ count: 0, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() }}
+      confused={{ on: false, onChange: vi.fn() }}
+      immobilized={{ on: true, onChange: vi.fn() }}
+      deathMarked={{ on: deathMarked, onChange }}
+    />,
+  );
+  return onChange;
+}
+
+describe("HeroCard Death Mark (intent/09)", () => {
+  it("is the last option, even on a hero at 0 HP, and picking it marks the hero", () => {
+    const onChange = renderMarkable(false, true);
+
+    expect(optionNames()).toEqual(["Add +1 Attack", "Add Confuse", "Add Death Mark"]);
+    fireEvent.click(within(popover()!).getByRole("button", { name: "Add Death Mark" }));
+    expect(onChange).toHaveBeenCalledWith(true);
+  });
+
+  it("shows a crimson chip after Immobilize while marked, and a tap removes it", () => {
+    const onChange = renderMarkable(true, false);
+
+    const chip = screen.getByRole("button", { name: "Death Mark token on Boreas" });
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+    expect(chip).toHaveAttribute("title", "Death Mark token (tap to remove)");
+    expect(chip.style.getPropertyValue("--token-accent")).toBe("var(--color-death-mark)");
+    const immobilized = screen.getByRole("button", { name: "Immobilized on Boreas" });
+    expect(
+      immobilized.compareDocumentPosition(chip) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    fireEvent.click(chip);
+    expect(onChange).toHaveBeenCalledWith(false);
+  });
+});
+
 describe("HeroCard token row", () => {
   it("shows only the '+' when nothing is held", () => {
     renderRow({}, { open: false });
@@ -109,6 +153,11 @@ describe("HeroCard token row", () => {
     expect(
       screen.getByRole("button", { name: "Boreas: 0 +1 Attack tokens. Hide controls" }),
     ).toBeInTheDocument();
+  });
+
+  it("offers Death Mark only when it's passed, after Immobilize", () => {
+    renderRow();
+    expect(optionNames()).not.toContain("Add Death Mark");
   });
 
   it("has no token row without a picker (the Win Screen)", () => {
