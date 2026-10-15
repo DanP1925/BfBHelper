@@ -82,19 +82,11 @@
   color: var(--color-gold);
 }
 
-.confused {
+/* Any on/off token's icon, in its own accent (set inline from
+ * ON_OFF_TOKENS, like TokenToggle). */
+.onOffToken {
   display: flex;
-  color: var(--color-confuse);
-}
-
-.immobilized {
-  display: flex;
-  color: var(--color-immobilize);
-}
-
-.deathMarked {
-  display: flex;
-  color: var(--color-death-mark);
+  color: var(--token-accent);
 }
 
 .dimmed {

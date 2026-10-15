@@ -76,9 +76,16 @@ export function TokenPicker({ heroName, options, expanded, onExpandedChange }: T
     }
   }, [expanded]);
 
+  // Read through a ref, like useDismiss, so the parent's inline callback
+  // doesn't re-attach these listeners on every pick while the picker is open.
+  const onExpandedChangeRef = useRef(onExpandedChange);
+  useEffect(() => {
+    onExpandedChangeRef.current = onExpandedChange;
+  });
+
   useEffect(() => {
     if (!expanded) return;
-    const close = () => onExpandedChange(false);
+    const close = () => onExpandedChangeRef.current(false);
     // Capture, so a scroll of the Board's own scroll area counts too.
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
@@ -86,7 +93,7 @@ export function TokenPicker({ heroName, options, expanded, onExpandedChange }: T
       window.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };
-  }, [expanded, onExpandedChange]);
+  }, [expanded]);
 
   const groupLabel = `Add a token to ${heroName}`;
 

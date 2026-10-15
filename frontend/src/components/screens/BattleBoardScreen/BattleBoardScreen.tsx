@@ -101,9 +101,10 @@ export function BattleBoardScreen({
               onHeroImmobilizedChange={(heroId, value) =>
                 setHeroImmobilized(team.side, heroId, value)
               }
-              showDeathMark={deathMarkSide === team.side}
-              onHeroDeathMarkedChange={(heroId, value) =>
-                setHeroDeathMarked(team.side, heroId, value)
+              onHeroDeathMarkedChange={
+                deathMarkSide === team.side
+                  ? (heroId, value) => setHeroDeathMarked(team.side, heroId, value)
+                  : undefined
               }
               onStructureHpChange={(slot, value) => setStructureHp(team.side, slot, value)}
               openTokenKey={openTokenKey}

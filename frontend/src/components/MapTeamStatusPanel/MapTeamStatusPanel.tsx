@@ -1,12 +1,11 @@
+import type { CSSProperties } from "react";
 import type { Hero, PlayerId } from "../../lib/draft/types";
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState } from "../../lib/battle/types";
 import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { tokenCountLabel } from "../TokenChip/TokenChip";
-import { ConfuseTokenIcon } from "../TokenToggle/ConfuseTokenIcon";
-import { DeathMarkIcon } from "../TokenToggle/DeathMarkIcon";
-import { ImmobilizeIcon } from "../TokenToggle/ImmobilizeIcon";
+import { ON_OFF_TOKENS } from "../TokenToggle/onOffTokens";
 import styles from "./MapTeamStatusPanel.module.css";
 
 type MapTeamStatusPanelProps = {
@@ -47,8 +46,9 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Heroes</div>
         {heroes.map((hero) => {
-          const { hp, attackTokens, confused, immobilized, deathMarked } =
-            team.heroes[hero.id] ?? createInitialHeroState(hero);
+          const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
+          const { hp, attackTokens } = heroState;
+          const heldOnOff = ON_OFF_TOKENS.filter((token) => heroState[token.field]);
           const isDefeated = hp === 0;
           return (
             <div
@@ -72,7 +72,7 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                   holds a token. Its own line inside the row, so names never
                   truncate for it, and `.dimmed` covers it. No roster check
                   for Death Mark: only the Board's gated control sets it. */}
-              {(attackTokens > 0 || confused || immobilized || deathMarked) && (
+              {(attackTokens > 0 || heldOnOff.length > 0) && (
                 <span className={styles.tokenLine}>
                   {attackTokens > 0 && (
                     <span
@@ -84,29 +84,17 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                       {attackTokens}
                     </span>
                   )}
-                  {confused && (
-                    <span className={styles.confused} aria-label="Confused" title="Confuse token">
-                      <ConfuseTokenIcon size={13} />
-                    </span>
-                  )}
-                  {immobilized && (
+                  {heldOnOff.map(({ field, Icon, chipLabel, mapLabel, accent }) => (
                     <span
-                      className={styles.immobilized}
-                      aria-label="Immobilized"
-                      title="Immobilized"
+                      key={field}
+                      className={styles.onOffToken}
+                      style={{ "--token-accent": accent } as CSSProperties}
+                      aria-label={mapLabel}
+                      title={chipLabel}
                     >
-                      <ImmobilizeIcon size={13} />
+                      <Icon size={13} />
                     </span>
-                  )}
-                  {deathMarked && (
-                    <span
-                      className={styles.deathMarked}
-                      aria-label="Death Mark"
-                      title="Death Mark token"
-                    >
-                      <DeathMarkIcon size={13} />
-                    </span>
-                  )}
+                  ))}
                 </span>
               )}
             </div>
