@@ -15,6 +15,7 @@ function renderChip(props: ChipProps = {}) {
       max={9}
       icon={<AttackTokenIcon size={12} />}
       label="+1 Attack"
+      accent="var(--color-gold)"
       heroName="Caligar"
       expanded={false}
       {...props}
@@ -37,6 +38,7 @@ function StatefulChip({ count = 2 }: { count?: number }) {
         onChange={() => {}}
         icon={<AttackTokenIcon size={12} />}
         label="+1 Attack"
+        accent="var(--color-gold)"
         heroName="Caligar"
         expanded={expanded}
         onExpandedChange={setExpanded}
@@ -57,6 +59,24 @@ describe("TokenChip", () => {
     expect(toggle).toHaveTextContent("×2");
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(toggle).toHaveAttribute("title", "+1 Attack tokens");
+  });
+
+  it("draws the pill in the token's accent", () => {
+    const { container } = render(
+      <TokenChip
+        count={1}
+        max={9}
+        onChange={() => {}}
+        icon={<AttackTokenIcon size={12} />}
+        label="+1 Shield"
+        accent="var(--color-shield)"
+        heroName="Cyrus"
+        expanded={false}
+        onExpandedChange={() => {}}
+      />,
+    );
+
+    expect(container.firstElementChild).toHaveStyle({ "--token-accent": "var(--color-shield)" });
   });
 
   it("uses the singular for one token", () => {

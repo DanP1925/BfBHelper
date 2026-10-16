@@ -62,9 +62,9 @@ test("the token row shows only held tokens and a '+' picker that stays open, ins
   }
   await picker.getByRole("button", { name: "Add Confuse" }).click();
   await picker.getByRole("button", { name: "Add Immobilize" }).click();
-  // Held on/off tokens drop out; +1 Attack stays, with its count.
+  // Held on/off tokens drop out; +1 Attack stays, with no count (intent/11).
   await expect(picker.getByRole("button")).toHaveCount(1);
-  await expect(picker.getByRole("button", { name: "Add +1 Attack, 3 held" })).toBeVisible();
+  await expect(picker.getByRole("button", { name: "Add +1 Attack" })).toBeVisible();
 
   // A tap outside closes it.
   await page.getByText("Structures").first().click();

@@ -203,7 +203,7 @@ describe("Home", () => {
     fireEvent.click(option(p1Name, /^Add \+1 Attack/));
     fireEvent.click(option(p1Name, /^Add \+1 Attack/));
     expect(chip(p1Name)).toHaveAccessibleName(new RegExp(`^${p1Name}: 2 \\+1 Attack tokens`));
-    expect(option(p1Name, /^Add \+1 Attack, 2 held/)).toHaveTextContent("×2");
+    expect(picker(p1Name)).not.toHaveTextContent("×");
 
     // Same team: the outside mousedown closes the first, the click opens the second.
     fireEvent.mouseDown(addButton(p1Other));
@@ -297,13 +297,14 @@ describe("Home", () => {
   });
 });
 
+/** Saves a finished draft with these rosters and its fresh battle state. */
+function seedDraft(p1Ids: HeroId[], p2Ids: HeroId[]) {
+  saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
+  saveBattleState(createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById), "p1"));
+  saveView("battle");
+}
+
 describe("Home: Death Mark (intent/09)", () => {
-  /** Saves a finished draft with these rosters and its fresh battle state. */
-  function seedDraft(p1Ids: HeroId[], p2Ids: HeroId[]) {
-    saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
-    saveBattleState(createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById), "p1"));
-    saveView("battle");
-  }
   const offersDeathMark = (heroId: HeroId) => {
     const name = getHeroById(heroId).name;
     fireEvent.click(addButton(name));
@@ -376,6 +377,95 @@ describe("Home: Death Mark (intent/09)", () => {
     fireEvent.click(mark(ceralin)!);
     expect(mark(ceralin)).toBeNull();
     expect(screen.getByRole("button", { name: `Confuse token on ${ceralin}` })).toBeInTheDocument();
+  });
+});
+
+describe("Home: +1 Shield (intent/11)", () => {
+  const offersShield = (heroId: HeroId) => {
+    const name = getHeroById(heroId).name;
+    fireEvent.click(addButton(name));
+    const offered = within(picker(name)!).queryByRole("button", { name: "Add +1 Shield" });
+    fireEvent.click(addButton(name));
+    return offered !== null;
+  };
+  const shieldChip = (name: string) =>
+    screen.queryByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Shield token`) });
+
+  it("offers it only on Cyrus's team, Cyrus included, when he's on Player 1", () => {
+    seedDraft(["cyrus", "baldwin", "boreas", "caligar"], ["ceralin", "cynthia", "dazeem", "felix"]);
+    render(<Home />);
+
+    for (const id of ["cyrus", "baldwin", "boreas", "caligar"] as const) {
+      expect(offersShield(id)).toBe(true);
+    }
+    for (const id of ["ceralin", "cynthia", "dazeem", "felix"] as const) {
+      expect(offersShield(id)).toBe(false);
+    }
+  });
+
+  it("offers it only on Player 2 when Cyrus is on Player 2", () => {
+    seedDraft(["baldwin", "boreas", "caligar", "ceralin"], ["cynthia", "cyrus", "dazeem", "felix"]);
+    render(<Home />);
+
+    expect(offersShield("cynthia")).toBe(true);
+    expect(offersShield("cyrus")).toBe(true);
+    expect(offersShield("baldwin")).toBe(false);
+  });
+
+  it("offers it to nobody without Cyrus", () => {
+    seedDraft(
+      ["baldwin", "boreas", "caligar", "ceralin"],
+      ["cynthia", "dazeem", "felix", "kerrick"],
+    );
+    render(<Home />);
+
+    for (const id of ["baldwin", "boreas", "caligar", "ceralin", "cynthia", "dazeem"] as const) {
+      expect(offersShield(id)).toBe(false);
+    }
+  });
+
+  it("adds one per tap after the other tokens, works with Cyrus at 0 HP, and shares the one-open rule", () => {
+    seedDraft(["cyrus", "baldwin", "boreas", "caligar"], ["ceralin", "cynthia", "dazeem", "felix"]);
+    render(<Home />);
+    const cyrus = getHeroById("cyrus").name;
+    const baldwin = getHeroById("baldwin").name;
+
+    // Cyrus at 0 HP still counts as in the battle.
+    const decreaseHp = screen.getByRole("button", { name: `Decrease ${cyrus} HP` });
+    while (!decreaseHp.hasAttribute("disabled")) fireEvent.click(decreaseHp);
+
+    fireEvent.click(addButton(baldwin));
+    expect(
+      within(picker(baldwin)!)
+        .getAllByRole("button")
+        .map((row) => row.getAttribute("aria-label")),
+    ).toEqual(["Add +1 Attack", "Add Confuse", "Add Immobilize", "Add +1 Shield"]);
+    fireEvent.click(option(baldwin, "Add +1 Shield"));
+    fireEvent.click(option(baldwin, "Add +1 Shield"));
+    fireEvent.click(option(baldwin, "Add Confuse"));
+    expect(shieldChip(baldwin)).toHaveAccessibleName(
+      `${baldwin}: 2 +1 Shield tokens. Show controls`,
+    );
+    expect(shieldChip(cyrus)).toBeNull();
+
+    // Shield comes after Confuse in the row, whatever order they were added.
+    const confuse = screen.getByRole("button", { name: `Confuse token on ${baldwin}` });
+    expect(
+      confuse.compareDocumentPosition(shieldChip(baldwin)!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // Opening the Shield stepper closes the picker.
+    fireEvent.mouseDown(shieldChip(baldwin)!);
+    fireEvent.click(shieldChip(baldwin)!);
+    expect(picker(baldwin)).toBeNull();
+    expect(shieldChip(baldwin)).toHaveAttribute("aria-expanded", "true");
+
+    // Stepping to 0 removes the chip once its stepper closes.
+    const remove = screen.getByRole("button", { name: `Remove +1 Shield token from ${baldwin}` });
+    fireEvent.click(remove);
+    fireEvent.click(remove);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(shieldChip(baldwin)).toBeNull();
   });
 });
 

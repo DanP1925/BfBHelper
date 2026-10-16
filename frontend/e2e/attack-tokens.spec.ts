@@ -35,7 +35,11 @@ test("+1 Attack tokens count up and down, stay one-open, and survive a Board/Map
   for (let i = 0; i < 3; i++) {
     await heroPicker.getByRole("button", { name: /^Add \+1 Attack/ }).click();
   }
-  await expect(heroPicker.getByRole("button", { name: "Add +1 Attack, 3 held" })).toBeVisible();
+  // The picker row shows no count (intent/11); the held chip does.
+  await expect(heroPicker.getByRole("button", { name: "Add +1 Attack" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: `${hero}: 3 +1 Attack tokens. Show controls` }),
+  ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(heroPicker).toHaveCount(0);
 

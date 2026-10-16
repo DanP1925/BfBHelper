@@ -6,6 +6,7 @@ import {
   clampHeroAttackTokens,
   clampHeroHp,
   clampHeroLevel,
+  clampHeroShieldTokens,
   clampStructureHp,
 } from "./bounds";
 import {
@@ -26,6 +27,7 @@ export type BattleAction =
   | { type: "SET_HERO_CONFUSED"; side: PlayerId; heroId: HeroId; value: boolean }
   | { type: "SET_HERO_IMMOBILIZED"; side: PlayerId; heroId: HeroId; value: boolean }
   | { type: "SET_HERO_DEATH_MARKED"; side: PlayerId; heroId: HeroId; value: boolean }
+  | { type: "SET_HERO_SHIELD_TOKENS"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: MapSpaceId | null }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
@@ -104,6 +106,18 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
     case "SET_HERO_DEATH_MARKED":
       return setHeroField(state, action.side, action.heroId, "deathMarked", action.value);
 
+    // Manual only (intent/11): never spent on damage, never cleared on
+    // defeat (either hero's), a respawn or a passed round. No visibility
+    // check: only the UI limits it to Cyrus's team.
+    case "SET_HERO_SHIELD_TOKENS":
+      return setHeroField(
+        state,
+        action.side,
+        action.heroId,
+        "shieldTokens",
+        clampHeroShieldTokens(action.value),
+      );
+
     case "SET_STRUCTURE_HP": {
       const team = state[action.side];
       const nextHp = clampStructureHp(action.value, structureCeiling(action.slot));
@@ -153,7 +167,8 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
  * exceeds HERO_HP_CEILING would create a battle state that
  * loadBattleState's own validator would then reject as corrupt on the
  * very next reload. Every hero starts with no +1 Attack tokens,
- * unconfused, standing (not immobilized) and unmarked. */
+ * unconfused, standing (not immobilized), unmarked and with no Shield
+ * tokens. */
 export function createInitialHeroState(hero: Hero): HeroBattleState {
   return {
     hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL),
@@ -162,6 +177,7 @@ export function createInitialHeroState(hero: Hero): HeroBattleState {
     confused: false,
     immobilized: false,
     deathMarked: false,
+    shieldTokens: 0,
   };
 }
 
@@ -196,7 +212,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 7,
+    schemaVersion: 8,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

@@ -11,6 +11,7 @@ type HeroSpecificTokenRule = { owner: HeroId; targets: HeroSpecificTarget };
  * on either team. One row per token; later intents add rows. */
 export const HERO_SPECIFIC_TOKENS = {
   deathMark: { owner: "kunoichi", targets: "enemies" },
+  shield: { owner: "cyrus", targets: "allies" },
 } as const satisfies Record<string, HeroSpecificTokenRule>;
 
 export type HeroSpecificTokenId = keyof typeof HERO_SPECIFIC_TOKENS;

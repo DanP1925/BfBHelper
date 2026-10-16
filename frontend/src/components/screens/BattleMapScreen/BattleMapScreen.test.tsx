@@ -21,7 +21,7 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 7,
+    schemaVersion: 8,
     initiative: "p1",
     p1: {
       gold: 0,
@@ -33,6 +33,7 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
           confused: false,
           immobilized: false,
           deathMarked: false,
+          shieldTokens: 0,
         },
         caligar: {
           hp: 0,
@@ -41,6 +42,7 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
           confused: false,
           immobilized: false,
           deathMarked: false,
+          shieldTokens: 0,
         },
       },
       structures: { top: 11, middle: 11, bottom: 0, bit: 16 },
@@ -56,6 +58,7 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
           confused: false,
           immobilized: false,
           deathMarked: false,
+          shieldTokens: 0,
         },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
@@ -137,6 +140,7 @@ describe("BattleMapScreen", () => {
                 confused: false,
                 immobilized: false,
                 deathMarked: false,
+                shieldTokens: 0,
               },
             },
           },
@@ -175,6 +179,7 @@ describe("BattleMapScreen", () => {
                 confused: true,
                 immobilized: false,
                 deathMarked: false,
+                shieldTokens: 0,
               },
             },
           },
@@ -189,6 +194,7 @@ describe("BattleMapScreen", () => {
                 confused: true,
                 immobilized: false,
                 deathMarked: false,
+                shieldTokens: 0,
               },
             },
           },
@@ -228,6 +234,7 @@ describe("BattleMapScreen", () => {
                 confused: true,
                 immobilized: true,
                 deathMarked: false,
+                shieldTokens: 0,
               },
             },
           },
@@ -242,6 +249,7 @@ describe("BattleMapScreen", () => {
                 confused: false,
                 immobilized: true,
                 deathMarked: false,
+                shieldTokens: 0,
               },
             },
           },
@@ -285,6 +293,7 @@ describe("BattleMapScreen", () => {
                 confused: true,
                 immobilized: true,
                 deathMarked: true,
+                shieldTokens: 0,
               },
             },
           },
@@ -299,6 +308,7 @@ describe("BattleMapScreen", () => {
                 confused: false,
                 immobilized: false,
                 deathMarked: true,
+                shieldTokens: 0,
               },
             },
           },
@@ -319,6 +329,53 @@ describe("BattleMapScreen", () => {
     const icons = screen.getAllByLabelText("Death Mark");
     expect(icons).toHaveLength(2);
     expect(icons[0]).toHaveAttribute("title", "Death Mark token");
+  });
+
+  it("shows a hero's +1 Shield count in the status panel only above 0, after Death Mark", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: {
+              ...base.p1.heroes,
+              caligar: { ...base.p1.heroes.caligar, deathMarked: true, shieldTokens: 3 },
+            },
+          },
+          p2: {
+            ...base.p2,
+            heroes: {
+              ...base.p2.heroes,
+              sterling: { ...base.p2.heroes.sterling, shieldTokens: 1 },
+            },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    // Caligar (0 HP) keeps his; Sterling gets a token line for Shield alone;
+    // Boreas holds none.
+    expect(screen.getAllByLabelText(/\+1 Shield token/)).toHaveLength(2);
+    const caligarShield = screen.getByLabelText("3 +1 Shield tokens");
+    expect(caligarShield).toHaveTextContent("3");
+    expect(caligarShield).toHaveAttribute("title", "+1 Shield tokens");
+    expect(caligarShield.style.getPropertyValue("--token-accent")).toBe("var(--color-shield)");
+    expect(screen.getByLabelText("1 +1 Shield token")).toBeInTheDocument();
+    const mark = screen.getByLabelText("Death Mark");
+    expect(
+      mark.compareDocumentPosition(caligarShield) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('shows "End Battle" in the menu only once a winner exists', () => {
@@ -444,7 +501,7 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 7,
+      schemaVersion: 8,
       initiative: "p1",
       p1: {
         gold: 0,
@@ -458,6 +515,7 @@ describe("BattleMapScreen", () => {
               confused: false,
               immobilized: false,
               deathMarked: false,
+              shieldTokens: 0,
             },
           ]),
         ),

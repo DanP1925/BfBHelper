@@ -28,6 +28,12 @@ export type HeroBattleState = {
    * Changed only by hand: never cleared on defeat (either hero's),
    * respawn or a new round. */
   deathMarked: boolean;
+  /** Shield tokens on this hero (intent/11), given by Cyrus's Holy Aura
+   * and power cards. 0..HERO_SHIELD_TOKEN_CEILING. Only the UI limits it
+   * to Cyrus's team (heroSpecificTokens.ts). Changed only by hand: never
+   * spent on damage, and never cleared on defeat (either hero's),
+   * respawn or a new round. */
+  shieldTokens: number;
 };
 
 export type BattleTeamState = {
@@ -41,7 +47,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 7;
+  schemaVersion: 8;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

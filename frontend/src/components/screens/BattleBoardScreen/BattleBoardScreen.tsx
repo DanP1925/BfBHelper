@@ -24,6 +24,7 @@ type BattleBoardScreenProps = {
   setHeroConfused: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroDeathMarked: (side: PlayerId, heroId: HeroId, value: boolean) => void;
+  setHeroShieldTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
@@ -44,6 +45,7 @@ export function BattleBoardScreen({
   setHeroConfused,
   setHeroImmobilized,
   setHeroDeathMarked,
+  setHeroShieldTokens,
   setStructureHp,
   onNewDraft,
   onEndBattle,
@@ -62,6 +64,8 @@ export function BattleBoardScreen({
   // Only Kunoichi's enemies can be marked, and only while she's drafted
   // (intent/09). Rosters don't change mid-battle, so this is fixed.
   const deathMarkSide = heroSpecificTokenSide("deathMark", { p1: p1Heroes, p2: p2Heroes });
+  // Only Cyrus's own team, Cyrus included, can be shielded (intent/11).
+  const shieldSide = heroSpecificTokenSide("shield", { p1: p1Heroes, p2: p2Heroes });
 
   // "New Draft" and "End Battle" are both exceptional, rarely-tapped
   // actions next to the continuous HP/level/gold adjustments on this
@@ -104,6 +108,11 @@ export function BattleBoardScreen({
               onHeroDeathMarkedChange={
                 deathMarkSide === team.side
                   ? (heroId, value) => setHeroDeathMarked(team.side, heroId, value)
+                  : undefined
+              }
+              onHeroShieldTokensChange={
+                shieldSide === team.side
+                  ? (heroId, value) => setHeroShieldTokens(team.side, heroId, value)
                   : undefined
               }
               onStructureHpChange={(slot, value) => setStructureHp(team.side, slot, value)}

@@ -24,6 +24,9 @@ type BattleTeamPanelProps = {
   /** Passed only to Kunoichi's enemies (intent/09, see heroSpecificTokens.ts):
    * its presence is what gives this side's heroes a Death Mark control. */
   onHeroDeathMarkedChange?: (heroId: HeroId, value: boolean) => void;
+  /** Passed only to Cyrus's team (intent/11, see heroSpecificTokens.ts): its
+   * presence is what gives this side's heroes a +1 Shield control. */
+  onHeroShieldTokensChange?: (heroId: HeroId, value: number) => void;
   onStructureHpChange: (slot: keyof StructuresState, value: number) => void;
   /** Which token chip or "+" picker on the Board is open, owned by
    * `BattleBoardScreen` so opening one in this panel closes any open in the
@@ -44,6 +47,7 @@ export function BattleTeamPanel({
   onHeroConfusedChange,
   onHeroImmobilizedChange,
   onHeroDeathMarkedChange,
+  onHeroShieldTokensChange,
   onStructureHpChange,
   openTokenKey,
   onOpenTokenKeyChange,
@@ -74,6 +78,7 @@ export function BattleTeamPanel({
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
           // Per token type, so later tokens on the same hero get their own key.
           const attackTokenKey = `${side}:${hero.id}:attack`;
+          const shieldTokenKey = `${side}:${hero.id}:shield`;
           // The "+" picker shares the same one-open rule (intent/09).
           const pickerKey = `${side}:${hero.id}:picker`;
           return (
@@ -108,6 +113,17 @@ export function BattleTeamPanel({
                   ? {
                       on: heroState.deathMarked,
                       onChange: (value) => onHeroDeathMarkedChange(hero.id, value),
+                    }
+                  : undefined
+              }
+              shieldTokens={
+                onHeroShieldTokensChange
+                  ? {
+                      count: heroState.shieldTokens,
+                      onChange: (value) => onHeroShieldTokensChange(hero.id, value),
+                      expanded: openTokenKey === shieldTokenKey,
+                      onExpandedChange: (open) =>
+                        onOpenTokenKeyChange(open ? shieldTokenKey : null),
                     }
                   : undefined
               }

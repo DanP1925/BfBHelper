@@ -109,6 +109,7 @@ describe("useBattle", () => {
       confused: false,
       immobilized: false,
       deathMarked: false,
+      shieldTokens: 0,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
@@ -122,6 +123,7 @@ describe("useBattle", () => {
       confused: true,
       immobilized: true,
       deathMarked: true,
+      shieldTokens: 5,
     };
     saveBattleState(persisted);
 
@@ -134,6 +136,7 @@ describe("useBattle", () => {
       confused: true,
       immobilized: true,
       deathMarked: true,
+      shieldTokens: 5,
     });
   });
 
@@ -150,6 +153,7 @@ describe("useBattle", () => {
       confused: false,
       immobilized: false,
       deathMarked: false,
+      shieldTokens: 0,
     });
   });
 
@@ -322,6 +326,43 @@ describe("useBattle", () => {
     });
     expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBeNull();
     expect(result.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
+  });
+
+  it("setHeroShieldTokens persists the count, which survives a reload and steps back down", () => {
+    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroShieldTokens("p1", HERO_A.id, 3);
+    });
+    expect(result.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(3);
+    expect(result.current.state?.p1.heroes[HERO_A.id].attackTokens).toBe(0);
+    expect(result.current.state?.p2.heroes[HERO_B.id].shieldTokens).toBe(0);
+    expect(readRawState().p1.heroes[HERO_A.id].shieldTokens).toBe(3);
+    unmount();
+
+    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+    expect(reloaded.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(3);
+
+    act(() => {
+      reloaded.current.setHeroShieldTokens("p1", HERO_A.id, 2);
+    });
+    expect(reloaded.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(2);
+    expect(readRawState().p1.heroes[HERO_A.id].shieldTokens).toBe(2);
+  });
+
+  it("setHeroHp to 0 (with its move to respawn) and passInitiative keep the shields", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroShieldTokens("p1", HERO_A.id, 2);
+      result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+    });
+    act(() => {
+      result.current.setHeroHp("p1", HERO_A.id, 0);
+      result.current.passInitiative();
+    });
+    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
+    expect(result.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(2);
   });
 
   it("derives winner from live state and clears it once Bit HP is raised back above 0", () => {

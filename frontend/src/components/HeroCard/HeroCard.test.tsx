@@ -115,10 +115,11 @@ describe("HeroCard token row", () => {
     }
   });
 
-  it("drops held on/off tokens from the picker but keeps +1 Attack with its count", () => {
+  it("drops held on/off tokens from the picker but keeps +1 Attack, with no count", () => {
     renderRow({ attackTokens: 2, immobilized: true });
 
-    expect(optionNames()).toEqual(["Add +1 Attack, 2 held", "Add Confuse"]);
+    expect(optionNames()).toEqual(["Add +1 Attack", "Add Confuse"]);
+    expect(popover()).not.toHaveTextContent("×");
   });
 
   it("picking adds one +1 Attack, or turns an on/off token on", () => {
@@ -135,9 +136,7 @@ describe("HeroCard token row", () => {
   it("disables +1 Attack in the picker at the ceiling", () => {
     renderRow({ attackTokens: 9 });
 
-    expect(
-      within(popover()!).getByRole("button", { name: "Add +1 Attack, 9 held" }),
-    ).toBeDisabled();
+    expect(within(popover()!).getByRole("button", { name: "Add +1 Attack" })).toBeDisabled();
   });
 
   it("a tap on a held on/off chip removes it", () => {
@@ -158,6 +157,57 @@ describe("HeroCard token row", () => {
   it("offers Death Mark only when it's passed, after Immobilize", () => {
     renderRow();
     expect(optionNames()).not.toContain("Add Death Mark");
+  });
+
+  it("offers +1 Shield only when it's passed, last, and disables it at the ceiling", () => {
+    const onChange = vi.fn();
+    render(
+      <HeroCard
+        hero={boreas}
+        variant="battle"
+        hp={10}
+        level={1}
+        tokenPicker={{ expanded: true, onExpandedChange: vi.fn() }}
+        attackTokens={{ count: 0, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() }}
+        confused={{ on: false, onChange: vi.fn() }}
+        immobilized={{ on: false, onChange: vi.fn() }}
+        deathMarked={{ on: false, onChange: vi.fn() }}
+        shieldTokens={{ count: 2, onChange, expanded: false, onExpandedChange: vi.fn() }}
+      />,
+    );
+
+    expect(optionNames()).toEqual([
+      "Add +1 Attack",
+      "Add Confuse",
+      "Add Immobilize",
+      "Add Death Mark",
+      "Add +1 Shield",
+    ]);
+    fireEvent.click(within(popover()!).getByRole("button", { name: "Add +1 Shield" }));
+    expect(onChange).toHaveBeenCalledWith(3);
+    const chip = screen.getByRole("button", { name: "Boreas: 2 +1 Shield tokens. Show controls" });
+    expect(chip).toHaveTextContent("×2");
+    expect(chip).toHaveAttribute("title", "+1 Shield tokens");
+  });
+
+  it("disables +1 Shield in the picker at the ceiling", () => {
+    render(
+      <HeroCard
+        hero={boreas}
+        variant="battle"
+        hp={10}
+        level={1}
+        tokenPicker={{ expanded: true, onExpandedChange: vi.fn() }}
+        shieldTokens={{ count: 9, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() }}
+      />,
+    );
+
+    expect(within(popover()!).getByRole("button", { name: "Add +1 Shield" })).toBeDisabled();
+  });
+
+  it("offers no +1 Shield when it isn't passed", () => {
+    renderRow();
+    expect(optionNames()).not.toContain("Add +1 Shield");
   });
 
   it("has no token row without a picker (the Win Screen)", () => {

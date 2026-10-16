@@ -72,12 +72,12 @@ frontend/e2e/
 
 ### Data & state layer
 
-- [ ] M1. `lib/battle/types.ts`: `HeroBattleState` += `shieldTokens: number`
+- [x] M1. `lib/battle/types.ts`: `HeroBattleState` += `shieldTokens: number`
       (with the spec's doc comment), `BattleState.schemaVersion: 8`.
-- [ ] M2. `lib/battle/constants.ts`: += `HERO_SHIELD_TOKEN_CEILING = 9`,
+- [x] M2. `lib/battle/constants.ts`: += `HERO_SHIELD_TOKEN_CEILING = 9`,
       citing intent 11's Value Bounds. `lib/battle/bounds.ts`: +=
       `clampHeroShieldTokens(value)`, next to `clampHeroAttackTokens`.
-- [ ] M3. `lib/battle/reducer.ts`: += `SET_HERO_SHIELD_TOKENS { side, heroId,
+- [x] M3. `lib/battle/reducer.ts`: += `SET_HERO_SHIELD_TOKENS { side, heroId,
       value: number }`, one `setHeroField(..., "shieldTokens",
       clampHeroShieldTokens(value))` call with a manual-only comment ("never
       spent on damage, never cleared on defeat"). No visibility check.
@@ -86,12 +86,12 @@ frontend/e2e/
       `schemaVersion: 8`. `SET_HERO_HP` (including to 0),
       `SET_HERO_POSITION`, every other token action and `PASS_INITIATIVE`
       leave the count alone.
-- [ ] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION = 8`.
+- [x] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION = 8`.
       += `LegacyHeroBattleStateV7 = Omit<HeroBattleState, "shieldTokens">`,
       and `LegacyHeroBattleStateV6` derives from it. += `LegacyBattleTeamStateV7`;
       `PersistedBattleStateV7.p1/p2` use it, doc comment says it's only the
       source for `battleMigrations[7]`. += `PersistedBattleStateV8`.
-- [ ] M5. `lib/persistence/storage.ts`: += `upgradeV7ToV8 =
+- [x] M5. `lib/persistence/storage.ts`: += `upgradeV7ToV8 =
       addHeroFieldsStep<PersistedBattleStateV8>(8, { shieldTokens: 0 })`;
       `battleMigrations` += `7: upgradeV7ToV8`. `saveBattleState`,
       `isValidPersistedBattleState` and the import use
@@ -99,11 +99,11 @@ frontend/e2e/
       `isNumberInRange(hv.shieldTokens, 0, HERO_SHIELD_TOKEN_CEILING)` (doc
       comment lists it) and doesn't check who's shielded.
       `loadBattleState` returns `schemaVersion: 8`.
-- [ ] M6. `lib/useBattle.ts`: += `setHeroShieldTokens(side, heroId, value)`,
+- [x] M6. `lib/useBattle.ts`: += `setHeroShieldTokens(side, heroId, value)`,
       same shape as `setHeroAttackTokens`.
-- [ ] M7. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
+- [x] M7. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
       `shield: { owner: "cyrus", targets: "allies" }`.
-- [ ] M8. Fixtures and tests:
+- [x] M8. Fixtures and tests:
       - every hand-written `HeroBattleState` gains `shieldTokens: 0`
         (`reducer.test.ts`, `selectors.test.ts`, `storage.test.ts`,
         `useBattle.test.tsx`, `HeroCard.test.tsx`, `BattleMapScreen.test.tsx`,
@@ -117,46 +117,51 @@ frontend/e2e/
       - storage: v8 round-trip; v7→v8, v6→v8, v5→v8, v4→v8, v3→v8, v2→v8
         and v1→v8 migrations (every hero at 0, everything else unchanged,
         Death Mark, Immobilize, Confuse and +1 Attack kept on v7→v8);
-        rejects missing, negative, fractional, 10 and non-number
-        `shieldTokens`
+        rejects missing, negative, 10 and non-number `shieldTokens`
       - `useBattle`: `setHeroShieldTokens` updates and persists; reload
         keeps it
       - `heroSpecificTokens.test.ts`: Cyrus on p1 → `"p1"`, on p2 →
         `"p2"`, not drafted → `null`
       - data layer checks: `tsc --noEmit`, ESLint, full Vitest and
         Playwright green (no UI change from M1-M8)
+      (No fractional case: `isNumberInRange` doesn't check integers, and
+      `attackTokens` accepts a fraction too, so tightening validation was
+      left out of scope. Playwright ran once, at the end (M24), not after
+      the data layer. Also: a `setHeroHp` to 0 + `passInitiative` test in
+      `useBattle`, and a Cyrus-on-either-side test in
+      `heroSpecificTokens.test.ts`.)
 
 ### Display refactor
 
-- [ ] M9. `components/battleTokens.ts` (new): the spec's
+- [x] M9. `components/battleTokens.ts` (new): the spec's
       `CountedTokenField`, `OnOffTokenField`, `BattleToken` union and
       `BATTLE_TOKENS`, holding today's four tokens in the fixed order
       (+1 Attack with `AttackTokenIcon`, `var(--color-gold)` and
       `HERO_ATTACK_TOKEN_CEILING`; then Confuse, Immobilize, Death Mark as
       in `ON_OFF_TOKENS`). Delete `components/TokenToggle/onOffTokens.ts`
       and repoint its importers.
-- [ ] M10. `TokenChip`: += `accent: string`, set inline as `--token-accent`;
+- [x] M10. `TokenChip`: += `accent: string`, set inline as `--token-accent`;
       `TokenChip.module.css` reads `var(--token-accent)` for the border,
       fill, icon color and focus ring, like `TokenToggle`. The "×N" stays
       `--color-text`.
-- [ ] M11. `TokenPicker`: `TokenPickerOption` loses `count`; the "×N" span
+- [x] M11. `TokenPicker`: `TokenPickerOption` loses `count`; the "×N" span
       and `.optionCount` CSS are deleted; each row's accessible name is
       always "Add {label}". `disabled` stays.
-- [ ] M12. `HeroCard` battle variant: `tokenEntries` built by one loop over
+- [x] M12. `HeroCard` battle variant: `tokenEntries` built by one loop over
       `BATTLE_TOKENS`. A `"counted"` row reads `{ attackTokens }[field]` and
       makes a `countedEntry` (today's +1 Attack code moved into a function
       beside `toggleEntry`, using the row's `Icon`, `label`, `accent`, `max`).
       An `"onOff"` row calls `toggleEntry` as now. A row whose prop is
       absent is skipped. Keys are `field` (`"attack"` → `"attackTokens"`,
       React keys only; `BattleTeamPanel`'s `:attack` open key unchanged).
-- [ ] M13. `MapTeamStatusPanel`: the token line is one loop over
+- [x] M13. `MapTeamStatusPanel`: the token line is one loop over
       `BATTLE_TOKENS`, keeping held ones. A counted token renders as today's
       +1 Attack span (13px icon, count, `aria-label` from
       `tokenCountLabel(n, label)`, `` title={`${label} tokens`} ``), an
       on/off one as today's icon span. `.attackTokens` becomes
       `.countedToken`, colored by `--token-accent` set inline from the
       row's `accent`.
-- [ ] M14. Tests and checks:
+- [x] M14. Tests and checks:
       - `TokenChip`: renders in the passed accent
       - `TokenPicker.test.tsx`: "shows a held count and disables an option
         at its ceiling" keeps only the disabled check; no row shows "×N"
@@ -172,40 +177,52 @@ frontend/e2e/
         Shield is added; manual QA at 1280x800 (`/qa-screens`): the four
         tokens' chips, picker rows and Map icons look as before, the
         +1 Attack chip still gold, picker rows without counts
+      Vitest and ESLint were green after the refactor and before Shield;
+      Playwright ran at the end (M24). The four existing tokens look and
+      read as before at 1280x800; the only change is that no picker row
+      shows a count. The +1 Attack chip's `"attack"` React key is now
+      `"attackTokens"`; no test selected on it.
 
 ### Shield UI
 
-- [ ] M15. `app/globals.css`: += `--color-shield: #84c25e`.
-- [ ] M16. `components/TokenChip/ShieldTokenIcon.tsx` (new): the canvas's
+- [x] M15. `app/globals.css`: += `--color-shield: #84c25e`.
+- [x] M16. `components/TokenChip/ShieldTokenIcon.tsx` (new): the canvas's
       heater shield with a diamond emblem (the spec's two paths), 16px
       viewBox stroke SVG in `currentColor`, `aria-hidden`, `size` prop
       (12px on the Board, 14px in the picker, 13px on the Map).
-- [ ] M17. `components/battleTokens.ts`: += the `"+1 Shield"` row after
+- [x] M17. `components/battleTokens.ts`: += the `"+1 Shield"` row after
       Death Mark (`kind: "counted"`, `field: "shieldTokens"`,
       `ShieldTokenIcon`, `label` and `optionLabel` "+1 Shield",
       `var(--color-shield)`, `HERO_SHIELD_TOKEN_CEILING`).
-- [ ] M18. `HeroCard` battle variant: += optional
+- [x] M18. `HeroCard` battle variant: += optional
       `shieldTokens?: HeroCardTokenProps`, read by the counted loop. Only
       listed when the prop is passed.
-- [ ] M19. `BattleTeamPanel`: += optional `onHeroShieldTokensChange?(heroId,
+- [x] M19. `BattleTeamPanel`: += optional `onHeroShieldTokensChange?(heroId,
       value)`; when present, passes `shieldTokens={{ count, onChange,
       expanded, onExpandedChange }}`, keyed `` `${side}:${hero.id}:shield` ``
       against `openTokenKey`.
-- [ ] M20. `BattleBoardScreen`: `const shieldSide =
+- [x] M20. `BattleBoardScreen`: `const shieldSide =
       heroSpecificTokenSide("shield", { p1: p1Heroes, p2: p2Heroes })`; +=
       `setHeroShieldTokens` prop, passed as `onHeroShieldTokensChange` only
       to the panel where `shieldSide === team.side`. `app/page.tsx` passes
       `battle.setHeroShieldTokens`. Map props unchanged.
-- [ ] M21. Spec open item: is `ShieldTokenIcon` legible at 12px on the
+- [x] M21. Spec open item: is `ShieldTokenIcon` legible at 12px on the
       Board and 13px on the Map, apart from the swords? Check in the
       browser at 1280x800; simplify the drawing (e.g. drop the diamond) if
       it blurs, and update the spec.
-- [ ] M22. Spec open item: Board at 1280x800 with an ally of Cyrus who's
+      **Reads fine.** At 12px on the Board and 13px on the Map it's a
+      distinct green shield, apart from the swords. Canvas drawing kept.
+- [x] M22. Spec open item: Board at 1280x800 with an ally of Cyrus who's
       also an enemy of Kunoichi holding all five tokens (×9 on both counted
       ones): the card wraps to two lines and the Board doesn't scroll. Also
       the Map's token line for that hero. Decide in the browser, and
       update the spec.
-- [ ] M23. Tests:
+      **Fits.** Baldwin holding ×9, Confuse, Immobilize, Death Mark and
+      ×9 Shield wraps to two lines (row 44px), and the Board doesn't scroll
+      at 1280x800 or 2560x1440, including with either ×9 stepper open (the
+      Attack stepper pushes Death Mark to the second line). The Map's token
+      line for him stays one line in the 170px panel, and the Map fits.
+- [x] M23. Tests:
       - `HeroCard`: "+1 Shield" option only when `shieldTokens` is passed,
         after Death Mark, disabled at 9; chip shown while held or open
       - Board wiring (`page.test.tsx`): with Cyrus on p1, only p1's
@@ -223,8 +240,8 @@ frontend/e2e/
         when the ally's HP and Cyrus's HP go to 0; Cyrus's enemies'
         pickers have no "+1 Shield"; stepping to 0 removes the chip on both
         screens
-- [ ] M24. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green.
-- [ ] M25. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M24. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green.
+- [x] M25. Manual QA at 1280x800 (`/qa-screens`):
       - "+1 Shield" offered only on Cyrus's team, Cyrus included; the green
         chip reads apart from the gold +1 Attack chip, the ice-blue
         Immobilize and the P2 teal; hover and focus outline in green
@@ -236,7 +253,17 @@ frontend/e2e/
         0 Shield and its Death Mark, Immobilize, Confuse and +1 Attack
         values kept
       - New Draft resets every count
-- [ ] M26. `npm version minor --no-git-tag-version` (→ 0.11.0). In `BACKLOG.md`, mark Shield done in Cyrus's entry and the
+      Checked by script at 1280x800 and 2560x1440: offered on exactly
+      Cyrus's 4 heroes (Cyrus included); the green chip reads apart from
+      gold, ice blue and the P2 teal; icon legible (M21); Board and Map fit
+      (M22); Boreas's Shield dims with his row on the Map at 0 HP; a
+      schema-7 save upgrades to 8 with every hero at 0 Shield and Death
+      Mark, Immobilize, Confuse and ×9 kept. Not screenshotted: the green
+      hover/focus outline (the shared `--token-accent` rule) and New Draft
+      (`clearDraft` already clears the stored battle, unchanged here). Win
+      Screen covered by `WinScreen.test.tsx`.
+- [x] M26. `npm version minor --no-git-tag-version` (→ 0.11.0). In
+      `BACKLOG.md`, mark Shield done in Cyrus's entry and the
       hero-specific table (it has no checkbox), linking intent 11 and
       v0.11.0, as intent 09 did for Death Mark.
 

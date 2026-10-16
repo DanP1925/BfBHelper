@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, type ReactNode } from "react";
+import { useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { useDismiss } from "../../lib/useDismiss";
 import styles from "./TokenChip.module.css";
 
@@ -19,6 +19,9 @@ type TokenChipProps = {
   icon: ReactNode;
   /** The token's name for aria labels and the tooltip, e.g. "+1 Attack". */
   label: string;
+  /** The token's color (e.g. `"var(--color-gold)"`) for the pill, icon and
+   * focus ring (intent/11), like TokenToggle's. */
+  accent: string;
   heroName: string;
   /** Owned by the parent, so only one chip on the screen is open at a time
    * (intent/06). */
@@ -43,6 +46,7 @@ export function TokenChip({
   onChange,
   icon,
   label,
+  accent,
   heroName,
   expanded,
   onExpandedChange,
@@ -55,7 +59,11 @@ export function TokenChip({
 
   const toggleLabel = `${heroName}: ${tokenCountLabel(count, label)}. ${expanded ? "Hide" : "Show"} controls`;
   return (
-    <div ref={containerRef} className={`${styles.chip} ${expanded ? styles.expanded : ""}`}>
+    <div
+      ref={containerRef}
+      className={`${styles.chip} ${expanded ? styles.expanded : ""}`}
+      style={{ "--token-accent": accent } as CSSProperties}
+    >
       <button
         type="button"
         ref={toggleRef}
