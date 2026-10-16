@@ -220,3 +220,20 @@ apply any rule automatically (expiry, defeat, damage absorption).
 - [ ] **Turn-passing animation in the draft.** Animate the turn banner and
   team panel highlight when the pick passes to the other player. Parked
   from intent 10, added 2026-10-15.
+- [ ] **Drive the token wiring from `BATTLE_TOKENS`.** Do this before Chill.
+  Added 2026-10-16 from intent 11's `/simplify` review.
+  Each hero-specific token still costs about 25 lines across four files:
+  a setter prop on `BattleBoardScreen`, a gated callback prop on
+  `BattleTeamPanel`, a props object built there, and a named prop on
+  `HeroCard` (plus `HeroCard`'s hand-kept `counted` / `toggles` maps).
+  Instead:
+  - one `tokens` map passed down, keyed by stored field and built by a
+    loop over `BATTLE_TOKENS`; leaving a field out turns its control off
+  - an optional `heroSpecific` id on each `BATTLE_TOKENS` row, linking it
+    to its `HERO_SPECIFIC_TOKENS` rule, so the visibility gating is one
+    loop instead of one `heroSpecificTokenSide` call per token
+  - open-state keys built from the field (`${side}:${heroId}:${field}`)
+  Keep the stored fields, reducer actions and `useBattle` setters as they
+  are (spec 09's plain-fields choice). About 80-120 lines plus test prop
+  updates. After it, Chill and Stone are each a table row plus their
+  stored-state work. Its own `refactor:` PR.
