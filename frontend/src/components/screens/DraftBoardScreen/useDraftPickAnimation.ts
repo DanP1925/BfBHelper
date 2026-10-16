@@ -20,12 +20,19 @@ type Running = {
   frames: Set<number>;
   animations: Set<Animation>;
   standIns: Set<HTMLElement>;
+  /** The slot reveals still playing: the last one ending means the final
+   * hero has landed. */
+  reveals: Set<Animation>;
 };
 
 type UseDraftPickAnimationOptions = {
   pool: Hero[];
   /** null once the draft is done. */
   currentTurnPlayer: PlayerId | null;
+  /** While passed, called as soon as no pick animation is pending or
+   * playing: the page passes it only while the draft's last hero is
+   * landing (intent/10's "After the 8th hero appears in its slot"). */
+  onFinalPickLanded?: () => void;
 };
 
 type UseDraftPickAnimationResult = {
@@ -121,36 +128,44 @@ function glide(running: Running, root: HTMLElement, rects: PendingPick["rects"])
   }
 }
 
+/** Calls `onLanded`, if one is passed, once no pick's frame is pending and
+ * no slot reveal is playing. */
+function settle(running: Running, onLanded: (() => void) | undefined) {
+  if (onLanded && running.frames.size === 0 && running.reveals.size === 0) onLanded();
+}
+
 /** The hero's slot fades in with a flash of `color`, the picking team's.
  * The animation is the only thing keeping the slot invisible, so cancelling
  * it always leaves the slot showing. */
-function revealSlot(running: Running, slot: HTMLElement, color: string) {
+function revealSlot(running: Running, slot: HTMLElement, color: string, onDone: () => void) {
   // The ring is an outline drawn just inside the card: TeamPanel's slot list
   // clips anything outside it, which would cut a box-shadow ring off on a
   // slot touching the panel's edge. Only the soft glow spills outside, where
   // being clipped doesn't matter.
   const ring = { outlineStyle: "solid", outlineWidth: "3px", outlineOffset: "-3px" };
   const off = { ...ring, outlineColor: "transparent", boxShadow: "0 0 0 0 transparent" };
-  track(
-    running,
-    slot.animate(
-      // Easing per segment, not on the whole effect, so the flash peaks at
-      // exactly 40% of the reveal.
-      [
-        { ...off, opacity: 0, easing: "ease-out" },
-        {
-          ...ring,
-          outlineColor: color,
-          boxShadow: `0 0 18px 4px ${color}`,
-          opacity: 1,
-          offset: 0.4,
-          easing: "ease-in-out",
-        },
-        { ...off, opacity: 1 },
-      ],
-      { duration: SLOT_REVEAL_MS, delay: PICK_FADE_MS, fill: "backwards" },
-    ),
+  const reveal = slot.animate(
+    // Easing per segment, not on the whole effect, so the flash peaks at
+    // exactly 40% of the reveal.
+    [
+      { ...off, opacity: 0, easing: "ease-out" },
+      {
+        ...ring,
+        outlineColor: color,
+        boxShadow: `0 0 18px 4px ${color}`,
+        opacity: 1,
+        offset: 0.4,
+        easing: "ease-in-out",
+      },
+      { ...off, opacity: 1 },
+    ],
+    { duration: SLOT_REVEAL_MS, delay: PICK_FADE_MS, fill: "backwards" },
   );
+  running.reveals.add(reveal);
+  track(running, reveal, () => {
+    running.reveals.delete(reveal);
+    onDone();
+  });
 }
 
 /**
@@ -167,6 +182,7 @@ function revealSlot(running: Running, slot: HTMLElement, color: string) {
 export function useDraftPickAnimation({
   pool,
   currentTurnPlayer,
+  onFinalPickLanded,
 }: UseDraftPickAnimationOptions): UseDraftPickAnimationResult {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef<PendingPick | null>(null);
@@ -174,6 +190,17 @@ export function useDraftPickAnimation({
     frames: new Set(),
     animations: new Set(),
     standIns: new Set(),
+    reveals: new Set(),
+  });
+  // The latest `onFinalPickLanded`, for animation callbacks.
+  const onLandedRef = useRef(onFinalPickLanded);
+
+  // Every render: keep the latest callback, then check whether nothing is
+  // left to play. On the final pick's render its frame is already scheduled
+  // (layout effects run first), so this waits for that frame and its reveal.
+  useEffect(() => {
+    onLandedRef.current = onFinalPickLanded;
+    settle(runningRef.current, onFinalPickLanded);
   });
 
   function beforePick(heroId: HeroId) {
@@ -221,7 +248,9 @@ export function useDraftPickAnimation({
       glide(running, root, pending.rects);
       if (pending.fadeImage) fadeOut(running, pending.fadeImage);
       const slot = root.querySelector<HTMLElement>(`[data-slot-hero="${pending.heroId}"]`);
-      if (slot) revealSlot(running, slot, color);
+      if (slot) revealSlot(running, slot, color, () => settle(running, onLandedRef.current));
+      // No slot found: nothing will reveal, so the final pick lands now.
+      settle(running, onLandedRef.current);
     });
     running.frames.add(frame);
   }, [pool]);
@@ -229,6 +258,9 @@ export function useDraftPickAnimation({
   useEffect(() => {
     const { frames, animations, standIns } = runningRef.current;
     return () => {
+      // Cancelling a reveal below mustn't report a landing on the way out.
+      // (On Strict Mode's dev-only remount, the effect above restores it.)
+      onLandedRef.current = undefined;
       for (const frame of frames) cancelAnimationFrame(frame);
       frames.clear();
       for (const animation of Array.from(animations)) animation.cancel();

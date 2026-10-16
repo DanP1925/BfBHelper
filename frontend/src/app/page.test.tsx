@@ -1,10 +1,12 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import Home from "./page";
 import { getHeroById, HERO_IDS } from "../data/heroes";
 import { battleReducer, createInitialBattleState } from "../lib/battle/reducer";
 import type { HeroId } from "../lib/draft/types";
 import { saveBattleState, saveDraft, saveView } from "../lib/persistence/storage";
+import { installFakeAnimations, type FakeAnimations } from "../test/fakeAnimations";
+import { stubMatchMedia } from "../test/stubMatchMedia";
 
 /** Saves a finished draft (first 8 heroes, split 4/4) and returns a fresh
  * battle state for it — callers save it as-is or after edits. */
@@ -13,6 +15,18 @@ function seedDoneDraft() {
   const p2Ids = HERO_IDS.slice(4, 8);
   saveDraft({ initiative: "p1", picks: { p1: p1Ids, p2: p2Ids } });
   return createInitialBattleState(p1Ids.map(getHeroById), p2Ids.map(getHeroById), "p1");
+}
+
+/** Saves a draft one pick from done (initiative p1: Player 1 makes the 8th
+ * pick) and returns the hero that pick should take. */
+function seedLastPick() {
+  saveDraft({ initiative: "p1", picks: { p1: HERO_IDS.slice(0, 3), p2: HERO_IDS.slice(3, 7) } });
+  return getHeroById(HERO_IDS[7]);
+}
+
+function pickHero(heroId: HeroId) {
+  const hero = getHeroById(heroId);
+  fireEvent.click(screen.getByRole("button", { name: `Pick ${hero.name}, ${hero.className}` }));
 }
 
 beforeEach(() => {
@@ -36,6 +50,74 @@ describe("Home", () => {
     expect(screen.queryByRole("button", { name: new RegExp(`^Pick ${hero.name},`) })).toBeNull();
     expect(screen.getByText(hero.name)).toBeInTheDocument();
     expect(document.body.querySelector(":scope > img")).toBeNull();
+  });
+
+  describe("the draft's finale (intent/10)", () => {
+    // jsdom can't animate, so motion is off unless a test turns it on: the
+    // real `motionAllowed()` check, against faked animation APIs.
+    let fakes: FakeAnimations | null = null;
+
+    function turnMotionOn() {
+      fakes = installFakeAnimations();
+      stubMatchMedia(false);
+      return fakes;
+    }
+
+    afterEach(() => {
+      fakes?.restore();
+      fakes = null;
+    });
+
+    it("without motion, the 8th pick goes straight to a settled Draft Results", () => {
+      const last = seedLastPick();
+      render(<Home />);
+      pickHero(last.id);
+
+      expect(screen.getByText("Draft Complete")).toBeInTheDocument();
+      expect(screen.getByText("VS")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Skip intro" })).toBeNull();
+    });
+
+    it("with motion, the board stays up until the last hero lands, then the entrance plays", () => {
+      const { flushFrames, animationsOn } = turnMotionOn();
+      const last = seedLastPick();
+      render(<Home />);
+      pickHero(last.id);
+
+      // The draft is done, but the Draft Board is still up for the last hero.
+      expect(screen.getByText("Draft complete")).toBeInTheDocument();
+      expect(screen.queryByText("Draft Complete")).toBeNull();
+
+      act(() => flushFrames());
+      const [reveal] = animationsOn((element) => element.hasAttribute("data-slot-hero"));
+      expect(reveal.element.getAttribute("data-slot-hero")).toBe(last.id);
+      act(() => reveal.finish());
+
+      expect(screen.getByText("Draft Complete")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Skip intro" }));
+      expect(screen.queryByRole("button", { name: "Skip intro" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Start Battle →" })).toBeInTheDocument();
+    });
+
+    it("New Draft during the last hero's landing starts a clean draft", () => {
+      turnMotionOn();
+      const last = seedLastPick();
+      render(<Home />);
+      pickHero(last.id);
+      expect(screen.getByText("Draft complete")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "New Draft" }));
+      // Reduced motion from here on, so the new draft has no finale of its own.
+      stubMatchMedia(true);
+
+      // A full new draft ends on Draft Results: nothing from the old
+      // finale holds the board up.
+      for (let i = 0; i < 8; i++) {
+        fireEvent.click(screen.getAllByRole("button", { name: /^Pick / })[0]);
+      }
+      expect(screen.getByText("Draft Complete")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Skip intro" })).toBeNull();
+    });
   });
 
   it("renders the Win Screen when a completed battle's persisted view is 'win'", () => {

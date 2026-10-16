@@ -12,6 +12,7 @@ import {
   getRemainingPool,
   getTeamSlots,
   isDraftComplete,
+  isFinalPickNext,
 } from "./draft/selectors";
 import type { DraftState, HeroId, PlayerId } from "./draft/types";
 import { clearDraft, loadDraft, saveDraft } from "./persistence/storage";
@@ -26,6 +27,8 @@ export type UseDraftResult = {
   currentTurnPlayer: PlayerId | null;
   picksRequiredThisStep: number | null;
   picksRemainingThisStep: number | null;
+  /** True while exactly one pick is left: the next pick ends the draft. */
+  isFinalPickNext: boolean;
   remainingPool: HeroId[];
   teamSlots: Record<PlayerId, Array<HeroId | null>>;
   pickHero: (player: PlayerId, heroId: HeroId) => void;
@@ -98,6 +101,7 @@ export function useDraft(): UseDraftResult {
     currentTurnPlayer: draftState ? getCurrentTurnPlayer(draftState) : null,
     picksRequiredThisStep: draftState ? getPicksRequiredThisStep(draftState) : null,
     picksRemainingThisStep: draftState ? getPicksRemainingThisStep(draftState) : null,
+    isFinalPickNext: draftState ? isFinalPickNext(draftState) : false,
     remainingPool: draftState ? getRemainingPool(draftState, HERO_IDS) : [],
     teamSlots: {
       p1: draftState ? getTeamSlots(draftState, "p1") : EMPTY_SLOTS,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getHeroById } from "../data/heroes";
 import { BattleBoardScreen } from "../components/screens/BattleBoardScreen/BattleBoardScreen";
 import {
@@ -13,7 +13,8 @@ import { ResultsScreen } from "../components/screens/ResultsScreen/ResultsScreen
 import { StartScreen } from "../components/screens/StartScreen/StartScreen";
 import { WinScreen } from "../components/screens/WinScreen/WinScreen";
 import type { BattleView } from "../components/ViewToggle/ViewToggle";
-import type { Hero } from "../lib/draft/types";
+import type { Hero, HeroId } from "../lib/draft/types";
+import { motionAllowed } from "../lib/motion";
 import type { View } from "../lib/persistence/schema";
 import { loadView, saveView } from "../lib/persistence/storage";
 import { useBattle } from "../lib/useBattle";
@@ -66,6 +67,13 @@ export default function Home() {
   // "done", so a new battle never inherits the last one's camera.
   const [mapCamera, setMapCamera] = useState<MapCamera>(INITIAL_MAP_CAMERA);
 
+  /** What plays between the 8th pick and a settled Draft Results screen
+   * (intent/10). "landing": the Draft Board stays up until the last hero
+   * has appeared in its slot. "versus": the Draft Results screen plays its
+   * entrance. "none": normal rendering, which is also what a reload starts
+   * with, so the entrance never replays. */
+  const [draftOutro, setDraftOutro] = useState<"none" | "landing" | "versus">("none");
+
   useEffect(() => {
     if (draft.phase === "done") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -73,8 +81,20 @@ export default function Home() {
     } else {
       setView(null);
       setMapCamera(INITIAL_MAP_CAMERA);
+      // A new draft (even mid-finale) never inherits the last one's.
+      setDraftOutro("none");
     }
   }, [draft.phase]);
+
+  function handlePick(heroId: HeroId) {
+    // With reduced motion the draft ends straight on a settled Draft Results.
+    if (draft.isFinalPickNext && motionAllowed()) setDraftOutro("landing");
+    draft.pickHero(draft.currentTurnPlayer!, heroId);
+  }
+
+  // Stable, so the screens can depend on them in their effects.
+  const finishLanding = useCallback(() => setDraftOutro("versus"), []);
+  const finishIntro = useCallback(() => setDraftOutro("none"), []);
 
   // Shared by BattleBoardScreen's and BattleMapScreen's ViewToggle — the
   // only way to move between "battle" and "map" once a battle is underway.
@@ -87,7 +107,8 @@ export default function Home() {
     return <StartScreen onStartDraft={draft.startNewDraft} />;
   }
 
-  if (draft.phase === "done") {
+  // While "landing", the Draft Board stays up past the end of the draft.
+  if (draft.phase === "done" && draftOutro !== "landing") {
     if (view === null || battle.state === null) {
       // Not yet hydrated from storage — render nothing for this one
       // instant rather than guessing (and possibly flashing) a screen.
@@ -165,6 +186,8 @@ export default function Home() {
       <ResultsScreen
         p1Picks={p1Picks}
         p2Picks={p2Picks}
+        playIntro={draftOutro === "versus"}
+        onIntroEnd={finishIntro}
         onStartBattle={() => {
           setView("battle");
           saveView("battle");
@@ -173,6 +196,9 @@ export default function Home() {
     );
   }
 
+  // Drafting, or "landing": the same element type in the same spot, so the
+  // board stays mounted past the end of the draft and the final pick's
+  // animation plays out.
   return (
     <DraftBoardScreen
       initiative={draft.initiative!}
@@ -182,8 +208,11 @@ export default function Home() {
       pool={draft.remainingPool.map(getHeroById)}
       p1Slots={p1Slots}
       p2Slots={p2Slots}
-      onPick={(heroId) => draft.pickHero(draft.currentTurnPlayer!, heroId)}
+      onPick={handlePick}
       onNewDraft={draft.startNewDraft}
+      // Only while the last hero is landing: the board then reports as soon
+      // as nothing is left playing.
+      onFinalPickLanded={draftOutro === "landing" ? finishLanding : undefined}
     />
   );
 }

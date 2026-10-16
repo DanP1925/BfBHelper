@@ -3,23 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getHeroById, HERO_IDS } from "../../../data/heroes";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { PICK_FADE_MS, POOL_GLIDE_MS, SLOT_REVEAL_MS } from "../../../lib/motion";
+import {
+  installFakeAnimations,
+  type FakeAnimation,
+  type FakeAnimations,
+} from "../../../test/fakeAnimations";
 import { stubMatchMedia } from "../../../test/stubMatchMedia";
 import { useDraftPickAnimation } from "./useDraftPickAnimation";
 
-/** A recorded `element.animate` call, standing in for a real Animation. */
-type FakeAnimation = {
-  element: Element;
-  keyframes: Keyframe[];
-  options: KeyframeAnimationOptions;
-  state: "running" | "finished" | "cancelled";
-  onfinish: (() => void) | null;
-  oncancel: (() => void) | null;
-  cancel: () => void;
-  finish: () => void;
-};
-
+let fakes: FakeAnimations;
 let animations: FakeAnimation[] = [];
-let frames: FrameRequestCallback[] = [];
 
 const CARD_WIDTH = 100;
 
@@ -35,13 +28,11 @@ function fakeRect(element: Element): DOMRect {
 }
 
 function flushFrames() {
-  const pending = frames;
-  frames = [];
-  for (const callback of pending) callback(0);
+  fakes.flushFrames();
 }
 
 function animationsOn(predicate: (element: Element) => boolean) {
-  return animations.filter((animation) => predicate(animation.element));
+  return fakes.animationsOn(predicate);
 }
 
 function poolCardAnimations(id: HeroId) {
@@ -69,13 +60,19 @@ function Harness({
   slots,
   currentTurnPlayer,
   api,
+  onFinalPickLanded,
 }: {
   pool: Hero[];
   slots: HeroId[];
   currentTurnPlayer: PlayerId | null;
   api: HookApi;
+  onFinalPickLanded?: () => void;
 }) {
-  const { rootRef, beforePick } = useDraftPickAnimation({ pool, currentTurnPlayer });
+  const { rootRef, beforePick } = useDraftPickAnimation({
+    pool,
+    currentTurnPlayer,
+    onFinalPickLanded,
+  });
   api.expose(beforePick);
   return (
     <div ref={rootRef}>
@@ -97,10 +94,20 @@ function Harness({
 const [a, b, c, d] = HERO_IDS.slice(0, 4).map(getHeroById);
 
 /** Renders the pool [a, b, c, d], taps `picked`, then commits the pick the
- * way the draft does: the hero leaves the pool and lands in a slot. */
+ * way the draft does: the hero leaves the pool and lands in a slot. Like
+ * the page, `onFinalPickLanded` is only passed from that commit on, as if
+ * it were the draft's final pick. */
 function pick(
   picked: Hero,
-  { side = "p1", reduceMotion = false }: { side?: PlayerId | null; reduceMotion?: boolean } = {},
+  {
+    side = "p1",
+    reduceMotion = false,
+    onFinalPickLanded,
+  }: {
+    side?: PlayerId | null;
+    reduceMotion?: boolean;
+    onFinalPickLanded?: () => void;
+  } = {},
 ) {
   stubMatchMedia(reduceMotion);
   const api = makeApi();
@@ -113,70 +120,35 @@ function pick(
       slots={[picked.id]}
       currentTurnPlayer={side}
       api={api}
+      onFinalPickLanded={onFinalPickLanded}
     />,
   );
   return { view, api };
 }
 
+function slotReveal() {
+  const [reveal] = animationsOn((element) => element.hasAttribute("data-slot-hero"));
+  return reveal;
+}
+
 describe("useDraftPickAnimation", () => {
-  const originalAnimate = Element.prototype.animate;
-  const originalGetAnimations = Element.prototype.getAnimations;
   const originalRect = Element.prototype.getBoundingClientRect;
 
   beforeEach(() => {
-    animations = [];
-    frames = [];
-    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-      frames.push(callback);
-      return frames.length;
-    });
-    vi.stubGlobal("cancelAnimationFrame", () => {});
+    fakes = installFakeAnimations();
+    animations = fakes.animations;
     document.documentElement.style.setProperty("--color-p1", "#c1665a");
     document.documentElement.style.setProperty("--color-p2", "#4f9aa0");
-
     Element.prototype.getBoundingClientRect = function (this: Element) {
       return fakeRect(this);
-    };
-    Element.prototype.animate = function (
-      this: Element,
-      keyframes: Keyframe[] | PropertyIndexedKeyframes | null,
-      options?: number | KeyframeAnimationOptions,
-    ) {
-      const animation: FakeAnimation = {
-        element: this,
-        keyframes: keyframes as Keyframe[],
-        options: options as KeyframeAnimationOptions,
-        state: "running",
-        onfinish: null,
-        oncancel: null,
-        cancel() {
-          if (animation.state !== "running") return;
-          animation.state = "cancelled";
-          animation.oncancel?.();
-        },
-        finish() {
-          animation.state = "finished";
-          animation.onfinish?.();
-        },
-      };
-      animations.push(animation);
-      return animation as unknown as Animation;
-    };
-    Element.prototype.getAnimations = function (this: Element) {
-      return animations.filter(
-        (animation) => animation.element === this && animation.state === "running",
-      ) as unknown as Animation[];
     };
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
-    Element.prototype.animate = originalAnimate;
-    Element.prototype.getAnimations = originalGetAnimations;
+    fakes.restore();
     Element.prototype.getBoundingClientRect = originalRect;
     document.documentElement.style.removeProperty("--color-p1");
     document.documentElement.style.removeProperty("--color-p2");
-    document.querySelectorAll("body > img").forEach((img) => img.remove());
   });
 
   it("waits a frame after the pick, then glides every card after the picked one", () => {
@@ -271,5 +243,38 @@ describe("useDraftPickAnimation", () => {
 
     expect(animations.every((animation) => animation.state !== "running")).toBe(true);
     expect(document.body.querySelector(":scope > img")).toBeNull();
+  });
+
+  describe("onFinalPickLanded", () => {
+    it("fires once, after the final pick's slot reveal finishes", () => {
+      const onFinalPickLanded = vi.fn();
+      pick(b, { onFinalPickLanded });
+      expect(onFinalPickLanded).not.toHaveBeenCalled();
+
+      flushFrames();
+      expect(onFinalPickLanded).not.toHaveBeenCalled();
+
+      // The glide and fade ending first changes nothing: only the reveal counts.
+      for (const animation of animations.filter((a) => a !== slotReveal())) animation.finish();
+      expect(onFinalPickLanded).not.toHaveBeenCalled();
+
+      slotReveal().finish();
+      expect(onFinalPickLanded).toHaveBeenCalledTimes(1);
+    });
+
+    it("fires right away when no reveal plays", () => {
+      const onFinalPickLanded = vi.fn();
+      pick(b, { reduceMotion: true, onFinalPickLanded });
+      expect(onFinalPickLanded).toHaveBeenCalledTimes(1);
+    });
+
+    it("doesn't fire when the board unmounts mid-reveal", () => {
+      const onFinalPickLanded = vi.fn();
+      const { view } = pick(b, { onFinalPickLanded });
+      flushFrames();
+      view.unmount();
+      expect(slotReveal().state).toBe("cancelled");
+      expect(onFinalPickLanded).not.toHaveBeenCalled();
+    });
   });
 });

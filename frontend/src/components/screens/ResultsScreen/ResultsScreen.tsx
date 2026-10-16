@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { Hero } from "../../../lib/draft/types";
 import { useHeightFitColumns } from "../../../lib/useHeightFitColumns";
 import { HeroCard } from "../../HeroCard/HeroCard";
@@ -33,7 +34,7 @@ function TeamResults({ label, side, picks }: TeamResultsProps) {
   });
 
   return (
-    <div className={styles.team}>
+    <div className={`${styles.team} ${side === "p1" ? styles.teamP1 : styles.teamP2}`}>
       <div className={styles.teamHeader} style={{ borderBottomColor: `var(--color-${side})` }}>
         {label}
       </div>
@@ -53,17 +54,52 @@ function TeamResults({ label, side, picks }: TeamResultsProps) {
   );
 }
 
+/** The versus entrance's total length: the footer starts at 800ms and fades
+ * in for 300ms (keep in sync with ResultsScreen.module.css). */
+const INTRO_MS = 1100;
+
 type ResultsScreenProps = {
   p1Picks: Hero[];
   p2Picks: Hero[];
+  /** Play the versus entrance (intent/10): only right after the final pick. */
+  playIntro?: boolean;
+  /** Called once the entrance finishes or is skipped. Keep it stable: the
+   * entrance's timeout restarts when it changes. */
+  onIntroEnd?: () => void;
   onStartBattle: () => void;
 };
 
 /** The Draft Results screen (intent/10's name for it). It leads only into
  * the fight: "Start Battle" is its one button. */
-export function ResultsScreen({ p1Picks, p2Picks, onStartBattle }: ResultsScreenProps) {
+export function ResultsScreen({
+  p1Picks,
+  p2Picks,
+  playIntro = false,
+  onIntroEnd,
+  onStartBattle,
+}: ResultsScreenProps) {
+  const startBattleRef = useRef<HTMLButtonElement | null>(null);
+  const playedIntroRef = useRef(false);
+
+  // The footer's animationend normally ends the entrance. The timeout is a
+  // fallback in case the keyframes never run (e.g. the OS turned on reduced
+  // motion mid-draft), so the skip layer can't get stuck over the screen.
+  // Once the entrance ends, focus moves from the skip layer to the next
+  // action (only then, not on Strict Mode's dev-only effect re-run).
+  useEffect(() => {
+    if (playIntro) {
+      playedIntroRef.current = true;
+      const timeout = setTimeout(() => onIntroEnd?.(), INTRO_MS + 200);
+      return () => clearTimeout(timeout);
+    }
+    if (playedIntroRef.current) {
+      playedIntroRef.current = false;
+      startBattleRef.current?.focus();
+    }
+  }, [playIntro, onIntroEnd]);
+
   return (
-    <div className={styles.screen}>
+    <div className={playIntro ? `${styles.screen} ${styles.intro}` : styles.screen}>
       <div className={styles.scrollArea}>
         <div className={styles.titleBlock}>
           <div className={styles.eyebrow}>Battle for Biternia</div>
@@ -83,11 +119,33 @@ export function ResultsScreen({ p1Picks, p2Picks, onStartBattle }: ResultsScreen
         </div>
       </div>
 
-      <div className={styles.footer}>
-        <button type="button" className={styles.startBattleButton} onClick={onStartBattle}>
+      <div
+        className={styles.footer}
+        onAnimationEnd={(event) => {
+          if (playIntro && event.target === event.currentTarget) onIntroEnd?.();
+        }}
+      >
+        <button
+          ref={startBattleRef}
+          type="button"
+          className={styles.startBattleButton}
+          onClick={onStartBattle}
+        >
           Start Battle →
         </button>
       </div>
+
+      {/* Takes the skip tap, so a tap where "Start Battle" is about to
+          appear skips the entrance without also starting the battle. */}
+      {playIntro && (
+        <button
+          type="button"
+          className={styles.skipLayer}
+          aria-label="Skip intro"
+          autoFocus
+          onClick={() => onIntroEnd?.()}
+        />
+      )}
     </div>
   );
 }

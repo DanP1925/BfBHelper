@@ -4,6 +4,7 @@ import {
   getPicksRequiredForStep,
   isDraftDone,
   STEP_BOUNDARIES,
+  TOTAL_PICKS,
 } from "./sequence";
 
 /** Number of team slots each player has (fixed roster size). */
@@ -84,4 +85,9 @@ export function getTeamSlots(
 /** Whether all 8 picks have been made. */
 export function isDraftComplete(state: DraftState): boolean {
   return isDraftDone(getTotalPicks(state));
+}
+
+/** Whether the next pick is the draft's last (intent/10's finale starts there). */
+export function isFinalPickNext(state: DraftState): boolean {
+  return getTotalPicks(state) === TOTAL_PICKS - 1;
 }

@@ -1,8 +1,7 @@
 # Spec: BfbHelper v10 — Draft Pick Animation
 
-> **IN PROGRESS.** Architecture for intent 10's scope. The pick animation
-> and the static Draft Results changes are built (plan 10's PR B); the
-> versus finale (PR C) is not yet. See [../intent/10_draft-pick-animation.md](../intent/10_draft-pick-animation.md)
+> **BUILT.** Architecture for intent 10's scope, all built (plan 10's
+> PRs B and C). See [../intent/10_draft-pick-animation.md](../intent/10_draft-pick-animation.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -62,7 +61,8 @@
   const [draftOutro, setDraftOutro] = useState<"none" | "landing" | "versus">("none");
   ```
   - `page.tsx` wraps `onPick`. When the tap completes the draft
-    (`draft.currentStep === TOTAL_STEPS && draft.picksRemainingThisStep === 1`)
+    (`draft.isFinalPickNext`, from a new `isFinalPickNext` selector:
+    `getTotalPicks(state) === TOTAL_PICKS - 1`)
     and `motionAllowed()` (see Pick Logic) is true, it sets `"landing"`
     in the same handler, so it lands in the same render as the 8th pick.
     With reduced motion it stays `"none"`, and the app goes straight to
@@ -73,16 +73,18 @@
     "Draft complete" when `currentTurnPlayer` is null, and
     `draftReducer` already ignores picks once the draft is done, so
     stray taps on the last 11 pool cards do nothing.
-  - **One render path for the Draft Board.** `page.tsx` renders
-    `DraftBoardScreen` from a single branch,
-    `if (draft.phase === "drafting" || draftOutro === "landing")`, placed
-    before the done-phase branches. The element type and tree position
+  - **One render path for the Draft Board.** The done-phase branches are
+    skipped while `"landing"` (`draft.phase === "done" && draftOutro !==
+    "landing"`), so `page.tsx`'s final `return <DraftBoardScreen />`
+    serves both drafting and landing. The element type and tree position
     don't change between the 8th pick's render and the next, so React
     keeps the screen mounted and the final pick's animation isn't cut
     off.
-  - `DraftBoardScreen` gains `onFinalPickLanded?: () => void`, called
-    once the draft is done and the last slot reveal has finished.
-    `page.tsx` passes `() => setDraftOutro("versus")`.
+  - `DraftBoardScreen` gains `onFinalPickLanded?: () => void`. The hook
+    calls it, while it's passed, as soon as no pick animation is pending
+    or playing. `page.tsx` passes a stable `setDraftOutro("versus")`
+    callback only while `"landing"`, so "is the draft done" stays with
+    the page.
   - `ResultsScreen` gets `playIntro={draftOutro === "versus"}` and
     `onIntroEnd={() => setDraftOutro("none")}`. It's called when the
     entrance finishes or is skipped.
@@ -367,7 +369,9 @@ No change from v1-v9: same static Vercel deployment, no new infra.
   **Decided:** done. Version 67 shows the pick as a looping fade-out,
   glide and slot flash, replacing version 66's flight. See UI Design
   Reference.
-- Tune the versus timings in the browser at 1280x800 (PR C).
+- ~~Tune the versus timings in the browser at 1280x800 (PR C).~~
+  **Decided:** the canvas's timings are kept (500ms sweep, "VS" at
+  400ms for 300ms, footer at 800ms for 300ms, 1100ms in all).
   ~~`PICK_FADE_MS`, `POOL_GLIDE_MS`, `SLOT_REVEAL_MS`~~ **Decided:**
   the starting values (150 / 300 / 600ms) are kept for now. A pick
   settles in ~750ms and never blocks the next tap. Revisit after a
@@ -395,9 +399,13 @@ No change from v1-v9: same static Vercel deployment, no new infra.
   horizontal overflow, and the teams still fit without scrolling.~~
   **Decided:** fits at 1280x800 and 2560x1440, with no page or grid
   scroll.
-- `e2e/draft-to-battle.spec.ts` clicks the first pool card 8 times, then
+- ~~`e2e/draft-to-battle.spec.ts` clicks the first pool card 8 times, then
   waits for "Draft Complete" and "Start Battle →". Playwright waits for
   moving elements to settle and for "Start Battle →" to become visible,
   so it should pass with the animations on. Confirm, and add a check
   that the "VS" is visible. Also decide whether one e2e run uses
-  Playwright's `reducedMotion: "reduce"` to cover that path.
+  Playwright's `reducedMotion: "reduce"` to cover that path.~~
+  **Decided:** it passes with the animations on, since Playwright waits
+  out the skip layer before clicking "Start Battle →", and it now checks
+  the "VS". The new `e2e/draft-pick-animation.spec.ts` covers the
+  entrance, the skip, a reload, and a `reducedMotion: "reduce"` run.
