@@ -9,6 +9,7 @@ import {
   getTeamSlots,
   getTotalPicks,
   isDraftComplete,
+  isFinalPickNext,
 } from "./selectors";
 import { HERO_IDS } from "../../data/heroes";
 
@@ -193,5 +194,25 @@ describe("selectors", () => {
     };
     expect(isDraftComplete(done)).toBe(true);
     expect(getCurrentTurnPlayer(done)).toBeNull();
+  });
+
+  it("flags the final pick as next only with exactly one pick left", () => {
+    const sixMade: DraftState = {
+      initiative: "p1",
+      picks: { p1: ["agatha-trunch", "ceralin", "cynthia"], p2: ["boreas", "caligar", "cyrus"] },
+    };
+    const sevenMade: DraftState = {
+      ...sixMade,
+      picks: { ...sixMade.picks, p2: [...sixMade.picks.p2, "dazeem"] },
+    };
+    const done: DraftState = {
+      ...sevenMade,
+      picks: { ...sevenMade.picks, p1: [...sevenMade.picks.p1, "dolgolae"] },
+    };
+
+    expect(isFinalPickNext(freshState())).toBe(false);
+    expect(isFinalPickNext(sixMade)).toBe(false);
+    expect(isFinalPickNext(sevenMade)).toBe(true);
+    expect(isFinalPickNext(done)).toBe(false);
   });
 });

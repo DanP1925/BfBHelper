@@ -3,6 +3,88 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* Holds the skip layer, and clips the teams sweeping in from off-screen. */
+  position: relative;
+  overflow: hidden;
+}
+
+/* The versus entrance (intent/10), only right after the final pick. Total
+ * 1100ms: keep ResultsScreen.tsx's INTRO_MS in sync. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Each team sweeps in from its own side. */
+  .intro .teamP1,
+  .intro .teamP2 {
+    animation: sweepIn 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .intro .teamP1 {
+    --sweep-from: -560px;
+  }
+
+  .intro .teamP2 {
+    --sweep-from: 560px;
+  }
+
+  .intro .vs {
+    animation: vsLand 300ms ease-out 400ms both;
+  }
+
+  .intro .footer {
+    animation: footerIn 300ms ease-out 800ms both;
+  }
+}
+
+@keyframes sweepIn {
+  from {
+    transform: translateX(var(--sweep-from));
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Drops in from large, with a slight overshoot. */
+@keyframes vsLand {
+  0% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes footerIn {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Covers the screen while the entrance plays; a tap anywhere skips it. */
+.skipLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.skipLayer:focus-visible {
+  outline: none;
 }
 
 .scrollArea {

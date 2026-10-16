@@ -18,6 +18,9 @@ type DraftBoardScreenProps = {
   p2Slots: Array<Hero | null>;
   onPick: (heroId: HeroId) => void;
   onNewDraft: () => void;
+  /** Called once the draft is done and the last hero has appeared in its
+   * slot (intent/10), so the page can move on to the versus finale. */
+  onFinalPickLanded?: () => void;
 };
 
 export function DraftBoardScreen({
@@ -30,9 +33,14 @@ export function DraftBoardScreen({
   p2Slots,
   onPick,
   onNewDraft,
+  onFinalPickLanded,
 }: DraftBoardScreenProps) {
   const initiativeLabel = initiative === "p1" ? "Player 1" : "Player 2";
-  const { rootRef, beforePick } = useDraftPickAnimation({ pool, currentTurnPlayer });
+  const { rootRef, beforePick } = useDraftPickAnimation({
+    pool,
+    currentTurnPlayer,
+    onFinalPickLanded,
+  });
 
   function handlePick(heroId: HeroId) {
     beforePick(heroId);

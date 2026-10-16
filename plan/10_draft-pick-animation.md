@@ -215,13 +215,20 @@ frontend/e2e/
 
 ### PR C — Versus finale
 
-- [ ] M13. `useDraftPickAnimation`: += `onFinalPickLanded`. A ref counts
+- [x] M13. `useDraftPickAnimation`: += `onFinalPickLanded`. A ref counts
       running slot reveals. When it drops to 0 while `currentTurnPlayer`
       is null, call `onFinalPickLanded` once. If no reveal started (no
       motion, or the slot wasn't found), call it right away.
-- [ ] M14. `DraftBoardScreen`: += `onFinalPickLanded?: () => void`,
+      (Built simpler: the hook calls `onFinalPickLanded`, if passed, as
+      soon as no pick's frame is pending and no slot reveal (a `reveals`
+      set in `Running`) is playing. The page only passes it while
+      `"landing"`, so "is the draft done" lives there, not in the hook. One
+      `settle()` check runs after every render, at the end of each frame,
+      and when a reveal ends. Unmount clears the callback ref before
+      cancelling, so a cancelled reveal never reports a landing.)
+- [x] M14. `DraftBoardScreen`: += `onFinalPickLanded?: () => void`,
       passed to the hook.
-- [ ] M15. `page.tsx`:
+- [x] M15. `page.tsx`:
       - += `draftOutro` state (`"none" | "landing" | "versus"`, the spec's
         doc comment).
       - The `onPick` wrapper sets `"landing"` when the tap completes the
@@ -237,7 +244,15 @@ frontend/e2e/
       - The `draft.phase` effect also resets `draftOutro` to `"none"`.
       - `ResultsScreen` gets `playIntro={draftOutro === "versus"}` and
         `onIntroEnd={() => setDraftOutro("none")}`.
-- [ ] M16. `ResultsScreen` entrance: += `playIntro`, `onIntroEnd`. While
+      (Instead of a new branch, the done-phase block is skipped while
+      `"landing"` (`draft.phase === "done" && draftOutro !== "landing"`),
+      so the existing final `return <DraftBoardScreen />` serves both
+      drafting and landing. "Completes the draft" became a selector,
+      `isFinalPickNext` (`getTotalPicks === TOTAL_PICKS - 1`), exposed by
+      `useDraft`, instead of re-deriving it from step counts in the page.
+      The two callbacks are stable `useCallback`s, and
+      `onFinalPickLanded` is passed only while `"landing"`.)
+- [x] M16. `ResultsScreen` entrance: += `playIntro`, `onIntroEnd`. While
       `playIntro`, the root gets `.intro`. Its keyframes sit inside
       `@media (prefers-reduced-motion: no-preference)` and use
       `animation-fill-mode: both`:
@@ -249,16 +264,27 @@ frontend/e2e/
 
       The footer's `onAnimationEnd` calls `onIntroEnd`, with a timeout
       fallback at the entrance's total length.
-- [ ] M17. `ResultsScreen` skip: while `playIntro`, a transparent
+- [x] M17. `ResultsScreen` skip: while `playIntro`, a transparent
       full-screen `<button className={styles.skipLayer}
       aria-label="Skip intro">` is autofocused and calls `onIntroEnd`.
       After it goes, focus moves to "Start Battle →".
-- [ ] M18. Spec open item: tune the versus timings in the browser at
+      (The timeout fallback is `INTRO_MS + 200` = 1300ms. `.screen` is
+      `position: relative; overflow: hidden`, so the skip layer covers it
+      and the teams sweeping in from off-screen don't scroll the page.)
+- [x] M18. Spec open item: tune the versus timings in the browser at
       1280x800 against the canvas's "Draft Results" artboard.
-- [ ] M19. Spec open item: decide whether one e2e run uses Playwright's
+      **Kept the canvas's timings** (500ms sweep, "VS" at 400ms for 300ms,
+      footer at 800ms for 300ms). In stepped screenshots, the teams arrive,
+      then the "VS" lands, then "Start Battle →" appears, matching the
+      artboard.
+- [x] M19. Spec open item: decide whether one e2e run uses Playwright's
       `reducedMotion: "reduce"` to cover that path (expected: yes, in the
       new spec only, via `test.use`).
-- [ ] M20. Tests:
+      **Yes:** `draft-pick-animation.spec.ts` has a `reducedMotion: "reduce"`
+      describe block. Its "Draft Complete" checks use `exact: true`,
+      because `getByText` ignores case and would also match the Draft
+      Board's "Draft complete" banner.
+- [x] M20. Tests:
       - `useDraftPickAnimation.test.tsx`: `onFinalPickLanded` fires once,
         after the last reveal finishes, only once the draft is done, and
         right away when no reveal started
@@ -286,7 +312,7 @@ frontend/e2e/
           straight away
         - existing specs that draft and then click "Start Battle →" still
           pass: Playwright waits out the skip layer
-- [ ] M21. PR C checks: `tsc --noEmit`, ESLint, full Vitest and
+- [x] M21. PR C checks: `tsc --noEmit`, ESLint, full Vitest and
       Playwright green. Manual QA at 1280x800 (`/qa-screens`):
       - the 8th hero fades into its slot and flashes on the Draft Board
         ("Draft complete" banner), then Draft Results plays the entrance
@@ -299,7 +325,12 @@ frontend/e2e/
         Draft Results
       - "New Draft" on the Draft Board during the last pick's animation
         starts a clean draft
-- [ ] M22. `npm version minor --no-git-tag-version` in the same PR (the
+      Checked by script on this worktree's dev server on port 3100: stepped
+      screenshots of the last hero flashing under the "Draft complete"
+      banner and of the entrance; a tap where "Start Battle →" will appear
+      skips without starting the battle; New Draft mid-landing leaves no
+      animations or stand-ins.
+- [x] M22. `npm version minor --no-git-tag-version` in the same PR (the
       next minor, see Context). Intent 10 has no `BACKLOG.md` item to
       check off. It came straight from the user. The parked coin-flip and
       turn-passing items stay open.
