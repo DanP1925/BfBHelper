@@ -1,7 +1,13 @@
 import { Fragment, type ReactNode } from "react";
 import type { Hero } from "../../lib/draft/types";
 import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "../../lib/battle/constants";
-import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
+import {
+  BATTLE_TOKENS,
+  type CountedToken,
+  type CountedTokenField,
+  type OnOffToken,
+  type OnOffTokenField,
+} from "../battleTokens";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { TokenChip } from "../TokenChip/TokenChip";
 import { TokenPicker, type TokenPickerOption } from "../TokenPicker/TokenPicker";
@@ -40,19 +46,18 @@ type HeroCardProps =
        * when this is provided (the Battle Board), so the Win Screen's cards
        * stay as they are. */
       tokenPicker?: HeroCardPickerProps;
-      /** +1 Attack tokens (intent/06). Only the Battle Board passes it. */
-      attackTokens?: HeroCardTokenProps;
-      /** Confuse token (intent/07). Only the Battle Board passes it. */
-      confused?: HeroCardToggleProps;
-      /** Immobilized (intent/08). Only the Battle Board passes it. */
-      immobilized?: HeroCardToggleProps;
-      /** Death Mark (intent/09). The Battle Board passes it only on
-       * Kunoichi's enemies, which is how its visibility reaches the picker. */
-      deathMarked?: HeroCardToggleProps;
-      /** +1 Shield tokens (intent/11). The Battle Board passes it only on
-       * Cyrus's team, which is how its visibility reaches the picker. */
-      shieldTokens?: HeroCardTokenProps;
+      /** Each token this hero can take, keyed by its stored field. A field
+       * left out (a hero-specific token this hero can't carry) gets no chip
+       * and no picker option. Only the Battle Board passes it. */
+      tokens?: HeroCardTokens;
     });
+
+/** A battle card's token controls, one per stored field (intents 06-11). */
+export type HeroCardTokens = Partial<
+  { [F in CountedTokenField]: HeroCardTokenProps } & {
+    [F in OnOffTokenField]: HeroCardToggleProps;
+  }
+>;
 
 /** One counted token's value, setter and open state, passed all together
  * so the chip can't be wired half-way. */
@@ -162,23 +167,20 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { hp, level, onHpChange, onLevelChange, tokenPicker } = props;
-    const { attackTokens, confused, immobilized, deathMarked, shieldTokens } = props;
+    const { hp, level, onHpChange, onLevelChange, tokenPicker, tokens = {} } = props;
     const isDefeated = hp === 0;
 
     // The fixed order (BATTLE_TOKENS): +1 Attack, Confuse, Immobilize, then
     // the hero-specific tokens. The row's chips and the picker's options
     // both come from this one list, so they can't disagree, and a row never
-    // reshuffles by the order of adding. A token whose prop isn't passed
-    // (a hero-specific one this hero can't take) is skipped.
-    const counted = { attackTokens, shieldTokens };
-    const toggles = { confused, immobilized, deathMarked };
+    // reshuffles by the order of adding. A field missing from `tokens`
+    // (a hero-specific token this hero can't take) is skipped.
     const tokenEntries = BATTLE_TOKENS.flatMap((token): TokenEntry[] => {
       if (token.kind === "counted") {
-        const props = counted[token.field];
-        return props ? [countedEntry(token, props, hero.name)] : [];
+        const counted = tokens[token.field];
+        return counted ? [countedEntry(token, counted, hero.name)] : [];
       }
-      const toggle = toggles[token.field];
+      const toggle = tokens[token.field];
       return toggle ? [toggleEntry(token, toggle, hero.name)] : [];
     });
     return (

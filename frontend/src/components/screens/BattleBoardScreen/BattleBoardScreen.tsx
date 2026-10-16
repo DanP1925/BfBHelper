@@ -3,8 +3,9 @@
 import { useState } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { heroSpecificTokenSide } from "../../../lib/battle/heroSpecificTokens";
-import type { BattleState, StructuresState } from "../../../lib/battle/types";
-import { BattleTeamPanel } from "../../BattleTeamPanel/BattleTeamPanel";
+import type { BattleState, HeroBattleState, StructuresState } from "../../../lib/battle/types";
+import { BATTLE_TOKENS, type BattleTokenField } from "../../battleTokens";
+import { BattleTeamPanel, type TeamTokenSetters } from "../../BattleTeamPanel/BattleTeamPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
@@ -20,11 +21,8 @@ type BattleBoardScreenProps = {
   setGold: (side: PlayerId, value: number) => void;
   setHeroHp: (side: PlayerId, heroId: HeroId, value: number) => void;
   setHeroLevel: (side: PlayerId, heroId: HeroId, value: number) => void;
-  setHeroAttackTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
-  setHeroConfused: (side: PlayerId, heroId: HeroId, value: boolean) => void;
-  setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
-  setHeroDeathMarked: (side: PlayerId, heroId: HeroId, value: boolean) => void;
-  setHeroShieldTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
+  /** useBattle's setter for every token, keyed by stored field. */
+  setHeroToken: BoardTokenSetters;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
@@ -32,6 +30,37 @@ type BattleBoardScreenProps = {
   onSwitchView: (target: BattleView) => void;
   onPassInitiative: () => void;
 };
+
+/** One setter per token field, given that field's stored value type. */
+export type BoardTokenSetters = {
+  [F in BattleTokenField]: (side: PlayerId, heroId: HeroId, value: HeroBattleState[F]) => void;
+};
+
+/** The token setters one side's panel gets: every token, minus each
+ * hero-specific one whose rule puts it on the other side or whose owner
+ * wasn't drafted (intents 09, 11). Rosters don't change mid-battle, so
+ * this is fixed for the battle. */
+function teamTokenSetters(
+  side: PlayerId,
+  rosters: Record<PlayerId, readonly Hero[]>,
+  setters: BoardTokenSetters,
+): TeamTokenSetters {
+  const team: TeamTokenSetters = {};
+  for (const token of BATTLE_TOKENS) {
+    if (token.heroSpecific && heroSpecificTokenSide(token.heroSpecific, rosters) !== side) {
+      continue;
+    }
+    // Split by kind so each branch's setter has one value type.
+    if (token.kind === "counted") {
+      const set = setters[token.field];
+      team[token.field] = (heroId, value) => set(side, heroId, value);
+    } else {
+      const set = setters[token.field];
+      team[token.field] = (heroId, value) => set(side, heroId, value);
+    }
+  }
+  return team;
+}
 
 export function BattleBoardScreen({
   p1Heroes,
@@ -41,11 +70,7 @@ export function BattleBoardScreen({
   setGold,
   setHeroHp,
   setHeroLevel,
-  setHeroAttackTokens,
-  setHeroConfused,
-  setHeroImmobilized,
-  setHeroDeathMarked,
-  setHeroShieldTokens,
+  setHeroToken,
   setStructureHp,
   onNewDraft,
   onEndBattle,
@@ -61,11 +86,7 @@ export function BattleBoardScreen({
     { label: "Player 1", side: "p1", heroes: p1Heroes },
     { label: "Player 2", side: "p2", heroes: p2Heroes },
   ];
-  // Only Kunoichi's enemies can be marked, and only while she's drafted
-  // (intent/09). Rosters don't change mid-battle, so this is fixed.
-  const deathMarkSide = heroSpecificTokenSide("deathMark", { p1: p1Heroes, p2: p2Heroes });
-  // Only Cyrus's own team, Cyrus included, can be shielded (intent/11).
-  const shieldSide = heroSpecificTokenSide("shield", { p1: p1Heroes, p2: p2Heroes });
+  const rosters = { p1: p1Heroes, p2: p2Heroes };
 
   // "New Draft" and "End Battle" are both exceptional, rarely-tapped
   // actions next to the continuous HP/level/gold adjustments on this
@@ -98,23 +119,7 @@ export function BattleBoardScreen({
               onGoldChange={(value) => setGold(team.side, value)}
               onHeroHpChange={(heroId, value) => setHeroHp(team.side, heroId, value)}
               onHeroLevelChange={(heroId, value) => setHeroLevel(team.side, heroId, value)}
-              onHeroAttackTokensChange={(heroId, value) =>
-                setHeroAttackTokens(team.side, heroId, value)
-              }
-              onHeroConfusedChange={(heroId, value) => setHeroConfused(team.side, heroId, value)}
-              onHeroImmobilizedChange={(heroId, value) =>
-                setHeroImmobilized(team.side, heroId, value)
-              }
-              onHeroDeathMarkedChange={
-                deathMarkSide === team.side
-                  ? (heroId, value) => setHeroDeathMarked(team.side, heroId, value)
-                  : undefined
-              }
-              onHeroShieldTokensChange={
-                shieldSide === team.side
-                  ? (heroId, value) => setHeroShieldTokens(team.side, heroId, value)
-                  : undefined
-              }
+              onHeroTokenChange={teamTokenSetters(team.side, rosters, setHeroToken)}
               onStructureHpChange={(slot, value) => setStructureHp(team.side, slot, value)}
               openTokenKey={openTokenKey}
               onOpenTokenKeyChange={setOpenTokenKey}
