@@ -10,6 +10,12 @@ export function tokenCountLabel(count: number, label: string): string {
   return `${count} ${label} ${count === 1 ? "token" : "tokens"}`;
 }
 
+/** "+1 Attack tokens": a counted token's tooltip, shared by the chip and the
+ * Map's token line like tokenCountLabel. */
+export function tokenTitle(label: string): string {
+  return `${label} tokens`;
+}
+
 type TokenChipProps = {
   count: number;
   max: number;
@@ -71,7 +77,7 @@ export function TokenChip({
         aria-expanded={expanded}
         aria-controls={controlsId}
         aria-label={toggleLabel}
-        title={`${label} tokens`}
+        title={tokenTitle(label)}
         onClick={() => onExpandedChange(!expanded)}
       >
         {icon}

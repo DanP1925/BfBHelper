@@ -170,6 +170,10 @@ frontend/e2e/
         picker)
       - `e2e/attack-tokens.spec.ts` and `e2e/token-row.spec.ts` look for
         "Add +1 Attack" instead of "Add +1 Attack, 3 held"
+        (`token-row.spec.ts` also stopped counting the picker's rows: its
+        8 heroes include Cyrus, so on a coin flip the hero keeps "+1
+        Shield" too. It checks that Confuse and Immobilize dropped out
+        instead, and the suite passed 4 runs in a row.)
       - spec open item: confirm the refactor leaves +1 Attack, Confuse,
         Immobilize and Death Mark unchanged on the Board and the Map
         (same look, labels and order), apart from the picker count

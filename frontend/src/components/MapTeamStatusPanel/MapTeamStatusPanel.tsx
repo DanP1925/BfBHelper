@@ -4,7 +4,7 @@ import { createInitialHeroState } from "../../lib/battle/reducer";
 import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, HeroBattleState } from "../../lib/battle/types";
 import { BATTLE_TOKENS, type BattleToken } from "../battleTokens";
-import { tokenCountLabel } from "../TokenChip/TokenChip";
+import { tokenCountLabel, tokenTitle } from "../TokenChip/TokenChip";
 import styles from "./MapTeamStatusPanel.module.css";
 
 /** Whether `heroState` holds `token`: a count above 0, or a flag on. */
@@ -80,28 +80,23 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
               {held.length > 0 && (
                 <span className={styles.tokenLine}>
                   {held.map((token) => {
-                    const { field, Icon, accent } = token;
-                    const style = { "--token-accent": accent } as CSSProperties;
-                    return token.kind === "counted" ? (
+                    // A counted token shows its icon and count, an on/off one its icon.
+                    const count = token.kind === "counted" ? heroState[token.field] : null;
+                    const { Icon } = token;
+                    return (
                       <span
-                        key={field}
-                        className={styles.countedToken}
-                        style={style}
-                        aria-label={tokenCountLabel(heroState[token.field], token.label)}
-                        title={`${token.label} tokens`}
+                        key={token.field}
+                        className={styles.token}
+                        style={{ "--token-accent": token.accent } as CSSProperties}
+                        aria-label={
+                          token.kind === "counted"
+                            ? tokenCountLabel(heroState[token.field], token.label)
+                            : token.mapLabel
+                        }
+                        title={token.kind === "counted" ? tokenTitle(token.label) : token.chipLabel}
                       >
                         <Icon size={13} />
-                        {heroState[token.field]}
-                      </span>
-                    ) : (
-                      <span
-                        key={field}
-                        className={styles.onOffToken}
-                        style={style}
-                        aria-label={token.mapLabel}
-                        title={token.chipLabel}
-                      >
-                        <Icon size={13} />
+                        {count}
                       </span>
                     );
                   })}
