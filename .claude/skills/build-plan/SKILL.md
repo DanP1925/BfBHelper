@@ -46,7 +46,7 @@ State it in Context, with the reason:
 File: `plan/NN_<same-name-as-intent>.md`:
 
 ```markdown
-# Plan: BfbHelper vN — <Feature Name>
+# Plan NN: <Feature Name>
 
 > **Living checklist.** This is the Build-phase plan for the feature scoped
 > in [../intent/NN_x.md](../intent/NN_x.md) and [../specs/NN_x.md](../specs/NN_x.md).
