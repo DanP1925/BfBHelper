@@ -2,8 +2,9 @@ import type { Hero, HeroId, PlayerId } from "../../lib/draft/types";
 import { BIT_STARTING_HP, TOWER_SLOTS, TOWER_STARTING_HP } from "../../lib/battle/constants";
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
-import type { BattleTeamState, StructuresState } from "../../lib/battle/types";
-import { HeroCard, type HeroCardTokenProps } from "../HeroCard/HeroCard";
+import type { BattleTeamState, HeroBattleState, StructuresState } from "../../lib/battle/types";
+import { BATTLE_TOKENS, type BattleTokenField } from "../battleTokens";
+import { HeroCard, type HeroCardTokens } from "../HeroCard/HeroCard";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { StructureSlot } from "../StructureSlot/StructureSlot";
 import styles from "./BattleTeamPanel.module.css";
@@ -18,15 +19,10 @@ type BattleTeamPanelProps = {
   onGoldChange: (value: number) => void;
   onHeroHpChange: (heroId: HeroId, value: number) => void;
   onHeroLevelChange: (heroId: HeroId, value: number) => void;
-  onHeroAttackTokensChange: (heroId: HeroId, value: number) => void;
-  onHeroConfusedChange: (heroId: HeroId, value: boolean) => void;
-  onHeroImmobilizedChange: (heroId: HeroId, value: boolean) => void;
-  /** Passed only to Kunoichi's enemies (intent/09, see heroSpecificTokens.ts):
-   * its presence is what gives this side's heroes a Death Mark control. */
-  onHeroDeathMarkedChange?: (heroId: HeroId, value: boolean) => void;
-  /** Passed only to Cyrus's team (intent/11, see heroSpecificTokens.ts): its
-   * presence is what gives this side's heroes a +1 Shield control. */
-  onHeroShieldTokensChange?: (heroId: HeroId, value: number) => void;
+  /** A setter per token this side's heroes can take. The Board leaves out a
+   * hero-specific token's field on the side its rule excludes (e.g. Death
+   * Mark on Kunoichi's own team), which is what hides its control. */
+  onHeroTokenChange: TeamTokenSetters;
   onStructureHpChange: (slot: keyof StructuresState, value: number) => void;
   /** Which token chip or "+" picker on the Board is open, owned by
    * `BattleBoardScreen` so opening one in this panel closes any open in the
@@ -34,6 +30,46 @@ type BattleTeamPanelProps = {
   openTokenKey: string | null;
   onOpenTokenKeyChange: (key: string | null) => void;
 };
+
+/** One setter per token field, given that field's stored value type. */
+export type TeamTokenSetters = {
+  [F in BattleTokenField]?: (heroId: HeroId, value: HeroBattleState[F]) => void;
+};
+
+/** A hero's token controls, built by one loop over BATTLE_TOKENS. A counted
+ * chip's open key is `${side}:${heroId}:${field}`, so each chip on a hero
+ * opens on its own (intents 06, 11). */
+function heroTokens(
+  side: PlayerId,
+  hero: Hero,
+  heroState: HeroBattleState,
+  setters: TeamTokenSetters,
+  openTokenKey: string | null,
+  onOpenTokenKeyChange: (key: string | null) => void,
+): HeroCardTokens {
+  const tokens: HeroCardTokens = {};
+  for (const token of BATTLE_TOKENS) {
+    if (token.kind === "counted") {
+      const set = setters[token.field];
+      if (!set) continue;
+      const key = `${side}:${hero.id}:${token.field}`;
+      tokens[token.field] = {
+        count: heroState[token.field],
+        onChange: (value) => set(hero.id, value),
+        expanded: openTokenKey === key,
+        onExpandedChange: (open) => onOpenTokenKeyChange(open ? key : null),
+      };
+    } else {
+      const set = setters[token.field];
+      if (!set) continue;
+      tokens[token.field] = {
+        on: heroState[token.field],
+        onChange: (value) => set(hero.id, value),
+      };
+    }
+  }
+  return tokens;
+}
 
 export function BattleTeamPanel({
   label,
@@ -43,11 +79,7 @@ export function BattleTeamPanel({
   onGoldChange,
   onHeroHpChange,
   onHeroLevelChange,
-  onHeroAttackTokensChange,
-  onHeroConfusedChange,
-  onHeroImmobilizedChange,
-  onHeroDeathMarkedChange,
-  onHeroShieldTokensChange,
+  onHeroTokenChange,
   onStructureHpChange,
   openTokenKey,
   onOpenTokenKeyChange,
@@ -76,20 +108,6 @@ export function BattleTeamPanel({
           // it at hydrate time), but degrading gracefully beats a thrown
           // error if that invariant is ever violated post-hydration.
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
-          // A counted token's chip props, with its own open key per token
-          // type, so each chip on a hero opens on its own (intents 06, 11).
-          const countedProps = (
-            field: "attackTokens" | "shieldTokens",
-            onChange: (heroId: HeroId, value: number) => void,
-          ): HeroCardTokenProps => {
-            const key = `${side}:${hero.id}:${field}`;
-            return {
-              count: heroState[field],
-              onChange: (value) => onChange(hero.id, value),
-              expanded: openTokenKey === key,
-              onExpandedChange: (open) => onOpenTokenKeyChange(open ? key : null),
-            };
-          };
           // The "+" picker shares the same one-open rule (intent/09).
           const pickerKey = `${side}:${hero.id}:picker`;
           return (
@@ -105,28 +123,14 @@ export function BattleTeamPanel({
                 expanded: openTokenKey === pickerKey,
                 onExpandedChange: (open) => onOpenTokenKeyChange(open ? pickerKey : null),
               }}
-              attackTokens={countedProps("attackTokens", onHeroAttackTokensChange)}
-              confused={{
-                on: heroState.confused,
-                onChange: (value) => onHeroConfusedChange(hero.id, value),
-              }}
-              immobilized={{
-                on: heroState.immobilized,
-                onChange: (value) => onHeroImmobilizedChange(hero.id, value),
-              }}
-              deathMarked={
-                onHeroDeathMarkedChange
-                  ? {
-                      on: heroState.deathMarked,
-                      onChange: (value) => onHeroDeathMarkedChange(hero.id, value),
-                    }
-                  : undefined
-              }
-              shieldTokens={
-                onHeroShieldTokensChange
-                  ? countedProps("shieldTokens", onHeroShieldTokensChange)
-                  : undefined
-              }
+              tokens={heroTokens(
+                side,
+                hero,
+                heroState,
+                onHeroTokenChange,
+                openTokenKey,
+                onOpenTokenKeyChange,
+              )}
             />
           );
         })}

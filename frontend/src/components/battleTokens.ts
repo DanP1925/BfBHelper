@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { HERO_ATTACK_TOKEN_CEILING, HERO_SHIELD_TOKEN_CEILING } from "../lib/battle/constants";
+import type { HeroSpecificTokenId } from "../lib/battle/heroSpecificTokens";
 import type { HeroBattleState } from "../lib/battle/types";
 import { AttackTokenIcon } from "./TokenChip/AttackTokenIcon";
 import { ShieldTokenIcon } from "./TokenChip/ShieldTokenIcon";
@@ -8,14 +9,23 @@ import { DeathMarkIcon } from "./TokenToggle/DeathMarkIcon";
 import { ImmobilizeIcon } from "./TokenToggle/ImmobilizeIcon";
 
 /** A per-hero counted token's stored field (intents 06, 11). */
-type CountedTokenField = keyof Pick<HeroBattleState, "attackTokens" | "shieldTokens">;
+export type CountedTokenField = keyof Pick<HeroBattleState, "attackTokens" | "shieldTokens">;
 
 /** A per-hero on/off token's stored field (intents 07-09). */
-type OnOffTokenField = keyof Pick<HeroBattleState, "confused" | "immobilized" | "deathMarked">;
+export type OnOffTokenField = keyof Pick<
+  HeroBattleState,
+  "confused" | "immobilized" | "deathMarked"
+>;
+
+/** Every token's stored field. Its value type is `HeroBattleState[field]`. */
+export type BattleTokenField = CountedTokenField | OnOffTokenField;
 
 type TokenLook = {
   Icon: ComponentType<{ size: number }>;
   accent: string;
+  /** Set on a hero-specific token: its rule in heroSpecificTokens.ts, which
+   * decides which side may carry it. Left out, every hero can. */
+  heroSpecific?: HeroSpecificTokenId;
 };
 
 /** A counted token: a TokenChip with "×N" and a − / + stepper. */
@@ -46,10 +56,11 @@ export type BattleToken = CountedToken | OnOffToken;
 
 /** Every token in the fixed order (intents 09 and 11): +1 Attack, Confuse,
  * Immobilize, then the hero-specific ones (Death Mark first). HeroCard's
- * row and picker and the Map's token line all loop over this, so a new
- * token is one row here. Which heroes may carry a hero-specific token is
- * decided elsewhere (heroSpecificTokens.ts). Display only: the stored
- * fields, actions and migrations stay one plain field per token. */
+ * row and picker, the Board's wiring and the Map's token line all loop
+ * over this, so a new token is one row here plus its stored field and
+ * setter. Which heroes may carry a hero-specific token comes from the rule
+ * its `heroSpecific` id names. The stored fields, actions and migrations
+ * stay one plain field per token. */
 export const BATTLE_TOKENS: readonly BattleToken[] = [
   {
     kind: "counted",
@@ -85,6 +96,7 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     optionLabel: "Death Mark",
     mapLabel: "Death Mark",
     accent: "var(--color-death-mark)",
+    heroSpecific: "deathMark",
   },
   // Named "+1 Shield" to match "+1 Attack" (intent/11, decided 2026-10-16).
   {
@@ -94,5 +106,6 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     label: "+1 Shield",
     accent: "var(--color-shield)",
     max: HERO_SHIELD_TOKEN_CEILING,
+    heroSpecific: "shield",
   },
 ];

@@ -30,29 +30,29 @@ function renderRow(state: RowState = {}, { open = true, chipOpen = false } = {})
       hp={10}
       level={1}
       tokenPicker={{ expanded: open, onExpandedChange: vi.fn() }}
-      attackTokens={{
-        count: state.attackTokens ?? 0,
-        onChange: handlers.attack,
-        expanded: chipOpen,
-        onExpandedChange: vi.fn(),
+      tokens={{
+        attackTokens: {
+          count: state.attackTokens ?? 0,
+          onChange: handlers.attack,
+          expanded: chipOpen,
+          onExpandedChange: vi.fn(),
+        },
+        confused: { on: state.confused ?? false, onChange: handlers.confused },
+        immobilized: { on: state.immobilized ?? false, onChange: handlers.immobilized },
+        deathMarked:
+          state.deathMarked === undefined
+            ? undefined
+            : { on: state.deathMarked, onChange: handlers.deathMarked },
+        shieldTokens:
+          state.shieldTokens === undefined
+            ? undefined
+            : {
+                count: state.shieldTokens,
+                onChange: handlers.shield,
+                expanded: false,
+                onExpandedChange: vi.fn(),
+              },
       }}
-      confused={{ on: state.confused ?? false, onChange: handlers.confused }}
-      immobilized={{ on: state.immobilized ?? false, onChange: handlers.immobilized }}
-      deathMarked={
-        state.deathMarked === undefined
-          ? undefined
-          : { on: state.deathMarked, onChange: handlers.deathMarked }
-      }
-      shieldTokens={
-        state.shieldTokens === undefined
-          ? undefined
-          : {
-              count: state.shieldTokens,
-              onChange: handlers.shield,
-              expanded: false,
-              onExpandedChange: vi.fn(),
-            }
-      }
     />,
   );
   return handlers;
@@ -73,10 +73,12 @@ function renderMarkable(deathMarked: boolean, open: boolean) {
       hp={0}
       level={1}
       tokenPicker={{ expanded: open, onExpandedChange: vi.fn() }}
-      attackTokens={{ count: 0, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() }}
-      confused={{ on: false, onChange: vi.fn() }}
-      immobilized={{ on: true, onChange: vi.fn() }}
-      deathMarked={{ on: deathMarked, onChange }}
+      tokens={{
+        attackTokens: { count: 0, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() },
+        confused: { on: false, onChange: vi.fn() },
+        immobilized: { on: true, onChange: vi.fn() },
+        deathMarked: { on: deathMarked, onChange },
+      }}
     />,
   );
   return onChange;

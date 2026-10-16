@@ -220,7 +220,9 @@ apply any rule automatically (expiry, defeat, damage absorption).
 - [ ] **Turn-passing animation in the draft.** Animate the turn banner and
   team panel highlight when the pick passes to the other player. Parked
   from intent 10, added 2026-10-15.
-- [ ] **Drive the token wiring from `BATTLE_TOKENS`.** Do this before Chill.
+- [x] **Drive the token wiring from `BATTLE_TOKENS`.** Do this before Chill.
+  Done (v0.11.1): a new token is now its `BATTLE_TOKENS` row, its stored
+  field and setter, and one line in `page.tsx`'s `setHeroToken` map.
   Added 2026-10-16 from intent 11's `/simplify` review.
   Each hero-specific token still costs about 25 lines across four files:
   a setter prop on `BattleBoardScreen`, a gated callback prop on
