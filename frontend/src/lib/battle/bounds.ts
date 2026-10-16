@@ -2,6 +2,7 @@ import {
   HERO_ATTACK_TOKEN_CEILING,
   HERO_HP_CEILING,
   HERO_MAX_LEVEL,
+  HERO_SHIELD_TOKEN_CEILING,
   HERO_STARTING_LEVEL,
 } from "./constants";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
@@ -37,6 +38,11 @@ export function clampHeroLevel(value: number): number {
 /** +1 Attack tokens: floor 0, ceiling HERO_ATTACK_TOKEN_CEILING (9). */
 export function clampHeroAttackTokens(value: number): number {
   return clamp(value, 0, HERO_ATTACK_TOKEN_CEILING);
+}
+
+/** Shield tokens: floor 0, ceiling HERO_SHIELD_TOKEN_CEILING (9). */
+export function clampHeroShieldTokens(value: number): number {
+  return clamp(value, 0, HERO_SHIELD_TOKEN_CEILING);
 }
 
 /** Structure HP: floor 0, ceiling is that structure's own starting HP

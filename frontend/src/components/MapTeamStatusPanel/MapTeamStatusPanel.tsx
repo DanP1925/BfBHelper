@@ -2,11 +2,15 @@ import type { CSSProperties } from "react";
 import type { Hero, PlayerId } from "../../lib/draft/types";
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
-import type { BattleTeamState } from "../../lib/battle/types";
-import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
+import type { BattleTeamState, HeroBattleState } from "../../lib/battle/types";
+import { BATTLE_TOKENS, type BattleToken } from "../battleTokens";
 import { tokenCountLabel } from "../TokenChip/TokenChip";
-import { ON_OFF_TOKENS } from "../TokenToggle/onOffTokens";
 import styles from "./MapTeamStatusPanel.module.css";
+
+/** Whether `heroState` holds `token`: a count above 0, or a flag on. */
+function holds(heroState: HeroBattleState, token: BattleToken): boolean {
+  return token.kind === "counted" ? heroState[token.field] > 0 : heroState[token.field];
+}
 
 type MapTeamStatusPanelProps = {
   label: string;
@@ -47,8 +51,8 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
         <div className={styles.sectionLabel}>Heroes</div>
         {heroes.map((hero) => {
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
-          const { hp, attackTokens } = heroState;
-          const heldOnOff = ON_OFF_TOKENS.filter((token) => heroState[token.field]);
+          const { hp } = heroState;
+          const held = BATTLE_TOKENS.filter((token) => holds(heroState, token));
           const isDefeated = hp === 0;
           return (
             <div
@@ -68,33 +72,39 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                 </svg>
                 {hp}
               </span>
-              {/* Read-only token line (intents 06-09), only while the hero
-                  holds a token. Its own line inside the row, so names never
-                  truncate for it, and `.dimmed` covers it. No roster check
-                  for Death Mark: only the Board's gated control sets it. */}
-              {(attackTokens > 0 || heldOnOff.length > 0) && (
+              {/* Read-only token line (intents 06-11), only while the hero
+                  holds a token, in BATTLE_TOKENS' order. Its own line inside
+                  the row, so names never truncate for it, and `.dimmed`
+                  covers it. No roster check for hero-specific tokens: only
+                  the Board's gated controls set them. */}
+              {held.length > 0 && (
                 <span className={styles.tokenLine}>
-                  {attackTokens > 0 && (
-                    <span
-                      className={styles.attackTokens}
-                      aria-label={tokenCountLabel(attackTokens, "+1 Attack")}
-                      title="+1 Attack tokens"
-                    >
-                      <AttackTokenIcon size={13} />
-                      {attackTokens}
-                    </span>
-                  )}
-                  {heldOnOff.map(({ field, Icon, chipLabel, mapLabel, accent }) => (
-                    <span
-                      key={field}
-                      className={styles.onOffToken}
-                      style={{ "--token-accent": accent } as CSSProperties}
-                      aria-label={mapLabel}
-                      title={chipLabel}
-                    >
-                      <Icon size={13} />
-                    </span>
-                  ))}
+                  {held.map((token) => {
+                    const { field, Icon, accent } = token;
+                    const style = { "--token-accent": accent } as CSSProperties;
+                    return token.kind === "counted" ? (
+                      <span
+                        key={field}
+                        className={styles.countedToken}
+                        style={style}
+                        aria-label={tokenCountLabel(heroState[token.field], token.label)}
+                        title={`${token.label} tokens`}
+                      >
+                        <Icon size={13} />
+                        {heroState[token.field]}
+                      </span>
+                    ) : (
+                      <span
+                        key={field}
+                        className={styles.onOffToken}
+                        style={style}
+                        aria-label={token.mapLabel}
+                        title={token.chipLabel}
+                      >
+                        <Icon size={13} />
+                      </span>
+                    );
+                  })}
                 </span>
               )}
             </div>

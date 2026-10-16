@@ -62,13 +62,13 @@ describe("TokenPicker", () => {
     expect(popover()).not.toBeNull();
   });
 
-  it("shows a held count and disables an option at its ceiling", () => {
-    const options = makeOptions({ attack: { count: 9, disabled: true } });
+  it("disables an option at its ceiling, and shows no count on any row", () => {
+    const options = makeOptions({ attack: { disabled: true } });
     render(<StatefulPicker options={options} />);
     fireEvent.click(addButton());
 
-    const attack = within(popover()!).getByRole("button", { name: "Add +1 Attack, 9 held" });
-    expect(attack).toHaveTextContent("×9");
+    const attack = within(popover()!).getByRole("button", { name: "Add +1 Attack" });
+    expect(popover()).not.toHaveTextContent("×");
     expect(attack).toBeDisabled();
     fireEvent.click(attack);
     expect(options[0].onPick).not.toHaveBeenCalled();

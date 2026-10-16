@@ -107,6 +107,10 @@ when the hero who uses them is in the battle, on either team.
   after defense and stays if the hero who placed it is defeated. Shields are
   removed by hand when damage comes in, with no automatic damage handling.
   Needs Shield tokens (hero-specific).
+  **Done:** scoped in `intent/11_shield-tokens.md`, built in v0.11.0. A green
+  "+1 Shield" counted chip (0-9), added through the "+" picker on Cyrus's
+  team only (Cyrus included), and a shield icon with the count in the Map's
+  status panel. Never spent on damage or cleared automatically.
 - **Dazeem (Ice Mage):** *Winter's Chill* gives an enemy hit by Dazeem a -1
   Attack Chill token. All Chill tokens are removed at the end of that hero's
   action. Chill tokens are hero-specific, counted per hero, added and removed
@@ -177,7 +181,7 @@ Hero-specific (only when that hero is in the battle):
 |---|---|---|
 | Favored Enemy | one permanent marker on an enemy | Boreas |
 | Bear Trap | single marker on a map space | Boreas |
-| Shield | count per hero | Cyrus |
+| Shield (done, v0.11.0) | count per hero | Cyrus |
 | Chill | count per hero | Dazeem |
 | Ice Wall | single marker on a map space | Dazeem |
 | "To the Pain" Arena | isolated space for Felix + one enemy | Felix |

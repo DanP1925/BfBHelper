@@ -1,7 +1,7 @@
 # Spec 11: Shield Tokens
 
-> **DRAFT.** Architecture for intent 11's scope. Build-out has not started
-> yet. See [../intent/11_shield-tokens.md](../intent/11_shield-tokens.md)
+> **BUILT.** Architecture for intent 11's scope, all built in one PR
+> (plan 11). See [../intent/11_shield-tokens.md](../intent/11_shield-tokens.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -136,7 +136,7 @@
     plus the `schemaVersion` literal (to 8).
   - **Validation:** `hasValidBattleTeamShape` also requires
     `isNumberInRange(hv.shieldTokens, 0, HERO_SHIELD_TOKEN_CEILING)`, next to
-    the `attackTokens` check. A missing, fractional or out-of-range count
+    the `attackTokens` check. A missing, non-numeric or out-of-range count
     fails the whole payload, the same clear-on-failure convention as other
     hero fields. It doesn't check that only Cyrus's team is shielded:
     validation checks shape, not game rules.
@@ -414,12 +414,24 @@ No change from earlier intents: same static Vercel deployment, no new infra.
   **Decided:** leaf green `#84c25e` (App Flow version 72), from the
   rulebook token's green shield. The BACKLOG's "Review every token's
   display" item looks at it again with the other tokens.
-- Check `ShieldTokenIcon` (drawn on the canvas, version 72) for legibility
-  at 12px on the Board and 13px on the Map, apart from the swords.
-- Check the Board at 1280x800 with a Cyrus ally holding all five tokens
+- ~~Check `ShieldTokenIcon` (drawn on the canvas, version 72) for legibility
+  at 12px on the Board and 13px on the Map, apart from the swords.~~
+  **Decided:** the canvas drawing is kept. At both sizes it reads as a
+  distinct green shield, apart from the swords.
+- ~~Check the Board at 1280x800 with a Cyrus ally holding all five tokens
   (Kunoichi on the other team): the card wraps to two lines and the Board
   doesn't scroll. Also check the Map's token line for that hero with ×9 on
-  both counted tokens.
-- Confirm the `BATTLE_TOKENS` refactor leaves +1 Attack, Confuse,
+  both counted tokens.~~
+  **Decided:** it fits. The five-token card wraps to two lines (row 44px)
+  and the Board doesn't scroll at 1280x800 or 2560x1440, even with either
+  ×9 stepper open. That hero's Map token line stays one line in the 170px
+  panel.
+- ~~Confirm the `BATTLE_TOKENS` refactor leaves +1 Attack, Confuse,
   Immobilize and Death Mark unchanged on the Board and the Map (existing
-  tests and the `token-row` e2e pass with only fixture edits).
+  tests and the `token-row` e2e pass with only fixture edits).~~
+  **Decided:** unchanged apart from the picker count. Existing unit tests
+  needed only fixture and picker-label edits, and all 13 e2e specs pass.
+- Validation doesn't reject a fractional count (`isNumberInRange` doesn't
+  check integers), for `shieldTokens` as for `attackTokens`. Left as is:
+  only a hand-edited save could hold one, and the reducer always clamps to
+  whole taps.

@@ -1,16 +1,10 @@
 import { Fragment, type ReactNode } from "react";
 import type { Hero } from "../../lib/draft/types";
-import {
-  HERO_ATTACK_TOKEN_CEILING,
-  HERO_HP_CEILING,
-  HERO_MAX_LEVEL,
-  HERO_STARTING_LEVEL,
-} from "../../lib/battle/constants";
+import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "../../lib/battle/constants";
+import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
-import { AttackTokenIcon } from "../TokenChip/AttackTokenIcon";
 import { TokenChip } from "../TokenChip/TokenChip";
 import { TokenPicker, type TokenPickerOption } from "../TokenPicker/TokenPicker";
-import { ON_OFF_TOKENS, type OnOffToken } from "../TokenToggle/onOffTokens";
 import { TokenToggle } from "../TokenToggle/TokenToggle";
 import styles from "./HeroCard.module.css";
 
@@ -55,6 +49,9 @@ type HeroCardProps =
       /** Death Mark (intent/09). The Battle Board passes it only on
        * Kunoichi's enemies, which is how its visibility reaches the picker. */
       deathMarked?: HeroCardToggleProps;
+      /** +1 Shield tokens (intent/11). The Battle Board passes it only on
+       * Cyrus's team, which is how its visibility reaches the picker. */
+      shieldTokens?: HeroCardTokenProps;
     });
 
 /** One counted token's value, setter and open state, passed all together
@@ -81,6 +78,40 @@ export type HeroCardPickerProps = {
 /** One token in the row: its held chip (or `null` while not held) and its
  * picker option (or `null` while it can't be added). */
 type TokenEntry = { key: string; chip: ReactNode; option: TokenPickerOption | null };
+
+/** A counted token's entry: its chip while held or open, and an option that
+ * adds 1 per tap up to its ceiling. */
+function countedEntry(
+  { field, Icon, label, optionLabel, accent, max }: CountedToken,
+  token: HeroCardTokenProps,
+  heroName: string,
+): TokenEntry {
+  const { count, onChange } = token;
+  return {
+    key: field,
+    // Stays while its stepper is open at 0, gone once it closes there.
+    chip:
+      count > 0 || token.expanded ? (
+        <TokenChip
+          {...token}
+          max={max}
+          icon={<Icon size={12} />}
+          label={label}
+          accent={accent}
+          heroName={heroName}
+        />
+      ) : null,
+    // Always offered, 1 per tap.
+    option: {
+      key: field,
+      icon: <Icon size={14} />,
+      label: optionLabel,
+      accent,
+      disabled: count >= max,
+      onPick: () => onChange(count + 1),
+    },
+  };
+}
 
 /** An on/off token's entry: a lit chip while held, an option while not. */
 function toggleEntry(
@@ -132,46 +163,24 @@ export function HeroCard(props: HeroCardProps) {
 
   if (variant === "battle") {
     const { hp, level, onHpChange, onLevelChange, tokenPicker } = props;
-    const { attackTokens, confused, immobilized, deathMarked } = props;
+    const { attackTokens, confused, immobilized, deathMarked, shieldTokens } = props;
     const isDefeated = hp === 0;
 
-    // The fixed order (intent/09): +1 Attack, Confuse, Immobilize, then the
-    // hero-specific tokens (Death Mark first). The row's chips and the
-    // picker's options both come from this one list, so they can't disagree,
-    // and a row never reshuffles by the order of adding.
-    const tokenEntries: TokenEntry[] = [];
-    if (attackTokens) {
-      const { count, onChange } = attackTokens;
-      tokenEntries.push({
-        key: "attack",
-        // Stays while its stepper is open at 0, gone once it closes there.
-        chip:
-          count > 0 || attackTokens.expanded ? (
-            <TokenChip
-              {...attackTokens}
-              max={HERO_ATTACK_TOKEN_CEILING}
-              icon={<AttackTokenIcon size={12} />}
-              label="+1 Attack"
-              heroName={hero.name}
-            />
-          ) : null,
-        // Always offered, 1 per tap.
-        option: {
-          key: "attack",
-          icon: <AttackTokenIcon size={14} />,
-          label: "+1 Attack",
-          accent: "var(--color-gold)",
-          count,
-          disabled: count >= HERO_ATTACK_TOKEN_CEILING,
-          onPick: () => onChange(count + 1),
-        },
-      });
-    }
+    // The fixed order (BATTLE_TOKENS): +1 Attack, Confuse, Immobilize, then
+    // the hero-specific tokens. The row's chips and the picker's options
+    // both come from this one list, so they can't disagree, and a row never
+    // reshuffles by the order of adding. A token whose prop isn't passed
+    // (a hero-specific one this hero can't take) is skipped.
+    const counted = { attackTokens, shieldTokens };
     const toggles = { confused, immobilized, deathMarked };
-    for (const token of ON_OFF_TOKENS) {
+    const tokenEntries = BATTLE_TOKENS.flatMap((token): TokenEntry[] => {
+      if (token.kind === "counted") {
+        const props = counted[token.field];
+        return props ? [countedEntry(token, props, hero.name)] : [];
+      }
       const toggle = toggles[token.field];
-      if (toggle) tokenEntries.push(toggleEntry(token, toggle, hero.name));
-    }
+      return toggle ? [toggleEntry(token, toggle, hero.name)] : [];
+    });
     return (
       <div className={styles.battleCard}>
         <div className={styles.battleTokenWrapper}>

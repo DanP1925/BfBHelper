@@ -65,7 +65,8 @@ const p2InitiativeDraft: DraftState = {
 /** One side's team as an older save stored it: heroes without the given
  * fields (`attackTokens` before schema 4, intent/06; `confused` before
  * schema 5, intent/07; `immobilized` before schema 6, intent/08;
- * `deathMarked` before schema 7, intent/09). */
+ * `deathMarked` before schema 7, intent/09; `shieldTokens` before schema
+ * 8, intent/11). */
 function withoutHeroFields(team: BattleState["p1"], ...fields: (keyof HeroBattleState)[]) {
   return {
     ...team,
@@ -290,7 +291,7 @@ describe("saveBattleState / loadBattleState", () => {
   it("returns null and clears the key when schemaVersion is newer than current", () => {
     window.localStorage.setItem(
       BATTLE_STATE_STORAGE_KEY,
-      JSON.stringify({ schemaVersion: 7, p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
+      JSON.stringify({ schemaVersion: 9, p1: sampleBattleState.p1, p2: sampleBattleState.p2 }),
     );
 
     expect(loadBattleState()).toBeNull();
@@ -310,6 +311,7 @@ describe("saveBattleState / loadBattleState", () => {
             confused: false,
             immobilized: false,
             deathMarked: false,
+            shieldTokens: 0,
           },
         } as unknown as BattleState["p1"]["heroes"],
       },
@@ -367,7 +369,7 @@ describe("saveBattleState / loadBattleState", () => {
     expect(loadBattleState()).toEqual(state);
   });
 
-  describe("schema-1 -> 7 migration (intents 04 + 05 + 06 + 07 + 08 + 09)", () => {
+  describe("schema-1 -> 8 migration (intents 04 + 05 + 06 + 07 + 08 + 09 + 11)", () => {
     beforeEach(() => {
       saveDraft(p2InitiativeDraft);
     });
@@ -404,7 +406,7 @@ describe("saveBattleState / loadBattleState", () => {
       const loaded = loadBattleState();
 
       expect(loaded).not.toBeNull();
-      expect(loaded?.schemaVersion).toBe(7);
+      expect(loaded?.schemaVersion).toBe(8);
       expect(loaded?.initiative).toBe("p2");
       expect(loaded?.p1.heroes).toEqual({
         "agatha-trunch": {
@@ -414,6 +416,7 @@ describe("saveBattleState / loadBattleState", () => {
           confused: false,
           immobilized: false,
           deathMarked: false,
+          shieldTokens: 0,
         },
       });
       expect(loaded?.p2.heroes).toEqual({
@@ -424,6 +427,7 @@ describe("saveBattleState / loadBattleState", () => {
           confused: false,
           immobilized: false,
           deathMarked: false,
+          shieldTokens: 0,
         },
       });
       expect(loaded?.p1.heroPositions).toEqual({ "agatha-trunch": null });
@@ -433,7 +437,7 @@ describe("saveBattleState / loadBattleState", () => {
       );
     });
 
-    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 7 on disk", () => {
+    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 8 on disk", () => {
       persistRawSchema1(
         { "agatha-trunch": { hp: 10, level: 1 } },
         { baldwin: { hp: 9, level: 1 } },
@@ -445,17 +449,18 @@ describe("saveBattleState / loadBattleState", () => {
 
       const raw = window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY);
       const parsed = JSON.parse(raw as string);
-      expect(parsed.schemaVersion).toBe(7);
+      expect(parsed.schemaVersion).toBe(8);
       expect(parsed.initiative).toBe("p2");
       expect(parsed.p1.heroPositions["agatha-trunch"]).toBeNull();
       expect(parsed.p1.heroes["agatha-trunch"].attackTokens).toBe(0);
       expect(parsed.p1.heroes["agatha-trunch"].confused).toBe(false);
       expect(parsed.p1.heroes["agatha-trunch"].immobilized).toBe(false);
       expect(parsed.p1.heroes["agatha-trunch"].deathMarked).toBe(false);
+      expect(parsed.p1.heroes["agatha-trunch"].shieldTokens).toBe(0);
     });
   });
 
-  describe("schema-2 -> 7 migration (intents 05 + 06 + 07 + 08 + 09)", () => {
+  describe("schema-2 -> 8 migration (intents 05 + 06 + 07 + 08 + 09 + 11)", () => {
     function persistRawSchema2(state: BattleState) {
       const { initiative: _omitted, ...rest } = state;
       void _omitted;
@@ -463,8 +468,22 @@ describe("saveBattleState / loadBattleState", () => {
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...rest,
-          p1: withoutHeroFields(rest.p1, "attackTokens", "confused", "immobilized", "deathMarked"),
-          p2: withoutHeroFields(rest.p2, "attackTokens", "confused", "immobilized", "deathMarked"),
+          p1: withoutHeroFields(
+            rest.p1,
+            "attackTokens",
+            "confused",
+            "immobilized",
+            "deathMarked",
+            "shieldTokens",
+          ),
+          p2: withoutHeroFields(
+            rest.p2,
+            "attackTokens",
+            "confused",
+            "immobilized",
+            "deathMarked",
+            "shieldTokens",
+          ),
           schemaVersion: 2,
           updatedAt: new Date().toISOString(),
         }),
@@ -485,10 +504,10 @@ describe("saveBattleState / loadBattleState", () => {
       persistRawSchema2(midBattle);
 
       // midBattle's heroes already have attackTokens: 0, confused: false,
-      // immobilized: false and deathMarked: false, which is what the
-      // v3 -> v4, v4 -> v5, v5 -> v6 and v6 -> v7 steps add back to the
-      // stripped schema-2 payload.
-      expect(loadBattleState()).toEqual({ ...midBattle, schemaVersion: 7, initiative: "p2" });
+      // immobilized: false, deathMarked: false and shieldTokens: 0, which is
+      // what the v3 -> v4, v4 -> v5, v5 -> v6, v6 -> v7 and v7 -> v8 steps
+      // add back to the stripped schema-2 payload.
+      expect(loadBattleState()).toEqual({ ...midBattle, schemaVersion: 8, initiative: "p2" });
     });
 
     it("returns null and clears the key when there's no valid draft to default from", () => {
@@ -507,14 +526,28 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-3 -> 7 migration (intents 06 + 07 + 08 + 09)", () => {
+  describe("schema-3 -> 8 migration (intents 06 + 07 + 08 + 09 + 11)", () => {
     function persistRawSchema3(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...state,
-          p1: withoutHeroFields(state.p1, "attackTokens", "confused", "immobilized", "deathMarked"),
-          p2: withoutHeroFields(state.p2, "attackTokens", "confused", "immobilized", "deathMarked"),
+          p1: withoutHeroFields(
+            state.p1,
+            "attackTokens",
+            "confused",
+            "immobilized",
+            "deathMarked",
+            "shieldTokens",
+          ),
+          p2: withoutHeroFields(
+            state.p2,
+            "attackTokens",
+            "confused",
+            "immobilized",
+            "deathMarked",
+            "shieldTokens",
+          ),
           schemaVersion: 3,
           updatedAt: new Date().toISOString(),
         }),
@@ -538,6 +571,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: false,
               immobilized: false,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [heroId]: MAP_SPACE_IDS[0] },
@@ -578,14 +612,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-4 -> 7 migration (intents 07 + 08 + 09)", () => {
+  describe("schema-4 -> 8 migration (intents 07 + 08 + 09 + 11)", () => {
     function persistRawSchema4(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...state,
-          p1: withoutHeroFields(state.p1, "confused", "immobilized", "deathMarked"),
-          p2: withoutHeroFields(state.p2, "confused", "immobilized", "deathMarked"),
+          p1: withoutHeroFields(state.p1, "confused", "immobilized", "deathMarked", "shieldTokens"),
+          p2: withoutHeroFields(state.p2, "confused", "immobilized", "deathMarked", "shieldTokens"),
           schemaVersion: 4,
           updatedAt: new Date().toISOString(),
         }),
@@ -610,6 +644,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: false,
               immobilized: false,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -625,6 +660,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: false,
               immobilized: false,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
         },
@@ -657,14 +693,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-5 -> 7 migration (intents 08 + 09)", () => {
+  describe("schema-5 -> 8 migration (intents 08 + 09 + 11)", () => {
     function persistRawSchema5(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...state,
-          p1: withoutHeroFields(state.p1, "immobilized", "deathMarked"),
-          p2: withoutHeroFields(state.p2, "immobilized", "deathMarked"),
+          p1: withoutHeroFields(state.p1, "immobilized", "deathMarked", "shieldTokens"),
+          p2: withoutHeroFields(state.p2, "immobilized", "deathMarked", "shieldTokens"),
           schemaVersion: 5,
           updatedAt: new Date().toISOString(),
         }),
@@ -689,6 +725,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: true,
               immobilized: false,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -704,6 +741,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: false,
               immobilized: false,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
         },
@@ -736,14 +774,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-6 -> 7 migration (intent/09)", () => {
+  describe("schema-6 -> 8 migration (intents 09 + 11)", () => {
     function persistRawSchema6(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...state,
-          p1: withoutHeroFields(state.p1, "deathMarked"),
-          p2: withoutHeroFields(state.p2, "deathMarked"),
+          p1: withoutHeroFields(state.p1, "deathMarked", "shieldTokens"),
+          p2: withoutHeroFields(state.p2, "deathMarked", "shieldTokens"),
           schemaVersion: 6,
           updatedAt: new Date().toISOString(),
         }),
@@ -768,6 +806,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: true,
               immobilized: true,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -783,6 +822,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: false,
               immobilized: true,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
         },
@@ -815,6 +855,150 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
+  describe("schema-7 -> 8 migration (intent/11)", () => {
+    function persistRawSchema7(state: BattleState) {
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({
+          ...state,
+          p1: withoutHeroFields(state.p1, "shieldTokens"),
+          p2: withoutHeroFields(state.p2, "shieldTokens"),
+          schemaVersion: 7,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+    }
+
+    it("upgrades in place, every hero at 0 Shield, Death Mark, Immobilize, Confuse, attack tokens and everything else kept", () => {
+      const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0];
+      const p2HeroId = Object.keys(sampleBattleState.p2.heroes)[0];
+      const midBattle: BattleState = {
+        ...sampleBattleState,
+        initiative: "p2",
+        p1: {
+          ...sampleBattleState.p1,
+          gold: 4,
+          heroes: {
+            ...sampleBattleState.p1.heroes,
+            [p1HeroId]: {
+              hp: 0,
+              level: 2,
+              attackTokens: 3,
+              confused: true,
+              immobilized: true,
+              deathMarked: true,
+              shieldTokens: 0,
+            },
+          },
+          heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
+        },
+        p2: {
+          ...sampleBattleState.p2,
+          heroes: {
+            ...sampleBattleState.p2.heroes,
+            [p2HeroId]: {
+              hp: 9,
+              level: 1,
+              attackTokens: 1,
+              confused: false,
+              immobilized: true,
+              deathMarked: false,
+              shieldTokens: 0,
+            },
+          },
+        },
+      };
+      persistRawSchema7(midBattle);
+
+      expect(loadBattleState()).toEqual(midBattle);
+    });
+
+    it("returns null and clears the key when a team has no heroes object", () => {
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({
+          ...sampleBattleState,
+          p1: { ...sampleBattleState.p1, heroes: null },
+          schemaVersion: 7,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+
+    it("still rejects a schema-7 payload whose other fields are invalid", () => {
+      persistRawSchema7({ ...sampleBattleState, p1: { ...sampleBattleState.p1, gold: -1 } });
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("shieldTokens validation (intent/11)", () => {
+    it.each([
+      ["missing", undefined],
+      ["negative", -1],
+      ["above 9", 10],
+      ["non-numeric", "2"],
+    ])(
+      "returns null and clears the key when a hero's shieldTokens is %s",
+      (_label, shieldTokens) => {
+        const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
+        window.localStorage.setItem(
+          BATTLE_STATE_STORAGE_KEY,
+          JSON.stringify({
+            ...sampleBattleState,
+            p1: {
+              ...sampleBattleState.p1,
+              heroes: {
+                [heroId]: {
+                  hp: 5,
+                  level: 1,
+                  attackTokens: 0,
+                  confused: false,
+                  immobilized: false,
+                  deathMarked: false,
+                  shieldTokens,
+                },
+              },
+            },
+            updatedAt: new Date().toISOString(),
+          }),
+        );
+
+        expect(loadBattleState()).toBeNull();
+        expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+      },
+    );
+
+    it("round-trips a shielded hero on either side (shape only, no Cyrus check)", () => {
+      const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
+      const p2HeroId = Object.keys(sampleBattleState.p2.heroes)[0] as HeroId;
+      const shielded: BattleState = {
+        ...sampleBattleState,
+        p1: {
+          ...sampleBattleState.p1,
+          heroes: {
+            ...sampleBattleState.p1.heroes,
+            [p1HeroId]: { ...sampleBattleState.p1.heroes[p1HeroId], shieldTokens: 9 },
+          },
+        },
+        p2: {
+          ...sampleBattleState.p2,
+          heroes: {
+            ...sampleBattleState.p2.heroes,
+            [p2HeroId]: { ...sampleBattleState.p2.heroes[p2HeroId], shieldTokens: 2 },
+          },
+        },
+      };
+      saveBattleState(shielded);
+
+      expect(loadBattleState()).toEqual(shielded);
+    });
+  });
+
   describe("deathMarked validation (intent/09)", () => {
     it.each([
       ["missing", undefined],
@@ -837,6 +1021,7 @@ describe("saveBattleState / loadBattleState", () => {
                 confused: false,
                 immobilized: false,
                 deathMarked,
+                shieldTokens: 0,
               },
             },
           },
@@ -896,6 +1081,7 @@ describe("saveBattleState / loadBattleState", () => {
                 confused: false,
                 immobilized,
                 deathMarked: false,
+                shieldTokens: 0,
               },
             },
           },
@@ -947,6 +1133,7 @@ describe("saveBattleState / loadBattleState", () => {
                 confused,
                 immobilized: false,
                 deathMarked: false,
+                shieldTokens: 0,
               },
             },
           },
@@ -1000,6 +1187,7 @@ describe("saveBattleState / loadBattleState", () => {
                   confused: false,
                   immobilized: false,
                   deathMarked: false,
+                  shieldTokens: 0,
                 },
               },
             },
@@ -1027,6 +1215,7 @@ describe("saveBattleState / loadBattleState", () => {
               confused: false,
               immobilized: false,
               deathMarked: false,
+              shieldTokens: 0,
             },
           },
         },
@@ -1147,7 +1336,7 @@ describe("saveBattleState / loadBattleState", () => {
     // split exists to prevent: bumping the battle schema must never make
     // loadDraft() also expect a migration that doesn't exist for drafts.
     it("loadDraft still loads a schema-1 draft after CURRENT_BATTLE_SCHEMA_VERSION has been bumped past 1", () => {
-      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(7);
+      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(8);
       saveDraft(midDraftState);
 
       expect(loadDraft()).toEqual(midDraftState);

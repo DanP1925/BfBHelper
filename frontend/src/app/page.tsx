@@ -129,6 +129,7 @@ export default function Home() {
           setHeroConfused={battle.setHeroConfused}
           setHeroImmobilized={battle.setHeroImmobilized}
           setHeroDeathMarked={battle.setHeroDeathMarked}
+          setHeroShieldTokens={battle.setHeroShieldTokens}
           setStructureHp={battle.setStructureHp}
           onNewDraft={draft.returnToStart}
           onEndBattle={() => {

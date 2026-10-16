@@ -13,9 +13,8 @@ export type TokenPickerOption = {
   label: string;
   /** The token's color (e.g. `"var(--color-confuse)"`), for the row's icon. */
   accent: string;
-  /** How many the hero already holds, for counted tokens ("×2"). */
-  count?: number;
-  /** A counted token at its ceiling. */
+  /** A counted token at its ceiling. No row shows a count (intent/11): the
+   * held chip in the row behind the popover already does. */
   disabled?: boolean;
   onPick: () => void;
 };
@@ -129,9 +128,7 @@ export function TokenPicker({ heroName, options, expanded, onExpandedChange }: T
               key={option.key}
               type="button"
               className={styles.option}
-              aria-label={
-                option.count ? `Add ${option.label}, ${option.count} held` : `Add ${option.label}`
-              }
+              aria-label={`Add ${option.label}`}
               disabled={option.disabled}
               onClick={option.onPick}
             >
@@ -142,7 +139,6 @@ export function TokenPicker({ heroName, options, expanded, onExpandedChange }: T
                 {option.icon}
               </span>
               <span>{option.label}</span>
-              {option.count ? <span className={styles.optionCount}>×{option.count}</span> : null}
             </button>
           ))}
         </div>
