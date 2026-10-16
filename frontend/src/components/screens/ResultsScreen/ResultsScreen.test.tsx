@@ -17,7 +17,6 @@ describe("ResultsScreen (Draft Results)", () => {
     const onStartBattle = vi.fn();
     render(<ResultsScreen p1Picks={p1} p2Picks={p2} onStartBattle={onStartBattle} />);
 
-    expect(screen.queryByRole("button", { name: /new draft/i })).toBeNull();
     expect(screen.getAllByRole("button")).toHaveLength(1);
 
     fireEvent.click(screen.getByRole("button", { name: "Start Battle →" }));

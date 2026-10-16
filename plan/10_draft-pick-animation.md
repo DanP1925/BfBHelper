@@ -96,6 +96,8 @@ frontend/e2e/
       `data-pool-hero={hero.id}`. The `slot` variant's root (the
       `cardClass` div, not the `result` variant) gets
       `data-slot-hero={hero.id}`. No visual change.
+      (Set on `result` cards too, unconditionally: the hook only searches
+      inside the Draft Board, so they're never touched.)
 - [x] M3. `screens/DraftBoardScreen/useDraftPickAnimation.ts` (new), with
       the spec's signature, minus `onFinalPickLanded` (PR C):
       - `beforePick(heroId)`: only if `motionAllowed()` and
@@ -113,16 +115,18 @@ frontend/e2e/
           `translate(dx, dy) scale(s)` → `none`, `transform-origin: top
           left`, `delay: PICK_FADE_MS`, `fill: "backwards"`.
         - **Slot reveal:** `[data-slot-hero=heroId]` animates opacity
-          0 → 1 and a ring-plus-glow `box-shadow` that peaks at 0.4, in the
+          0 → 1 and a ring plus a glow that peak at 0.4, in the
           side's `--color-p1`/`--color-p2` (read with `getComputedStyle`),
           over `SLOT_REVEAL_MS`, same delay and fill.
       - Unmount: cancel every animation it started and remove any
         stand-ins.
       (The ring is an `outline` 3px inside the card, not a `box-shadow`
       spread, which `.slotList` clipped on edge slots; only the glow is a
-      shadow. Easing is set per keyframe so the flash peaks at 40%.
-      `transform-origin: top left` lives on `.poolCard` in
-      `HeroCard.module.css`. Spec updated.)
+      shadow. Easing is set per keyframe so the flash peaks at 40%. The
+      glide's `transformOrigin: "0 0"` is in its own keyframes, and the
+      stand-in copies the card image's computed `border-radius`. The rAF
+      does every read (team color, glide rects) before any write. Spec
+      updated.)
 - [x] M4. `DraftBoardScreen`: `rootRef` on the `.screen` div. The pool's
       `onPick` calls `beforePick(heroId)` then `onPick(heroId)`.
       `HeroPool`'s and `TeamPanel`'s props don't change.
@@ -203,9 +207,11 @@ frontend/e2e/
       Checked by script on a dev server on port 3100 (port 3000 belonged
       to another checkout): frame sampling, stepped and frozen-at-peak
       screenshots, and reduced motion (no animations or stand-ins). The
-      starting durations are kept until a playtest says otherwise. The
-      `ResultsScreen` and hook tests stub `ResizeObserver`, `matchMedia`,
-      `animate` and `getBoundingClientRect`, since jsdom has none of them.
+      starting durations are kept until a playtest says otherwise. jsdom
+      has no `ResizeObserver`, `matchMedia` or `animate`: a no-op
+      `ResizeObserver` now lives in `src/test/setup.ts`, `matchMedia` in a
+      shared `src/test/stubMatchMedia.ts`, and the hook test stubs
+      `animate` and `getBoundingClientRect` itself.
 
 ### PR C — Versus finale
 
