@@ -114,6 +114,13 @@ Update the doc's "Open Questions" section: remove every question that
 was answered, and keep any deferred to the spec/design, marked as such.
 If nothing is left, remove the section.
 
+When writing a new intent, title it `# Intent NN: Feature Name` and use a
+plain `## Scope` heading. Don't add the "(v1 = …, intent 01. …)" history
+paragraph or a "vNN" phase label that older intents carry: the filenames
+already map numbers to features, and the real version is the semver in
+`frontend/package.json` (decided 2026-10-16). Leave older intents as
+they are.
+
 Do **not** create or update the spec (or any other file) as part of
 this skill's normal behavior, even if technical questions come up along
 the way — only do that if the user explicitly asks for it in the
