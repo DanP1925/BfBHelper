@@ -75,19 +75,12 @@
   font-weight: 600;
 }
 
-/* Any counted token's icon and count, in its own accent (set inline from
- * BATTLE_TOKENS, like TokenChip). */
-.countedToken {
+/* Any token's icon (and a counted one's count), in its own accent set
+ * inline from BATTLE_TOKENS, like TokenChip and TokenToggle. */
+.token {
   display: flex;
   align-items: center;
   gap: 2px;
-  color: var(--token-accent);
-}
-
-/* Any on/off token's icon, in its own accent (set inline from
- * BATTLE_TOKENS, like TokenToggle). */
-.onOffToken {
-  display: flex;
   color: var(--token-accent);
 }
 

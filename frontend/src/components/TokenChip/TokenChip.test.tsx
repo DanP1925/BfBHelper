@@ -62,21 +62,10 @@ describe("TokenChip", () => {
   });
 
   it("draws the pill in the token's accent", () => {
-    const { container } = render(
-      <TokenChip
-        count={1}
-        max={9}
-        onChange={() => {}}
-        icon={<AttackTokenIcon size={12} />}
-        label="+1 Shield"
-        accent="var(--color-shield)"
-        heroName="Cyrus"
-        expanded={false}
-        onExpandedChange={() => {}}
-      />,
-    );
+    renderChip({ count: 1, label: "+1 Shield", accent: "var(--color-shield)" });
 
-    expect(container.firstElementChild).toHaveStyle({ "--token-accent": "var(--color-shield)" });
+    const pill = screen.getByRole("button", { name: /^Caligar: 1 \+1 Shield token/ }).parentElement;
+    expect(pill?.style.getPropertyValue("--token-accent")).toBe("var(--color-shield)");
   });
 
   it("uses the singular for one token", () => {

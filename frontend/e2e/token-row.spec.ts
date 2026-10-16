@@ -63,8 +63,12 @@ test("the token row shows only held tokens and a '+' picker that stays open, ins
   await picker.getByRole("button", { name: "Add Confuse" }).click();
   await picker.getByRole("button", { name: "Add Immobilize" }).click();
   // Held on/off tokens drop out; +1 Attack stays, with no count (intent/11).
-  await expect(picker.getByRole("button")).toHaveCount(1);
+  // Not a row count: these 8 heroes include Cyrus, and the coin flip decides
+  // whether this hero is on his team and also keeps "+1 Shield".
+  await expect(picker.getByRole("button", { name: "Add Confuse" })).toHaveCount(0);
+  await expect(picker.getByRole("button", { name: "Add Immobilize" })).toHaveCount(0);
   await expect(picker.getByRole("button", { name: "Add +1 Attack" })).toBeVisible();
+  await expect(picker).not.toContainText("×");
 
   // A tap outside closes it.
   await page.getByText("Structures").first().click();

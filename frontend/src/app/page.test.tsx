@@ -304,14 +304,18 @@ function seedDraft(p1Ids: HeroId[], p2Ids: HeroId[]) {
   saveView("battle");
 }
 
+/** Whether this hero's "+" picker lists `option` (e.g. "Add Death Mark"):
+ * opens the picker, looks, and closes it again. */
+function offersToken(heroId: HeroId, option: string): boolean {
+  const name = getHeroById(heroId).name;
+  fireEvent.click(addButton(name));
+  const offered = within(picker(name)!).queryByRole("button", { name: option });
+  fireEvent.click(addButton(name));
+  return offered !== null;
+}
+
 describe("Home: Death Mark (intent/09)", () => {
-  const offersDeathMark = (heroId: HeroId) => {
-    const name = getHeroById(heroId).name;
-    fireEvent.click(addButton(name));
-    const offered = within(picker(name)!).queryByRole("button", { name: "Add Death Mark" });
-    fireEvent.click(addButton(name));
-    return offered !== null;
-  };
+  const offersDeathMark = (heroId: HeroId) => offersToken(heroId, "Add Death Mark");
 
   it("offers it only on Kunoichi's enemies when she's on Player 1", () => {
     seedDraft(
@@ -381,13 +385,7 @@ describe("Home: Death Mark (intent/09)", () => {
 });
 
 describe("Home: +1 Shield (intent/11)", () => {
-  const offersShield = (heroId: HeroId) => {
-    const name = getHeroById(heroId).name;
-    fireEvent.click(addButton(name));
-    const offered = within(picker(name)!).queryByRole("button", { name: "Add +1 Shield" });
-    fireEvent.click(addButton(name));
-    return offered !== null;
-  };
+  const offersShield = (heroId: HeroId) => offersToken(heroId, "Add +1 Shield");
   const shieldChip = (name: string) =>
     screen.queryByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Shield token`) });
 

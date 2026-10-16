@@ -8,18 +8,13 @@ import { DeathMarkIcon } from "./TokenToggle/DeathMarkIcon";
 import { ImmobilizeIcon } from "./TokenToggle/ImmobilizeIcon";
 
 /** A per-hero counted token's stored field (intents 06, 11). */
-export type CountedTokenField = keyof Pick<HeroBattleState, "attackTokens" | "shieldTokens">;
+type CountedTokenField = keyof Pick<HeroBattleState, "attackTokens" | "shieldTokens">;
 
 /** A per-hero on/off token's stored field (intents 07-09). */
-export type OnOffTokenField = keyof Pick<
-  HeroBattleState,
-  "confused" | "immobilized" | "deathMarked"
->;
+type OnOffTokenField = keyof Pick<HeroBattleState, "confused" | "immobilized" | "deathMarked">;
 
 type TokenLook = {
   Icon: ComponentType<{ size: number }>;
-  /** The picker row's label, e.g. "Confuse". */
-  optionLabel: string;
   accent: string;
 };
 
@@ -27,7 +22,8 @@ type TokenLook = {
 export type CountedToken = TokenLook & {
   kind: "counted";
   field: CountedTokenField;
-  /** TokenChip's and tokenCountLabel's name, e.g. "+1 Attack", "+1 Shield". */
+  /** The token's name everywhere: the chip, its picker row, the Map's
+   * tooltip and tokenCountLabel, e.g. "+1 Attack", "+1 Shield". */
   label: string;
   max: number;
 };
@@ -36,6 +32,8 @@ export type CountedToken = TokenLook & {
 export type OnOffToken = TokenLook & {
   kind: "onOff";
   field: OnOffTokenField;
+  /** The picker row's label, e.g. "Confuse". */
+  optionLabel: string;
   /** The held chip's label and the Map icon's tooltip, e.g. "Confuse token". */
   chipLabel: string;
   /** The Map icon's accessible name, e.g. "Confused". */
@@ -58,7 +56,6 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     field: "attackTokens",
     Icon: AttackTokenIcon,
     label: "+1 Attack",
-    optionLabel: "+1 Attack",
     accent: "var(--color-gold)",
     max: HERO_ATTACK_TOKEN_CEILING,
   },
@@ -95,7 +92,6 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     field: "shieldTokens",
     Icon: ShieldTokenIcon,
     label: "+1 Shield",
-    optionLabel: "+1 Shield",
     accent: "var(--color-shield)",
     max: HERO_SHIELD_TOKEN_CEILING,
   },

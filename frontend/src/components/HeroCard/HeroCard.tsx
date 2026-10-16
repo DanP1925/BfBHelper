@@ -82,7 +82,7 @@ type TokenEntry = { key: string; chip: ReactNode; option: TokenPickerOption | nu
 /** A counted token's entry: its chip while held or open, and an option that
  * adds 1 per tap up to its ceiling. */
 function countedEntry(
-  { field, Icon, label, optionLabel, accent, max }: CountedToken,
+  { field, Icon, label, accent, max }: CountedToken,
   token: HeroCardTokenProps,
   heroName: string,
 ): TokenEntry {
@@ -105,7 +105,7 @@ function countedEntry(
     option: {
       key: field,
       icon: <Icon size={14} />,
-      label: optionLabel,
+      label,
       accent,
       disabled: count >= max,
       onPick: () => onChange(count + 1),

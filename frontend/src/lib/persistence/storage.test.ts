@@ -945,24 +945,16 @@ describe("saveBattleState / loadBattleState", () => {
     ])(
       "returns null and clears the key when a hero's shieldTokens is %s",
       (_label, shieldTokens) => {
-        const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
+        const heroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
         window.localStorage.setItem(
           BATTLE_STATE_STORAGE_KEY,
           JSON.stringify({
             ...sampleBattleState,
             p1: {
               ...sampleBattleState.p1,
-              heroes: {
-                [heroId]: {
-                  hp: 5,
-                  level: 1,
-                  attackTokens: 0,
-                  confused: false,
-                  immobilized: false,
-                  deathMarked: false,
-                  shieldTokens,
-                },
-              },
+              // A valid hero with only shieldTokens broken (`undefined` is
+              // dropped by JSON.stringify, so "missing" really is missing).
+              heroes: { [heroId]: { ...sampleBattleState.p1.heroes[heroId], shieldTokens } },
             },
             updatedAt: new Date().toISOString(),
           }),

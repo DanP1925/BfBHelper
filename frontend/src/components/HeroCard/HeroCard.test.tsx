@@ -5,13 +5,23 @@ import { HeroCard } from "./HeroCard";
 
 const boreas = getHeroById("boreas");
 
-type RowState = { attackTokens?: number; confused?: boolean; immobilized?: boolean };
+/** The hero-specific tokens (`deathMarked`, `shieldTokens`) are only passed
+ * when set, as the Board does for heroes who can take them. */
+type RowState = {
+  attackTokens?: number;
+  confused?: boolean;
+  immobilized?: boolean;
+  deathMarked?: boolean;
+  shieldTokens?: number;
+};
 
 function renderRow(state: RowState = {}, { open = true, chipOpen = false } = {}) {
   const handlers = {
     attack: vi.fn(),
     confused: vi.fn(),
     immobilized: vi.fn(),
+    deathMarked: vi.fn(),
+    shield: vi.fn(),
   };
   render(
     <HeroCard
@@ -28,6 +38,21 @@ function renderRow(state: RowState = {}, { open = true, chipOpen = false } = {})
       }}
       confused={{ on: state.confused ?? false, onChange: handlers.confused }}
       immobilized={{ on: state.immobilized ?? false, onChange: handlers.immobilized }}
+      deathMarked={
+        state.deathMarked === undefined
+          ? undefined
+          : { on: state.deathMarked, onChange: handlers.deathMarked }
+      }
+      shieldTokens={
+        state.shieldTokens === undefined
+          ? undefined
+          : {
+              count: state.shieldTokens,
+              onChange: handlers.shield,
+              expanded: false,
+              onExpandedChange: vi.fn(),
+            }
+      }
     />,
   );
   return handlers;
@@ -159,22 +184,8 @@ describe("HeroCard token row", () => {
     expect(optionNames()).not.toContain("Add Death Mark");
   });
 
-  it("offers +1 Shield only when it's passed, last, and disables it at the ceiling", () => {
-    const onChange = vi.fn();
-    render(
-      <HeroCard
-        hero={boreas}
-        variant="battle"
-        hp={10}
-        level={1}
-        tokenPicker={{ expanded: true, onExpandedChange: vi.fn() }}
-        attackTokens={{ count: 0, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() }}
-        confused={{ on: false, onChange: vi.fn() }}
-        immobilized={{ on: false, onChange: vi.fn() }}
-        deathMarked={{ on: false, onChange: vi.fn() }}
-        shieldTokens={{ count: 2, onChange, expanded: false, onExpandedChange: vi.fn() }}
-      />,
-    );
+  it("offers +1 Shield last, after Death Mark, adding one per tap, with its chip while held", () => {
+    const handlers = renderRow({ deathMarked: false, shieldTokens: 2 });
 
     expect(optionNames()).toEqual([
       "Add +1 Attack",
@@ -184,23 +195,14 @@ describe("HeroCard token row", () => {
       "Add +1 Shield",
     ]);
     fireEvent.click(within(popover()!).getByRole("button", { name: "Add +1 Shield" }));
-    expect(onChange).toHaveBeenCalledWith(3);
+    expect(handlers.shield).toHaveBeenCalledWith(3);
     const chip = screen.getByRole("button", { name: "Boreas: 2 +1 Shield tokens. Show controls" });
     expect(chip).toHaveTextContent("×2");
     expect(chip).toHaveAttribute("title", "+1 Shield tokens");
   });
 
   it("disables +1 Shield in the picker at the ceiling", () => {
-    render(
-      <HeroCard
-        hero={boreas}
-        variant="battle"
-        hp={10}
-        level={1}
-        tokenPicker={{ expanded: true, onExpandedChange: vi.fn() }}
-        shieldTokens={{ count: 9, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() }}
-      />,
-    );
+    renderRow({ shieldTokens: 9 });
 
     expect(within(popover()!).getByRole("button", { name: "Add +1 Shield" })).toBeDisabled();
   });

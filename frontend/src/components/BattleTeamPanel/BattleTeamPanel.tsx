@@ -3,7 +3,7 @@ import { BIT_STARTING_HP, TOWER_SLOTS, TOWER_STARTING_HP } from "../../lib/battl
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, StructuresState } from "../../lib/battle/types";
-import { HeroCard } from "../HeroCard/HeroCard";
+import { HeroCard, type HeroCardTokenProps } from "../HeroCard/HeroCard";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { StructureSlot } from "../StructureSlot/StructureSlot";
 import styles from "./BattleTeamPanel.module.css";
@@ -76,9 +76,20 @@ export function BattleTeamPanel({
           // it at hydrate time), but degrading gracefully beats a thrown
           // error if that invariant is ever violated post-hydration.
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
-          // Per token type, so later tokens on the same hero get their own key.
-          const attackTokenKey = `${side}:${hero.id}:attack`;
-          const shieldTokenKey = `${side}:${hero.id}:shield`;
+          // A counted token's chip props, with its own open key per token
+          // type, so each chip on a hero opens on its own (intents 06, 11).
+          const countedProps = (
+            field: "attackTokens" | "shieldTokens",
+            onChange: (heroId: HeroId, value: number) => void,
+          ): HeroCardTokenProps => {
+            const key = `${side}:${hero.id}:${field}`;
+            return {
+              count: heroState[field],
+              onChange: (value) => onChange(hero.id, value),
+              expanded: openTokenKey === key,
+              onExpandedChange: (open) => onOpenTokenKeyChange(open ? key : null),
+            };
+          };
           // The "+" picker shares the same one-open rule (intent/09).
           const pickerKey = `${side}:${hero.id}:picker`;
           return (
@@ -94,12 +105,7 @@ export function BattleTeamPanel({
                 expanded: openTokenKey === pickerKey,
                 onExpandedChange: (open) => onOpenTokenKeyChange(open ? pickerKey : null),
               }}
-              attackTokens={{
-                count: heroState.attackTokens,
-                onChange: (value) => onHeroAttackTokensChange(hero.id, value),
-                expanded: openTokenKey === attackTokenKey,
-                onExpandedChange: (open) => onOpenTokenKeyChange(open ? attackTokenKey : null),
-              }}
+              attackTokens={countedProps("attackTokens", onHeroAttackTokensChange)}
               confused={{
                 on: heroState.confused,
                 onChange: (value) => onHeroConfusedChange(hero.id, value),
@@ -118,13 +124,7 @@ export function BattleTeamPanel({
               }
               shieldTokens={
                 onHeroShieldTokensChange
-                  ? {
-                      count: heroState.shieldTokens,
-                      onChange: (value) => onHeroShieldTokensChange(hero.id, value),
-                      expanded: openTokenKey === shieldTokenKey,
-                      onExpandedChange: (open) =>
-                        onOpenTokenKeyChange(open ? shieldTokenKey : null),
-                    }
+                  ? countedProps("shieldTokens", onHeroShieldTokensChange)
                   : undefined
               }
             />
