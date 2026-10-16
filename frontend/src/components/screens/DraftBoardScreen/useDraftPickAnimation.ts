@@ -9,12 +9,15 @@ type PendingPick = {
   side: PlayerId;
   /** Where every pool card was drawn at the tap, running transforms included. */
   rects: Map<string, DOMRect>;
-  /** The tapped card's art and where it was drawn, for its fade-out stand-in. */
-  fadeImage: { src: string; rect: DOMRect } | null;
+  /** The tapped card's art, where it was drawn and its corner radius, for
+   * its fade-out stand-in. */
+  fadeImage: { src: string; rect: DOMRect; borderRadius: string } | null;
 };
 
-/** What a pick's animations leave behind, so unmount can clean it all up. */
+/** Everything a pick's animations leave running, so unmount can tear it
+ * all down. */
 type Running = {
+  frames: Set<number>;
   animations: Set<Animation>;
   standIns: Set<HTMLElement>;
 };
@@ -31,6 +34,10 @@ type UseDraftPickAnimationResult = {
   beforePick: (heroId: HeroId) => void;
 };
 
+function poolCards(root: HTMLElement) {
+  return Array.from(root.querySelectorAll<HTMLElement>("[data-pool-hero]"));
+}
+
 function track(running: Running, animation: Animation, onDone?: () => void) {
   running.animations.add(animation);
   const done = () => {
@@ -43,7 +50,10 @@ function track(running: Running, animation: Animation, onDone?: () => void) {
 
 /** The tapped card is already gone from the DOM, so a fixed-position copy
  * of its art fades out where it was drawn. */
-function fadeOut(running: Running, { src, rect }: NonNullable<PendingPick["fadeImage"]>) {
+function fadeOut(
+  running: Running,
+  { src, rect, borderRadius }: NonNullable<PendingPick["fadeImage"]>,
+) {
   const standIn = document.createElement("img");
   standIn.src = src;
   standIn.alt = "";
@@ -56,7 +66,7 @@ function fadeOut(running: Running, { src, rect }: NonNullable<PendingPick["fadeI
     height: `${rect.height}px`,
     margin: "0",
     objectFit: "cover",
-    borderRadius: "6px",
+    borderRadius,
     pointerEvents: "none",
     zIndex: "100",
   });
@@ -83,7 +93,7 @@ function fadeOut(running: Running, { src, rect }: NonNullable<PendingPick["fadeI
  * fades. Cancels, reads and animations run as three passes so the reads
  * share one layout instead of forcing one per card. */
 function glide(running: Running, root: HTMLElement, rects: PendingPick["rects"]) {
-  const cards = Array.from(root.querySelectorAll<HTMLElement>("[data-pool-hero]"));
+  const cards = poolCards(root);
   // Cancelling a previous pick's glide first, so each new rect is the card's
   // real layout spot while `rects` holds where it was drawn.
   for (const card of cards) for (const previous of card.getAnimations()) previous.cancel();
@@ -111,13 +121,10 @@ function glide(running: Running, root: HTMLElement, rects: PendingPick["rects"])
   }
 }
 
-/** The hero's slot fades in with a flash in the picking team's color. The
- * animation is the only thing keeping the slot invisible, so cancelling it
- * always leaves the slot showing. */
-function revealSlot(running: Running, slot: HTMLElement, side: PlayerId) {
-  const color =
-    getComputedStyle(document.documentElement).getPropertyValue(`--color-${side}`).trim() ||
-    "currentColor";
+/** The hero's slot fades in with a flash of `color`, the picking team's.
+ * The animation is the only thing keeping the slot invisible, so cancelling
+ * it always leaves the slot showing. */
+function revealSlot(running: Running, slot: HTMLElement, color: string) {
   // The ring is an outline drawn just inside the card: TeamPanel's slot list
   // clips anything outside it, which would cut a box-shadow ring off on a
   // slot touching the panel's edge. Only the soft glow spills outside, where
@@ -163,8 +170,11 @@ export function useDraftPickAnimation({
 }: UseDraftPickAnimationOptions): UseDraftPickAnimationResult {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pendingRef = useRef<PendingPick | null>(null);
-  const framesRef = useRef(new Set<number>());
-  const runningRef = useRef<Running>({ animations: new Set(), standIns: new Set() });
+  const runningRef = useRef<Running>({
+    frames: new Set(),
+    animations: new Set(),
+    standIns: new Set(),
+  });
 
   function beforePick(heroId: HeroId) {
     const root = rootRef.current;
@@ -173,13 +183,18 @@ export function useDraftPickAnimation({
     if (!root || currentTurnPlayer === null || !motionAllowed()) return;
 
     const rects = new Map<string, DOMRect>();
-    for (const card of root.querySelectorAll<HTMLElement>("[data-pool-hero]")) {
+    let fadeImage: PendingPick["fadeImage"] = null;
+    for (const card of poolCards(root)) {
       rects.set(card.dataset.poolHero!, card.getBoundingClientRect());
+      const image = card.dataset.poolHero === heroId ? card.querySelector("img") : null;
+      if (image) {
+        fadeImage = {
+          src: image.currentSrc || image.src,
+          rect: image.getBoundingClientRect(),
+          borderRadius: getComputedStyle(image).borderRadius,
+        };
+      }
     }
-    const image = root.querySelector<HTMLImageElement>(`[data-pool-hero="${heroId}"] img`);
-    const fadeImage = image
-      ? { src: image.currentSrc || image.src, rect: image.getBoundingClientRect() }
-      : null;
     pendingRef.current = { heroId, side: currentTurnPlayer, rects, fadeImage };
   }
 
@@ -192,22 +207,27 @@ export function useDraftPickAnimation({
     pendingRef.current = null;
     if (pool.some((hero) => hero.id === pending.heroId)) return;
 
+    const running = runningRef.current;
     const frame = requestAnimationFrame(() => {
-      framesRef.current.delete(frame);
+      running.frames.delete(frame);
       const root = rootRef.current;
       if (!root) return;
-      const running = runningRef.current;
-      if (pending.fadeImage) fadeOut(running, pending.fadeImage);
+      // Every read before any write: the team color and the glide's layout
+      // reads come before the stand-in is appended and animations start.
+      const color =
+        getComputedStyle(document.documentElement)
+          .getPropertyValue(`--color-${pending.side}`)
+          .trim() || "currentColor";
       glide(running, root, pending.rects);
+      if (pending.fadeImage) fadeOut(running, pending.fadeImage);
       const slot = root.querySelector<HTMLElement>(`[data-slot-hero="${pending.heroId}"]`);
-      if (slot) revealSlot(running, slot, pending.side);
+      if (slot) revealSlot(running, slot, color);
     });
-    framesRef.current.add(frame);
+    running.frames.add(frame);
   }, [pool]);
 
   useEffect(() => {
-    const frames = framesRef.current;
-    const { animations, standIns } = runningRef.current;
+    const { frames, animations, standIns } = runningRef.current;
     return () => {
       for (const frame of frames) cancelAnimationFrame(frame);
       frames.clear();

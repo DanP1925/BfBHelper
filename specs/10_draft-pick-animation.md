@@ -1,7 +1,8 @@
 # Spec: BfbHelper v10 — Draft Pick Animation
 
-> **DRAFT.** Architecture for intent 10's scope. Build-out has not started
-> yet. See [../intent/10_draft-pick-animation.md](../intent/10_draft-pick-animation.md)
+> **IN PROGRESS.** Architecture for intent 10's scope. The pick animation
+> and the static Draft Results changes are built (plan 10's PR B); the
+> versus finale (PR C) is not yet. See [../intent/10_draft-pick-animation.md](../intent/10_draft-pick-animation.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -101,7 +102,9 @@
   `lib/persistence/schema.ts` changes, and neither schema version moves.
 - `HeroCard` adds DOM hooks for the animation to find cards, not data:
   - The `pool` variant's `<button>` gets `data-pool-hero={hero.id}`.
-  - The `slot` variant's root gets `data-slot-hero={hero.id}`.
+  - The `slot` and `result` variants' root gets `data-slot-hero={hero.id}`.
+    The hook only searches inside the Draft Board, so result cards are
+    never touched.
 
 ## Pick Logic
 - **`motionAllowed()`** (new, `frontend/src/lib/motion.ts`):
