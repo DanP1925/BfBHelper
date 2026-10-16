@@ -15,6 +15,7 @@ import {
   HERO_MAX_LEVEL,
   HERO_SHIELD_TOKEN_CEILING,
   HERO_STARTING_LEVEL,
+  HERO_STONE_TOKEN_CEILING,
   TOWER_STARTING_HP,
 } from "../battle/constants";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
@@ -34,6 +35,7 @@ import {
   type PersistedBattleStateV6,
   type PersistedBattleStateV7,
   type PersistedBattleStateV8,
+  type PersistedBattleStateV9,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -173,6 +175,10 @@ const upgradeV6ToV7 = addHeroFieldsStep<PersistedBattleStateV7>(7, { deathMarked
  * "upgrades in place", every hero's Shield at 0). */
 const upgradeV7ToV8 = addHeroFieldsStep<PersistedBattleStateV8>(8, { shieldTokens: 0 });
 
+/** Schema 8 → 9: every hero gets `stoneTokens: 0` (intent/12:
+ * "upgrades in place", every hero's Stone at 0). */
+const upgradeV8ToV9 = addHeroFieldsStep<PersistedBattleStateV9>(9, { stoneTokens: 0 });
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -186,6 +192,7 @@ const battleMigrations: MigrationSteps = {
   5: upgradeV5ToV6,
   6: upgradeV6ToV7,
   7: upgradeV7ToV8,
+  8: upgradeV8ToV9,
 };
 
 function isBrowser(): boolean {
@@ -337,11 +344,11 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * belongs to `useBattle`'s `heroIdSetsMatch`, which has the draft to
  * compare against): gold is non-negative, each structure is within its
  * own floor/ceiling, every `heroes` entry has a real hero id with hp/level/
- * attackTokens/shieldTokens each within bounds and a boolean `confused`,
- * `immobilized` and `deathMarked` (shape only: it doesn't check that only
- * Kunoichi's enemies are marked or Cyrus's team shielded), and every one
- * of those hero ids also
- * has a `heroPositions` entry that's either `null` or a real map-space id.
+ * attackTokens/shieldTokens/stoneTokens each within bounds and a boolean
+ * `confused`, `immobilized` and `deathMarked` (shape only: it doesn't check
+ * hero-specific visibility, `HERO_SPECIFIC_TOKENS`), and every one of those
+ * hero ids also has a `heroPositions` entry that's either `null` or a real
+ * map-space id.
  */
 function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   if (!hasValidLegacyBattleTeamShape(data)) return false;
@@ -360,6 +367,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
     if (typeof hv.immobilized !== "boolean") return false;
     if (typeof hv.deathMarked !== "boolean") return false;
     if (!isNumberInRange(hv.shieldTokens, 0, HERO_SHIELD_TOKEN_CEILING)) return false;
+    if (!isNumberInRange(hv.stoneTokens, 0, HERO_STONE_TOKEN_CEILING)) return false;
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
     if (position !== null && !isMapSpaceIdLike(position)) return false;
@@ -368,7 +376,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV8 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV9 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -546,7 +554,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV8 = {
+  const payload: PersistedBattleStateV9 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -575,7 +583,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 8,
+    schemaVersion: 9,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,

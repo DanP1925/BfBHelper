@@ -131,6 +131,7 @@ export default function Home() {
             immobilized: battle.setHeroImmobilized,
             deathMarked: battle.setHeroDeathMarked,
             shieldTokens: battle.setHeroShieldTokens,
+            stoneTokens: battle.setHeroStoneTokens,
           }}
           setStructureHp={battle.setStructureHp}
           onNewDraft={draft.returnToStart}

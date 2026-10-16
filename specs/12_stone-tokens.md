@@ -1,7 +1,7 @@
 # Spec 12: Stone Tokens
 
-> **DRAFT.** Architecture for intent 12's scope. Build-out has not started
-> yet. See [../intent/12_stone-tokens.md](../intent/12_stone-tokens.md)
+> **BUILT.** Architecture for intent 12's scope, all built in one PR
+> (plan 12). See [../intent/12_stone-tokens.md](../intent/12_stone-tokens.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -294,26 +294,32 @@ infra.
   **Decided:** done (App Flow version 74), with Sedusa replacing Runika
   on Player 2. See UI Design Reference.
 - ~~Pick `--color-stone` on the canvas.~~
-  **Decided (provisional):** cool stone grey `#a3adb8` (App Flow
-  version 74), from the rulebook token's stone. It's cooler and lighter
-  than `--color-muted` `#a8987d` (warm) and less saturated than
-  `--color-immobilize` `#8fb4e0`. Check in the browser at 1280x800 that a
-  held Stone chip doesn't read as disabled or muted next to a defeated
-  hero's dimming, and that it reads apart from Immobilize's ice blue.
-  Adjust on the canvas and here if not.
-- Check `StoneTokenIcon` for legibility at 12px on the Board and 13px on
-  the Map, apart from the swords and the shield. The canvas draws a
+  **Decided:** cool stone grey `#a3adb8` (App Flow version 74), from the
+  rulebook token's stone. It's cooler and lighter than `--color-muted`
+  `#a8987d` (warm) and less saturated than `--color-immobilize`
+  `#8fb4e0`. Checked at 1280x800: a held Stone chip reads as held, not
+  disabled, next to a defeated hero's dimming, and apart from
+  Immobilize's ice blue.
+- ~~Check `StoneTokenIcon` for legibility at 12px on the Board and 13px on
+  the Map, apart from the swords and the shield.~~ The canvas draws a
   coiled snake: an oval head top right and an S-shaped body (16px
   viewBox, stroke 1.5):
   ```svg
   <path d="M9.5 3.5a2 1.5 0 1 0 4 0a2 1.5 0 1 0-4 0z" />
   <path d="M10 4.75C7 5.25 4.5 6.5 5.5 8.5s6 .5 6.75 2.75S9 14.5 3.5 13.75" />
   ```
-  If the snake blurs, simplify it, and update this spec.
-- Check the Board at 1280x800 with the six-token case (an ally of Cyrus
+  **Decided:** the canvas drawing is kept. It doesn't blur at 12px or
+  13px and reads apart from the swords and the shield, though at that
+  size it reads more like a script "S" than a snake. BACKLOG's "Review
+  every token's display" item can revisit it.
+- ~~Check the Board at 1280x800 with the six-token case (an ally of Cyrus
   who's an enemy of Kunoichi and Sedusa, with both counted tokens at their
   ceilings): the card wraps to two lines and the Board doesn't scroll,
   with any stepper open. Also check that hero's Map token line in the
-  170px panel.
+  170px panel.~~
+  **Decided:** it fits. The six-token card wraps to two lines (row 44px)
+  and the Board doesn't scroll at 1280x800 or 2560x1440, with the Attack
+  or the Stone stepper open. That hero's Map token line stays one line in
+  the 170px panel.
 - Validation doesn't reject a fractional count, for `stoneTokens` as for
   the other counted tokens (spec 11). Left as is.

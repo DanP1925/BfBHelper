@@ -22,3 +22,9 @@ export const HERO_ATTACK_TOKEN_CEILING = 9;
  * 2026-10-16) — the same single digit as +1 Attack. The box's 15 tokens
  * aren't a per-hero limit. */
 export const HERO_SHIELD_TOKEN_CEILING = 9;
+
+/** Per-hero Stone token ceiling (intent/12's Value Bounds, decided
+ * 2026-10-16) — a hero at 3 is defeated and their tokens are discarded,
+ * so a higher count never matters. The box's 8 tokens aren't a per-hero
+ * limit. */
+export const HERO_STONE_TOKEN_CEILING = 3;

@@ -164,6 +164,10 @@ when the hero who uses them is in the battle, on either team.
   token. Defeat at 3 Stone is applied by hand (no warning, no auto-defeat), and
   Stone is cleared by hand on defeat. Power cards place more Stone and
   immobilize. Needs Stone tokens (hero-specific) and Immobilize.
+  **Done:** scoped in `intent/12_stone-tokens.md`, built in v0.12.0. A grey
+  "+1 Stone" counted chip (0-3), added through the "+" picker on Sedusa's
+  enemies only, and a snake icon with the count in the Map's status panel.
+  Never defeats a hero or clears automatically.
 
 ### Summary
 
@@ -187,7 +191,7 @@ Hero-specific (only when that hero is in the battle):
 | "To the Pain" Arena | isolated space for Felix + one enemy | Felix |
 | Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
 | Artifacts (x3) | named on/off toggles on Runika | Runika |
-| Stone | count per hero | Sedusa |
+| Stone (done, v0.12.0) | count per hero | Sedusa |
 
 Need nothing hero-specific: Vladiator, Sterling, Ceralin, Motley, Ken Obi.
 The starting-HP bug fix applies to every hero.

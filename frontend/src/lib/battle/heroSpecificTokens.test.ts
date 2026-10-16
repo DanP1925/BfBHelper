@@ -7,6 +7,7 @@ const boreas = getHeroById("boreas");
 const sterling = getHeroById("sterling");
 const caligar = getHeroById("caligar");
 const cyrus = getHeroById("cyrus");
+const sedusa = getHeroById("sedusa");
 
 describe("heroSpecificTokenSide", () => {
   it("offers Death Mark to p2 when Kunoichi is on p1", () => {
@@ -34,6 +35,15 @@ describe("heroSpecificTokenSide", () => {
 
   it("offers Shield to nobody when Cyrus wasn't drafted", () => {
     expect(heroSpecificTokenSide("shield", { p1: [boreas], p2: [kunoichi] })).toBeNull();
+  });
+
+  it("offers Stone to Sedusa's enemies, whichever side she's on", () => {
+    expect(heroSpecificTokenSide("stone", { p1: [boreas, sedusa], p2: [sterling] })).toBe("p2");
+    expect(heroSpecificTokenSide("stone", { p1: [boreas], p2: [sedusa, sterling] })).toBe("p1");
+  });
+
+  it("offers Stone to nobody when Sedusa wasn't drafted", () => {
+    expect(heroSpecificTokenSide("stone", { p1: [boreas], p2: [cyrus] })).toBeNull();
   });
 });
 
