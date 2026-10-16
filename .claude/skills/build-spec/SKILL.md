@@ -59,7 +59,7 @@ Recurring decisions to make explicitly, following earlier specs:
 File: `specs/NN_<same-name-as-intent>.md`. Structure, following 02–05:
 
 ```markdown
-# Spec: BfbHelper vN — <Feature Name>
+# Spec NN: <Feature Name>
 
 > **DRAFT.** Architecture for intent NN's scope. Build-out has not started
 > yet. See [../intent/NN_x.md](../intent/NN_x.md) for the product-level
@@ -90,7 +90,12 @@ Style:
   the canvas hasn't been updated for this feature yet, write that in this
   section and list it as an Open Item. Don't invent a description of art
   that doesn't exist.
-- **Deployment:** usually "No change from v1–vN-1".
+- **No "vN" phase labels.** Refer to earlier features as "intents 01-10"
+  or "spec 09", not "v1-v10". The real version is the semver in
+  `frontend/package.json`, and the filenames already map numbers to
+  features (decided 2026-10-16, as in `/build-intent`). Older specs keep
+  their titles.
+- **Deployment:** usually "No change from earlier intents".
 - **Open Items:** implementation choices you couldn't settle on paper
   (e.g. "check in the browser at 1280x800"). When they're decided later,
   strike them through and add **Decided:**.

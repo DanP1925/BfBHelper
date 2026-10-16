@@ -54,8 +54,8 @@ This phase covers only:
 
 ## Proposed Outcome
 After Cyrus uses a Paladin power, the player controlling him taps "+" on
-a friendly hero in his space and picks Shield. That hero's card and line
-on the Map show "Shield ×1". When an attack hits a shielded hero, the
+a friendly hero in his space and picks "+1 Shield". That hero's card and
+line on the Map show one shield. When an attack hits a shielded hero, the
 player works out damage after defense, taps one shield off per point,
 and lowers HP by whatever is left. When a shielded hero is defeated, a
 player taps their shields off.
