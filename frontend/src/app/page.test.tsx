@@ -467,6 +467,83 @@ describe("Home: +1 Shield (intent/11)", () => {
   });
 });
 
+describe("Home: +1 Stone (intent/12)", () => {
+  const offersStone = (heroId: HeroId) => offersToken(heroId, "Add +1 Stone");
+  const stoneChip = (name: string) =>
+    screen.queryByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Stone token`) });
+
+  it("offers it only on Sedusa's enemies when she's on Player 1, never on her own team", () => {
+    seedDraft(
+      ["sedusa", "baldwin", "boreas", "caligar"],
+      ["ceralin", "cynthia", "dazeem", "felix"],
+    );
+    render(<Home />);
+
+    for (const id of ["ceralin", "cynthia", "dazeem", "felix"] as const) {
+      expect(offersStone(id)).toBe(true);
+    }
+    for (const id of ["sedusa", "baldwin", "boreas", "caligar"] as const) {
+      expect(offersStone(id)).toBe(false);
+    }
+  });
+
+  it("offers it only on Player 1 when Sedusa is on Player 2", () => {
+    seedDraft(
+      ["baldwin", "boreas", "caligar", "ceralin"],
+      ["cynthia", "sedusa", "dazeem", "felix"],
+    );
+    render(<Home />);
+
+    expect(offersStone("baldwin")).toBe(true);
+    expect(offersStone("cynthia")).toBe(false);
+    expect(offersStone("sedusa")).toBe(false);
+  });
+
+  it("offers it to nobody without Sedusa", () => {
+    seedDraft(
+      ["baldwin", "boreas", "caligar", "ceralin"],
+      ["cynthia", "dazeem", "felix", "kerrick"],
+    );
+    render(<Home />);
+
+    for (const id of ["baldwin", "boreas", "caligar", "ceralin", "cynthia", "dazeem"] as const) {
+      expect(offersStone(id)).toBe(false);
+    }
+  });
+
+  it("adds one per tap up to 3, after Shield, and still works with Sedusa at 0 HP", () => {
+    // Cyrus with Sedusa's enemies, so the picker shows both counted
+    // hero-specific tokens.
+    seedDraft(["sedusa", "baldwin", "boreas", "caligar"], ["cyrus", "cynthia", "dazeem", "felix"]);
+    render(<Home />);
+    const sedusa = getHeroById("sedusa").name;
+    const cynthia = getHeroById("cynthia").name;
+
+    // Sedusa at 0 HP still counts as in the battle.
+    const decreaseHp = screen.getByRole("button", { name: `Decrease ${sedusa} HP` });
+    while (!decreaseHp.hasAttribute("disabled")) fireEvent.click(decreaseHp);
+
+    fireEvent.click(addButton(cynthia));
+    expect(
+      within(picker(cynthia)!)
+        .getAllByRole("button")
+        .map((row) => row.getAttribute("aria-label")),
+    ).toEqual(["Add +1 Attack", "Add Confuse", "Add Immobilize", "Add +1 Shield", "Add +1 Stone"]);
+    for (let i = 0; i < 3; i++) fireEvent.click(option(cynthia, "Add +1 Stone"));
+    expect(option(cynthia, "Add +1 Stone")).toBeDisabled();
+    fireEvent.click(option(cynthia, "Add +1 Shield"));
+    expect(stoneChip(cynthia)).toHaveAccessibleName(`${cynthia}: 3 +1 Stone tokens. Show controls`);
+
+    // Stone comes after Shield in the row, whatever order they were added.
+    const shield = screen.getByRole("button", { name: new RegExp(`^${cynthia}: 1 \\+1 Shield`) });
+    expect(
+      shield.compareDocumentPosition(stoneChip(cynthia)!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Reaching 3 doesn't defeat the hero: HP is untouched.
+    expect(screen.getByLabelText(`${cynthia} HP`, { exact: true })).not.toHaveValue(0);
+  });
+});
+
 function attackChipName(heroName: string): RegExp {
   return new RegExp(`^${heroName}: \\d+ \\+1 Attack token`);
 }

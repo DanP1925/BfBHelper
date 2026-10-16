@@ -28,7 +28,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 8 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 9 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -103,7 +103,8 @@ export type LegacyBattleTeamStateV5 = Omit<BattleTeamState, "heroes"> & {
 
 /** Each schema's hero is the next one's minus the field that schema added,
  * so a new schema only touches the newest legacy type. */
-type LegacyHeroBattleStateV7 = Omit<HeroBattleState, "shieldTokens">;
+type LegacyHeroBattleStateV8 = Omit<HeroBattleState, "stoneTokens">;
+type LegacyHeroBattleStateV7 = Omit<LegacyHeroBattleStateV8, "shieldTokens">;
 type LegacyHeroBattleStateV6 = Omit<LegacyHeroBattleStateV7, "deathMarked">;
 type LegacyHeroBattleStateV5 = Omit<LegacyHeroBattleStateV6, "immobilized">;
 
@@ -146,10 +147,25 @@ export type PersistedBattleStateV7 = Omit<PersistedBattleStateV6, "schemaVersion
   p2: LegacyBattleTeamStateV7;
 };
 
+/** One side's battle-team state in schema 8: per-hero shieldTokens,
+ * but no stoneTokens count yet (intent/12). */
+export type LegacyBattleTeamStateV8 = Omit<BattleTeamState, "heroes"> & {
+  heroes: Record<HeroId, LegacyHeroBattleStateV8>;
+};
+
 /** The on-disk (localStorage) shape of a persisted battle state, version 8
- * (intent/11: per-hero `shieldTokens`). */
+ * (intent/11: per-hero `shieldTokens`) — now only the migration source shape
+ * `battleMigrations[8]` upgrades from. */
 export type PersistedBattleStateV8 = Omit<PersistedBattleStateV7, "schemaVersion" | "p1" | "p2"> & {
   schemaVersion: 8;
+  p1: LegacyBattleTeamStateV8;
+  p2: LegacyBattleTeamStateV8;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 9
+ * (intent/12: per-hero `stoneTokens`). */
+export type PersistedBattleStateV9 = Omit<PersistedBattleStateV8, "schemaVersion" | "p1" | "p2"> & {
+  schemaVersion: 9;
   p1: BattleTeamState;
   p2: BattleTeamState;
 };

@@ -1,27 +1,34 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { getHeroById } from "../../data/heroes";
+import type { CountedTokenField } from "../battleTokens";
 import { HeroCard } from "./HeroCard";
 
 const boreas = getHeroById("boreas");
 
-/** The hero-specific tokens (`deathMarked`, `shieldTokens`) are only passed
- * when set, as the Board does for heroes who can take them. */
+/** The hero-specific tokens (`deathMarked`, `shieldTokens`, `stoneTokens`)
+ * are only passed when set, as the Board does for heroes who can take them. */
 type RowState = {
   attackTokens?: number;
   confused?: boolean;
   immobilized?: boolean;
   deathMarked?: boolean;
   shieldTokens?: number;
+  stoneTokens?: number;
 };
 
-function renderRow(state: RowState = {}, { open = true, chipOpen = false } = {}) {
+/** `openChip` names the counted chip whose stepper is open, if any. */
+function renderRow(
+  state: RowState = {},
+  { open = true, openChip }: { open?: boolean; openChip?: CountedTokenField } = {},
+) {
   const handlers = {
     attack: vi.fn(),
     confused: vi.fn(),
     immobilized: vi.fn(),
     deathMarked: vi.fn(),
     shield: vi.fn(),
+    stone: vi.fn(),
   };
   render(
     <HeroCard
@@ -34,7 +41,7 @@ function renderRow(state: RowState = {}, { open = true, chipOpen = false } = {})
         attackTokens: {
           count: state.attackTokens ?? 0,
           onChange: handlers.attack,
-          expanded: chipOpen,
+          expanded: openChip === "attackTokens",
           onExpandedChange: vi.fn(),
         },
         confused: { on: state.confused ?? false, onChange: handlers.confused },
@@ -49,7 +56,16 @@ function renderRow(state: RowState = {}, { open = true, chipOpen = false } = {})
             : {
                 count: state.shieldTokens,
                 onChange: handlers.shield,
-                expanded: false,
+                expanded: openChip === "shieldTokens",
+                onExpandedChange: vi.fn(),
+              },
+        stoneTokens:
+          state.stoneTokens === undefined
+            ? undefined
+            : {
+                count: state.stoneTokens,
+                onChange: handlers.stone,
+                expanded: openChip === "stoneTokens",
                 onExpandedChange: vi.fn(),
               },
       }}
@@ -174,7 +190,7 @@ describe("HeroCard token row", () => {
   });
 
   it("keeps the +1 Attack chip at 0 while its stepper is open", () => {
-    renderRow({ attackTokens: 0 }, { open: false, chipOpen: true });
+    renderRow({ attackTokens: 0 }, { open: false, openChip: "attackTokens" });
 
     expect(
       screen.getByRole("button", { name: "Boreas: 0 +1 Attack tokens. Hide controls" }),
@@ -212,6 +228,38 @@ describe("HeroCard token row", () => {
   it("offers no +1 Shield when it isn't passed", () => {
     renderRow();
     expect(optionNames()).not.toContain("Add +1 Shield");
+  });
+
+  it("offers +1 Stone last, after +1 Shield, adding one per tap, with its grey chip while held", () => {
+    const handlers = renderRow({ deathMarked: false, shieldTokens: 0, stoneTokens: 1 });
+
+    expect(optionNames()).toEqual([
+      "Add +1 Attack",
+      "Add Confuse",
+      "Add Immobilize",
+      "Add Death Mark",
+      "Add +1 Shield",
+      "Add +1 Stone",
+    ]);
+    fireEvent.click(within(popover()!).getByRole("button", { name: "Add +1 Stone" }));
+    expect(handlers.stone).toHaveBeenCalledWith(2);
+    const chip = screen.getByRole("button", { name: "Boreas: 1 +1 Stone token. Show controls" });
+    expect(chip).toHaveTextContent("×1");
+    expect(chip).toHaveAttribute("title", "+1 Stone tokens");
+  });
+
+  it("disables +1 Stone at 3, in the picker and on the open chip's +", () => {
+    renderRow({ stoneTokens: 3 }, { openChip: "stoneTokens" });
+
+    expect(within(popover()!).getByRole("button", { name: "Add +1 Stone" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add +1 Stone token to Boreas" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Remove +1 Stone token from Boreas" })).toBeEnabled();
+  });
+
+  it("offers no +1 Stone when it isn't passed, and shows no chip at 0", () => {
+    renderRow();
+    expect(optionNames()).not.toContain("Add +1 Stone");
+    expect(screen.queryByRole("button", { name: /\+1 Stone token/ })).toBeNull();
   });
 
   it("has no token row without a picker (the Win Screen)", () => {

@@ -110,6 +110,7 @@ describe("useBattle", () => {
       immobilized: false,
       deathMarked: false,
       shieldTokens: 0,
+      stoneTokens: 0,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
@@ -124,6 +125,7 @@ describe("useBattle", () => {
       immobilized: true,
       deathMarked: true,
       shieldTokens: 5,
+      stoneTokens: 2,
     };
     saveBattleState(persisted);
 
@@ -137,6 +139,7 @@ describe("useBattle", () => {
       immobilized: true,
       deathMarked: true,
       shieldTokens: 5,
+      stoneTokens: 2,
     });
   });
 
@@ -154,6 +157,7 @@ describe("useBattle", () => {
       immobilized: false,
       deathMarked: false,
       shieldTokens: 0,
+      stoneTokens: 0,
     });
   });
 
@@ -363,6 +367,46 @@ describe("useBattle", () => {
     });
     expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
     expect(result.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(2);
+  });
+
+  it("setHeroStoneTokens persists the count, which survives a reload and steps back down", () => {
+    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroStoneTokens("p2", HERO_B.id, 3);
+    });
+    expect(result.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(3);
+    expect(result.current.state?.p2.heroes[HERO_B.id].shieldTokens).toBe(0);
+    expect(result.current.state?.p1.heroes[HERO_A.id].stoneTokens).toBe(0);
+    expect(readRawState().p2.heroes[HERO_B.id].stoneTokens).toBe(3);
+    unmount();
+
+    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+    expect(reloaded.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(3);
+
+    act(() => {
+      reloaded.current.setHeroStoneTokens("p2", HERO_B.id, 2);
+    });
+    expect(reloaded.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(2);
+    expect(readRawState().p2.heroes[HERO_B.id].stoneTokens).toBe(2);
+  });
+
+  it("reaching 3 Stone doesn't defeat the hero; setHeroHp to 0 and passInitiative keep the Stone", () => {
+    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+    act(() => {
+      result.current.setHeroPosition("p2", HERO_B.id, MAP_SPACE_IDS[0]);
+      result.current.setHeroStoneTokens("p2", HERO_B.id, 3);
+    });
+    expect(result.current.state?.p2.heroes[HERO_B.id].hp).toBe(HERO_B.baseHp + 1);
+    expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBe(MAP_SPACE_IDS[0]);
+
+    act(() => {
+      result.current.setHeroHp("p2", HERO_B.id, 0);
+      result.current.passInitiative();
+    });
+    expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBeNull();
+    expect(result.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(3);
   });
 
   it("derives winner from live state and clears it once Bit HP is raised back above 0", () => {

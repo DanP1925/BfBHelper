@@ -5,11 +5,17 @@ import {
   HERO_ATTACK_TOKEN_CEILING,
   HERO_HP_CEILING,
   HERO_SHIELD_TOKEN_CEILING,
+  HERO_STONE_TOKEN_CEILING,
   TOWER_STARTING_HP,
 } from "./constants";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
-import { battleReducer, createInitialBattleState, createInitialHeroState } from "./reducer";
+import {
+  battleReducer,
+  createInitialBattleState,
+  createInitialHeroState,
+  type BattleAction,
+} from "./reducer";
 import type { BattleState } from "./types";
 
 const HERO_A: Hero = {
@@ -44,6 +50,7 @@ describe("createInitialHeroState", () => {
       immobilized: false,
       deathMarked: false,
       shieldTokens: 0,
+      stoneTokens: 0,
     });
     expect(createInitialHeroState({ ...HERO_A, baseHp: HERO_HP_CEILING })).toEqual({
       hp: HERO_HP_CEILING,
@@ -53,6 +60,7 @@ describe("createInitialHeroState", () => {
       immobilized: false,
       deathMarked: false,
       shieldTokens: 0,
+      stoneTokens: 0,
     });
   });
 });
@@ -68,6 +76,7 @@ describe("createInitialBattleState", () => {
       immobilized: false,
       deathMarked: false,
       shieldTokens: 0,
+      stoneTokens: 0,
     });
   });
 
@@ -93,9 +102,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 8", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 9", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(8);
+    expect(state.schemaVersion).toBe(9);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -478,10 +487,15 @@ describe("battleReducer", () => {
     });
   });
 
-  describe("SET_HERO_SHIELD_TOKENS", () => {
-    function shield(state: BattleState, side: "p1" | "p2", value: number): BattleState {
+  // The hero-specific counted tokens (intents 11, 12) share one reducer
+  // shape: clamp-and-replace, manual only, no visibility check.
+  describe.each([
+    { type: "SET_HERO_SHIELD_TOKENS", field: "shieldTokens", ceiling: HERO_SHIELD_TOKEN_CEILING },
+    { type: "SET_HERO_STONE_TOKENS", field: "stoneTokens", ceiling: HERO_STONE_TOKEN_CEILING },
+  ] as const)("$type", ({ type, field, ceiling }) => {
+    function set(state: BattleState, side: "p1" | "p2", value: number): BattleState {
       return battleReducer(state, {
-        type: "SET_HERO_SHIELD_TOKENS",
+        type,
         side,
         heroId: side === "p1" ? HERO_A.id : HERO_B.id,
         value,
@@ -490,89 +504,70 @@ describe("battleReducer", () => {
 
     it("clamps and replaces, changing nothing but that hero's count", () => {
       const state = baseState();
-      const next = shield(state, "p1", 3);
-      expect(next.p1.heroes[HERO_A.id]).toEqual({ ...state.p1.heroes[HERO_A.id], shieldTokens: 3 });
+      const next = set(state, "p1", 2);
+      expect(next.p1.heroes[HERO_A.id]).toEqual({ ...state.p1.heroes[HERO_A.id], [field]: 2 });
       expect(next.p1.heroPositions).toBe(state.p1.heroPositions);
       expect(next.p2).toBe(state.p2);
 
-      expect(shield(next, "p1", 2).p1.heroes[HERO_A.id].shieldTokens).toBe(2);
-      expect(shield(state, "p1", 99).p1.heroes[HERO_A.id].shieldTokens).toBe(
-        HERO_SHIELD_TOKEN_CEILING,
-      );
+      expect(set(next, "p1", 1).p1.heroes[HERO_A.id][field]).toBe(1);
+      expect(set(state, "p1", ceiling + 1).p1.heroes[HERO_A.id][field]).toBe(ceiling);
     });
 
-    it("doesn't check visibility: an enemy of Cyrus can be shielded too", () => {
-      // HERO_B is Cyrus, on p2, so HERO_A (p1) is his enemy; the UI alone
-      // decides who gets a control.
-      const state = shield(shield(baseState(), "p1", 1), "p2", 2);
-      expect(state.p1.heroes[HERO_A.id].shieldTokens).toBe(1);
-      expect(state.p2.heroes[HERO_B.id].shieldTokens).toBe(2);
-    });
-
-    it("is a no-op for an unknown heroId", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_SHIELD_TOKENS",
-        side: "p1",
-        heroId: "sterling",
-        value: 2,
-      });
-      expect(next).toBe(state);
-    });
-
-    it("is a no-op (same reference) when the clamped value is unchanged", () => {
-      const state = baseState();
-      expect(shield(state, "p1", -1)).toBe(state);
-      const two = shield(state, "p1", 2);
-      expect(shield(two, "p1", 2)).toBe(two);
-    });
-
-    it("survives SET_HERO_HP to 0, a move, the other tokens and PASS_INITIATIVE", () => {
-      let state = shield(baseState(), "p1", 4);
-      state = battleReducer(state, {
-        type: "SET_HERO_HP",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 0,
-      });
-      state = battleReducer(state, {
+    it("reaching the ceiling leaves HP and position alone (no auto-defeat)", () => {
+      const placed = battleReducer(baseState(), {
         type: "SET_HERO_POSITION",
         side: "p1",
         heroId: HERO_A.id,
         spaceId: MAP_SPACE_IDS[0],
       });
-      state = battleReducer(state, {
-        type: "SET_HERO_ATTACK_TOKENS",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 2,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_CONFUSED",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: true,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_IMMOBILIZED",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: true,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_DEATH_MARKED",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: true,
-      });
-      state = battleReducer(state, { type: "PASS_INITIATIVE" });
+      const next = set(placed, "p1", ceiling);
+      expect(next.p1.heroes[HERO_A.id].hp).toBe(placed.p1.heroes[HERO_A.id].hp);
+      expect(next.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
+    });
+
+    it("doesn't check visibility: either side can hold it", () => {
+      // HERO_B is Cyrus and neither hero is Sedusa; the UI alone decides
+      // who gets a control.
+      const state = set(set(baseState(), "p1", 1), "p2", 2);
+      expect(state.p1.heroes[HERO_A.id][field]).toBe(1);
+      expect(state.p2.heroes[HERO_B.id][field]).toBe(2);
+    });
+
+    it("is a no-op for an unknown heroId", () => {
+      const state = baseState();
+      expect(battleReducer(state, { type, side: "p1", heroId: "sterling", value: 2 })).toBe(state);
+    });
+
+    it("is a no-op (same reference) when the clamped value is unchanged", () => {
+      const state = baseState();
+      expect(set(state, "p1", -1)).toBe(state);
+      const two = set(state, "p1", 2);
+      expect(set(two, "p1", 2)).toBe(two);
+    });
+
+    it("survives SET_HERO_HP to 0, a move, the other tokens and PASS_INITIATIVE", () => {
+      const hero = { side: "p1", heroId: HERO_A.id } as const;
+      const others: BattleAction[] = [
+        { type: "SET_HERO_HP", ...hero, value: 0 },
+        { type: "SET_HERO_POSITION", ...hero, spaceId: MAP_SPACE_IDS[0] },
+        { type: "SET_HERO_ATTACK_TOKENS", ...hero, value: 2 },
+        { type: "SET_HERO_CONFUSED", ...hero, value: true },
+        { type: "SET_HERO_IMMOBILIZED", ...hero, value: true },
+        { type: "SET_HERO_DEATH_MARKED", ...hero, value: true },
+        { type: "SET_HERO_SHIELD_TOKENS", ...hero, value: 1 },
+        { type: "SET_HERO_STONE_TOKENS", ...hero, value: 1 },
+        { type: "PASS_INITIATIVE" },
+      ];
+      const state = others
+        .filter((action) => action.type !== type)
+        .reduce(battleReducer, set(baseState(), "p1", 3));
       expect(state.p1.heroes[HERO_A.id]).toMatchObject({
         hp: 0,
         attackTokens: 2,
         confused: true,
         immobilized: true,
         deathMarked: true,
-        shieldTokens: 4,
+        [field]: 3,
       });
     });
   });

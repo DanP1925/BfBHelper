@@ -19,6 +19,7 @@ export type UseBattleResult = {
   setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroDeathMarked: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroShieldTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
+  setHeroStoneTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
@@ -163,6 +164,14 @@ export function useBattle(
     );
   }, []);
 
+  const setHeroStoneTokens = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
+    setState((prev) =>
+      prev === null
+        ? prev
+        : battleReducer(prev, { type: "SET_HERO_STONE_TOKENS", side, heroId, value }),
+    );
+  }, []);
+
   const setStructureHp = useCallback(
     (side: PlayerId, slot: keyof StructuresState, value: number) => {
       setState((prev) =>
@@ -204,6 +213,7 @@ export function useBattle(
     setHeroImmobilized,
     setHeroDeathMarked,
     setHeroShieldTokens,
+    setHeroStoneTokens,
     setStructureHp,
     setHeroPosition,
     setGoldPile,

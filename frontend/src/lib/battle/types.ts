@@ -34,6 +34,12 @@ export type HeroBattleState = {
    * spent on damage, and never cleared on defeat (either hero's),
    * respawn or a new round. */
   shieldTokens: number;
+  /** Stone tokens on this hero (intent/12), given by Sedusa's Stony
+   * Glare and power cards. 0..HERO_STONE_TOKEN_CEILING. Only the UI
+   * limits it to Sedusa's enemies (heroSpecificTokens.ts). Changed only
+   * by hand: reaching 3 doesn't defeat the hero, and defeat, respawn
+   * and a new round don't clear it. */
+  stoneTokens: number;
 };
 
 export type BattleTeamState = {
@@ -47,7 +53,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 8;
+  schemaVersion: 9;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

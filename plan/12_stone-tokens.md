@@ -64,13 +64,13 @@ frontend/e2e/
 
 ### Data & state layer
 
-- [ ] M1. `lib/battle/types.ts`: `HeroBattleState` += `stoneTokens: number`
+- [x] M1. `lib/battle/types.ts`: `HeroBattleState` += `stoneTokens: number`
       (with the spec's doc comment), `BattleState.schemaVersion: 9`.
-- [ ] M2. `lib/battle/constants.ts`: += `HERO_STONE_TOKEN_CEILING = 3`,
+- [x] M2. `lib/battle/constants.ts`: += `HERO_STONE_TOKEN_CEILING = 3`,
       citing intent 12's Value Bounds (a hero at 3 is defeated and their
       tokens are discarded). `lib/battle/bounds.ts`: +=
       `clampHeroStoneTokens(value)`, next to `clampHeroShieldTokens`.
-- [ ] M3. `lib/battle/reducer.ts`: += `SET_HERO_STONE_TOKENS { side, heroId,
+- [x] M3. `lib/battle/reducer.ts`: += `SET_HERO_STONE_TOKENS { side, heroId,
       value: number }`, one `setHeroField(..., "stoneTokens",
       clampHeroStoneTokens(value))` call with a manual-only comment
       ("reaching 3 doesn't defeat, never cleared on defeat"). No visibility
@@ -79,12 +79,12 @@ frontend/e2e/
       `schemaVersion: 9`. `SET_HERO_HP` (including to 0),
       `SET_HERO_POSITION`, every other token action and `PASS_INITIATIVE`
       leave the count alone.
-- [ ] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION = 9`.
+- [x] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION = 9`.
       += `LegacyHeroBattleStateV8 = Omit<HeroBattleState, "stoneTokens">`,
       and `LegacyHeroBattleStateV7` derives from it. += `LegacyBattleTeamStateV8`;
       `PersistedBattleStateV8.p1/p2` use it, doc comment says it's only the
       source for `battleMigrations[8]`. += `PersistedBattleStateV9`.
-- [ ] M5. `lib/persistence/storage.ts`: += `upgradeV8ToV9 =
+- [x] M5. `lib/persistence/storage.ts`: += `upgradeV8ToV9 =
       addHeroFieldsStep<PersistedBattleStateV9>(9, { stoneTokens: 0 })`;
       `battleMigrations` += `8: upgradeV8ToV9`. `saveBattleState`,
       `isValidPersistedBattleState` and the import use
@@ -92,11 +92,11 @@ frontend/e2e/
       `isNumberInRange(hv.stoneTokens, 0, HERO_STONE_TOKEN_CEILING)` (doc
       comment lists it) and doesn't check who holds Stone.
       `loadBattleState` returns `schemaVersion: 9`.
-- [ ] M6. `lib/useBattle.ts`: += `setHeroStoneTokens(side, heroId, value)`,
+- [x] M6. `lib/useBattle.ts`: += `setHeroStoneTokens(side, heroId, value)`,
       same shape as `setHeroShieldTokens`.
-- [ ] M7. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
+- [x] M7. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
       `stone: { owner: "sedusa", targets: "enemies" }`.
-- [ ] M8. Fixtures and tests:
+- [x] M8. Fixtures and tests:
       - every hand-written `HeroBattleState` gains `stoneTokens: 0`
         (`reducer.test.ts`, `storage.test.ts`, `useBattle.test.tsx`,
         `HeroCard.test.tsx`, `BattleMapScreen.test.tsx`,
@@ -119,42 +119,56 @@ frontend/e2e/
 
 ### Stone UI
 
-- [ ] M9. `app/globals.css`: += `--color-stone: #a3adb8`, with a comment
+- [x] M9. `app/globals.css`: += `--color-stone: #a3adb8`, with a comment
       like `--color-shield`'s (the rulebook token's stone grey, cooler and
       lighter than `--color-muted`).
-- [ ] M10. `components/TokenChip/StoneTokenIcon.tsx` (new): the canvas's
+- [x] M10. `components/TokenChip/StoneTokenIcon.tsx` (new): the canvas's
       coiled snake (the spec's two paths: oval head, S-shaped body), 16px
       viewBox stroke SVG in `currentColor`, `aria-hidden`, `size` prop
       (12px on the Board, 14px in the picker, 13px on the Map).
-- [ ] M11. `components/battleTokens.ts`: `CountedTokenField` +=
+- [x] M11. `components/battleTokens.ts`: `CountedTokenField` +=
       `"stoneTokens"` (doc comment cites intent 12). `BATTLE_TOKENS` += the
       `"+1 Stone"` row after Shield (`kind: "counted"`,
       `field: "stoneTokens"`, `StoneTokenIcon`, `label` "+1 Stone",
       `var(--color-stone)`, `HERO_STONE_TOKEN_CEILING`,
       `heroSpecific: "stone"`). The table's doc comment adds Stone to the
       order list.
-- [ ] M12. `app/page.tsx`: `setHeroToken` += `stoneTokens:
+- [x] M12. `app/page.tsx`: `setHeroToken` += `stoneTokens:
       battle.setHeroStoneTokens`. Check that `HeroCard`, `BattleTeamPanel`,
       `BattleBoardScreen` and `MapTeamStatusPanel` need no edit (the
       spec's claim); note any that did.
-- [ ] M13. Spec open item: does `--color-stone` `#a3adb8` read as a held
+      **None did:** `tsc` flagged only test fixtures, and the table-driven
+      wiring picked Stone up from its `BATTLE_TOKENS` row.
+- [x] M13. Spec open item: does `--color-stone` `#a3adb8` read as a held
       token at 1280x800, not as disabled or muted next to a defeated
       hero's dimming, and apart from Immobilize's ice blue? Decide in the
       browser; adjust on the canvas and in the spec if not.
-- [ ] M14. Spec open item: is `StoneTokenIcon` legible at 12px on the
+      **Reads fine, kept.** The grey chip has the same tinted fill and
+      border as every held chip, so it reads as held. It sits clearly apart
+      from Immobilize's ice blue beside it, and from a defeated hero's
+      greyscale portrait.
+- [x] M14. Spec open item: is `StoneTokenIcon` legible at 12px on the
       Board and 13px on the Map, apart from the swords and the shield?
       Check in the browser at 1280x800; simplify the snake if it blurs,
       and update the spec.
-- [ ] M15. Spec open item: Board at 1280x800 with the six-token case (an
+      **Legible, kept.** It doesn't blur at 12px or 13px and reads apart
+      from the swords and the shield. At that size it reads more like a
+      script "S" than a snake; the BACKLOG's "Review every token's
+      display" item can look at it again with the other icons.
+- [x] M15. Spec open item: Board at 1280x800 with the six-token case (an
       ally of Cyrus who's an enemy of both Kunoichi and Sedusa) holding
       +1 Attack ×9, Confuse, Immobilize, Death Mark, Shield ×9 and
       Stone ×3: the card wraps to two lines and the Board doesn't scroll,
       with any stepper open. Also the Map's token line for that hero in
       the 170px panel. Decide in the browser, and update the spec.
+      **Fits.** Baldwin with all six wraps to two lines (row 44px: +1
+      Attack to Death Mark, then Shield, Stone and "+"), and the Board
+      doesn't scroll at 1280x800 or 2560x1440 with the Attack or the Stone
+      stepper open. His Map token line stays one line (14px) in the panel.
 
 ### Tests & verification
 
-- [ ] M16. Tests:
+- [x] M16. Tests:
       - `HeroCard`: "+1 Stone" option only when `tokens.stoneTokens` is
         passed, after "+1 Shield", disabled at 3; chip shown while held
         or open, its + disabled at 3
@@ -172,8 +186,10 @@ frontend/e2e/
         Map panel) and a reload; it stays when that hero's HP goes to 0
         and when Sedusa's does; Sedusa's team's pickers have no "+1
         Stone"; stepping to 0 removes the chip on both screens
-- [ ] M17. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green.
-- [ ] M18. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M17. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green.
+      (421 unit tests, 14 e2e specs. A fresh worktree first needs
+      `next typegen` for `layout.tsx`'s `LayoutProps`, unrelated to Stone.)
+- [x] M18. Manual QA at 1280x800 (`/qa-screens`):
       - "+1 Stone" offered only on Sedusa's enemies, never on her own
         team; the grey chip reads as held, apart from the muted text,
         the defeated dimming and the ice-blue Immobilize (M13); hover and
@@ -186,7 +202,16 @@ frontend/e2e/
         0 Stone and its Shield, Death Mark, Immobilize, Confuse and +1
         Attack values kept
       - New Draft resets every count
-- [ ] M19. `npm version minor --no-git-tag-version` (→ 0.12.0). In
+      Checked by a seeded script at 1280x800 and 2560x1440: offered on
+      exactly Sedusa's enemies (not Sedusa or Kunoichi, yes on Cyrus);
+      color and icon (M13, M14); Board and Map fit (M15); Boreas's Stone
+      dims with his row on the Map at 0 HP; a schema-8 save upgrades to 9
+      with every hero at 0 Stone and Baldwin's ×9 Attack, Confuse,
+      Immobilize, Death Mark and ×9 Shield kept. Not screenshotted: the
+      grey hover/focus outline (the shared `--token-accent` rule) and New
+      Draft (`clearDraft` already clears the stored battle, unchanged
+      here). Win Screen covered by `WinScreen.test.tsx`.
+- [x] M19. `npm version minor --no-git-tag-version` (→ 0.12.0). In
       `BACKLOG.md`, mark Stone done in Sedusa's entry and the
       hero-specific table, linking intent 12 and v0.12.0, as intent 11
       did for Shield.
