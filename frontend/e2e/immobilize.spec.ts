@@ -1,21 +1,5 @@
 import { test, expect } from "@playwright/test";
-
-/** Native HTML5 drag-and-drop via raw mouse down/move/up, same as
- * battle-map.spec.ts (Playwright's `dragTo` doesn't reliably fire the
- * dragstart/dragover/drop sequence `MapToken`/`MapSpace` rely on). */
-async function dragElementTo(
-  page: import("@playwright/test").Page,
-  source: import("@playwright/test").Locator,
-  targetX: number,
-  targetY: number,
-) {
-  const box = await source.boundingBox();
-  if (box === null) throw new Error("drag source has no bounding box");
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(targetX, targetY, { steps: 10 });
-  await page.mouse.up();
-}
+import { dragElementTo } from "./helpers";
 
 test("Immobilize is added and removed, never blocks a move, and survives a Board/Map switch, reload and defeat", async ({
   page,

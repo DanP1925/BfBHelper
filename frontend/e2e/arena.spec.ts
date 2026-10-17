@@ -1,20 +1,11 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
+import { dragElementTo } from "./helpers";
 
-/** Raw mouse down/move/up, as in battle-map.spec.ts: Playwright's `dragTo`
- * doesn't reliably fire the native dragstart/dragover/drop sequence. */
-async function dragTo(page: Page, source: Locator, target: { x: number; y: number }) {
-  const box = await source.boundingBox();
-  if (box === null) throw new Error("drag source has no bounding box");
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(target.x, target.y, { steps: 10 });
-  await page.mouse.up();
-}
-
-async function centerOf(locator: Locator) {
-  const box = await locator.boundingBox();
+/** Drags `source` onto the center of `target`. */
+async function dragTo(page: Page, source: Locator, target: Locator) {
+  const box = await target.boundingBox();
   if (box === null) throw new Error("drop target has no bounding box");
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await dragElementTo(page, source, box.x + box.width / 2, box.y + box.height / 2);
 }
 
 /** A hero's draggable token, wherever it is on the Map. */
@@ -74,14 +65,14 @@ test("the Arena opens at Felix's level 4, takes only Felix and one enemy, and su
   }
   await page.getByRole("button", { name: "Map" }).click();
   await expect(arena).toHaveCount(0);
-  await dragTo(page, token(page, "Felix"), await centerOf(board));
+  await dragTo(page, token(page, "Felix"), board);
   await expect(arena).toBeVisible();
 
   // Felix and one enemy go in; a second enemy and Felix's ally are refused.
-  await dragTo(page, token(page, "Felix"), await centerOf(arena));
-  await dragTo(page, token(page, enemy), await centerOf(arena));
-  await dragTo(page, token(page, secondEnemy), await centerOf(arena));
-  await dragTo(page, token(page, allyNames[0]), await centerOf(arena));
+  await dragTo(page, token(page, "Felix"), arena);
+  await dragTo(page, token(page, enemy), arena);
+  await dragTo(page, token(page, secondEnemy), arena);
+  await dragTo(page, token(page, allyNames[0]), arena);
   await expect(arena.locator("img[alt]")).toHaveCount(2);
   await expect(arena.getByAltText("Felix", { exact: true })).toBeVisible();
   await expect(arena.getByAltText(enemy, { exact: true })).toBeVisible();
@@ -107,7 +98,7 @@ test("the Arena opens at Felix's level 4, takes only Felix and one enemy, and su
   await expect(arena.getByAltText("Felix", { exact: true })).toBeVisible();
 
   // The player drags the survivor out; the empty Arena stays at level 4.
-  await dragTo(page, token(page, "Felix"), await centerOf(board));
+  await dragTo(page, token(page, "Felix"), board);
   await expect(arena).toBeVisible();
   await expect(arena.locator("img[alt]")).toHaveCount(0);
 

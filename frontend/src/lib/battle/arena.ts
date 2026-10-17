@@ -34,7 +34,10 @@ export function arenaOccupants(state: BattleState): HeroDragPayload[] {
  * hero; otherwise while Felix is drafted, at level 4 and not defeated (not
  * at 0 HP and not in his respawn area). */
 export function isArenaShown(state: BattleState): boolean {
-  if (arenaOccupants(state).length > 0) return true;
+  const occupied = SIDES.some((side) =>
+    Object.values(state[side].heroPositions).includes(ARENA_POSITION),
+  );
+  if (occupied) return true;
 
   const side = arenaOwnerSide(state);
   if (side === null) return false;

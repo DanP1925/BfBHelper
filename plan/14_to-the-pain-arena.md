@@ -169,8 +169,11 @@ frontend/e2e/
       **Kept:** the label and dashed box read as a separate drop zone.
 - [x] M14. Spec open item: `ArenaPanel` copies `RespawnAreaStrip`'s
       ~20 lines of drag-depth handling. Leave it copied unless
-      `/simplify` flags it; note the outcome in the spec. **Copied;**
-      `/simplify` wasn't run on this PR.
+      `/simplify` flags it; note the outcome in the spec. **Extracted:**
+      `/simplify` flagged it, so `lib/map/useHeroDropTarget.ts` now
+      serves `ArenaPanel`, `RespawnAreaStrip` and `MapSpace`. Tests drop
+      through `src/test/heroDrag.ts`'s `dropHero` (no hard-coded MIME
+      type), and the e2e drag helper lives in `e2e/helpers.ts`.
 
 ### Tests & verification
 

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Hero } from "../../lib/draft/types";
+import { dropHero, fakeDataTransfer } from "../../test/heroDrag";
 import { RespawnAreaStrip } from "./RespawnAreaStrip";
 
 function makeHero(id: Hero["id"], name: string): Hero {
@@ -11,18 +12,6 @@ function makeHero(id: Hero["id"], name: string): Hero {
     portrait: `/portraits/${id}.png`,
     battleToken: `/heroes-tokens/${id}.png`,
     baseHp: 10,
-  };
-}
-
-/** jsdom's DataTransfer doesn't implement getData/setData by default —
- * this minimal stand-in backs both, matching the shape
- * lib/map/dragPayload.ts reads/writes. */
-function fakeDataTransfer() {
-  const store = new Map<string, string>();
-  return {
-    setData: (type: string, value: string) => store.set(type, value),
-    getData: (type: string) => store.get(type) ?? "",
-    effectAllowed: "",
   };
 }
 
@@ -37,12 +26,7 @@ describe("RespawnAreaStrip", () => {
     const onDrop = vi.fn();
     render(<RespawnAreaStrip side="p1" label="Player 1" heroes={[]} onDrop={onDrop} />);
 
-    const dataTransfer = fakeDataTransfer();
-    dataTransfer.setData(
-      "application/x-bfbhelper-hero",
-      JSON.stringify({ side: "p1", heroId: "caligar" }),
-    );
-    fireEvent.drop(screen.getByText("Respawning Area"), { dataTransfer });
+    dropHero(screen.getByText("Respawning Area"), { side: "p1", heroId: "caligar" });
 
     expect(onDrop).toHaveBeenCalledWith("caligar");
   });
@@ -58,14 +42,9 @@ describe("RespawnAreaStrip", () => {
       />,
     );
 
-    const dataTransfer = fakeDataTransfer();
-    dataTransfer.setData(
-      "application/x-bfbhelper-hero",
-      JSON.stringify({ side: "p1", heroId: "caligar" }),
-    );
-
-    fireEvent.drop(screen.getByRole("region", { name: "Player 1 respawning area" }), {
-      dataTransfer,
+    dropHero(screen.getByRole("region", { name: "Player 1 respawning area" }), {
+      side: "p1",
+      heroId: "caligar",
     });
 
     expect(onDrop).toHaveBeenCalledOnce();
@@ -83,14 +62,9 @@ describe("RespawnAreaStrip", () => {
       />,
     );
 
-    const dataTransfer = fakeDataTransfer();
-    dataTransfer.setData(
-      "application/x-bfbhelper-hero",
-      JSON.stringify({ side: "p2", heroId: "sterling" }),
-    );
-
-    fireEvent.drop(screen.getByRole("region", { name: "Player 1 respawning area" }), {
-      dataTransfer,
+    dropHero(screen.getByRole("region", { name: "Player 1 respawning area" }), {
+      side: "p2",
+      heroId: "sterling",
     });
 
     expect(onDrop).not.toHaveBeenCalled();
@@ -107,9 +81,7 @@ describe("RespawnAreaStrip", () => {
       />,
     );
 
-    fireEvent.drop(screen.getByRole("region", { name: "Player 1 respawning area" }), {
-      dataTransfer: fakeDataTransfer(),
-    });
+    dropHero(screen.getByRole("region", { name: "Player 1 respawning area" }));
 
     expect(onDrop).not.toHaveBeenCalled();
   });
@@ -146,12 +118,7 @@ describe("RespawnAreaStrip", () => {
     fireEvent.dragEnter(strip, { dataTransfer: fakeDataTransfer() });
     expect(container.querySelector('[class*="stripDragOver"]')).not.toBeNull();
 
-    const dataTransfer = fakeDataTransfer();
-    dataTransfer.setData(
-      "application/x-bfbhelper-hero",
-      JSON.stringify({ side: "p1", heroId: "boreas" }),
-    );
-    fireEvent.drop(strip, { dataTransfer });
+    dropHero(strip, { side: "p1", heroId: "boreas" });
 
     expect(container.querySelector('[class*="stripDragOver"]')).toBeNull();
   });
