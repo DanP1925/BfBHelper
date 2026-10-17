@@ -77,32 +77,32 @@ frontend/e2e/
 
 ### Shared counted-token path (refactor, no behavior change)
 
-- [ ] M1. `lib/battle/types.ts`: += `CountedTokenField` (`"attackTokens" |
+- [x] M1. `lib/battle/types.ts`: += `CountedTokenField` (`"attackTokens" |
       "shieldTokens" | "stoneTokens"` for now), moved from
       `components/battleTokens.ts`, which imports it from here.
-- [ ] M2. `lib/battle/constants.ts`: replace `HERO_ATTACK_TOKEN_CEILING`,
+- [x] M2. `lib/battle/constants.ts`: replace `HERO_ATTACK_TOKEN_CEILING`,
       `HERO_SHIELD_TOKEN_CEILING` and `HERO_STONE_TOKEN_CEILING` with
       `HERO_COUNTED_TOKEN_CEILINGS` (`as const satisfies
       Record<CountedTokenField, number>`), each entry keeping its old
       comment. `types.ts`'s field doc comments point at the table.
-- [ ] M3. `lib/battle/bounds.ts`: replace the three `clampHero…Tokens`
+- [x] M3. `lib/battle/bounds.ts`: replace the three `clampHero…Tokens`
       with `clampHeroCountedToken(field, value)`.
-- [ ] M4. `lib/battle/reducer.ts`: replace `SET_HERO_ATTACK_TOKENS`,
+- [x] M4. `lib/battle/reducer.ts`: replace `SET_HERO_ATTACK_TOKENS`,
       `SET_HERO_SHIELD_TOKENS` and `SET_HERO_STONE_TOKENS` with
       `SET_HERO_COUNTED_TOKEN { side, heroId, field, value }`, one
       `setHeroField(..., field, clampHeroCountedToken(field, value))` call.
       One manual-only comment keeps each token's specifics (Shield never
       spent on damage, 3 Stone doesn't defeat).
-- [ ] M5. `lib/useBattle.ts`: replace `setHeroAttackTokens`,
+- [x] M5. `lib/useBattle.ts`: replace `setHeroAttackTokens`,
       `setHeroShieldTokens` and `setHeroStoneTokens` with
       `setHeroCountedToken(side, heroId, field, value)`. `app/page.tsx`:
       `setHeroToken`'s counted entries bind their field to it.
-- [ ] M6. `lib/persistence/storage.ts`: `hasValidBattleTeamShape`
+- [x] M6. `lib/persistence/storage.ts`: `hasValidBattleTeamShape`
       replaces its three counted-token checks with one loop over
       `HERO_COUNTED_TOKEN_CEILINGS`; its doc comment says so.
       `components/battleTokens.ts`: each counted row's `max` reads from
       the table.
-- [ ] M7. Tests follow the renames, with no behavior change:
+- [x] M7. Tests follow the renames, with no behavior change:
       `bounds.test.ts` (one `describe.each` over the table for
       `clampHeroCountedToken`), `reducer.test.ts` (the counted-token
       `describe.each` dispatches `SET_HERO_COUNTED_TOKEN` with its
@@ -112,31 +112,31 @@ frontend/e2e/
 
 ### Chill data & state layer
 
-- [ ] M8. `lib/battle/types.ts`: `HeroBattleState` += `chillTokens:
+- [x] M8. `lib/battle/types.ts`: `HeroBattleState` += `chillTokens:
       number` (with the spec's doc comment), `CountedTokenField` +=
       `"chillTokens"`, `BattleState.schemaVersion: 10`.
-- [ ] M9. `lib/battle/constants.ts`: `HERO_COUNTED_TOKEN_CEILINGS` +=
+- [x] M9. `lib/battle/constants.ts`: `HERO_COUNTED_TOKEN_CEILINGS` +=
       `chillTokens: 5`, citing intent 13's Value Bounds (the box's 5).
       No new clamp, action or setter: M3-M5 cover it.
-- [ ] M10. `lib/battle/reducer.ts`: `createInitialHeroState` returns
+- [x] M10. `lib/battle/reducer.ts`: `createInitialHeroState` returns
       `chillTokens: 0` (doc comment adds "no Chill tokens"),
       `createInitialBattleState` writes `schemaVersion: 10`. The shared
       comment adds "Chill isn't cleared at the end of an action".
-- [ ] M11. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
+- [x] M11. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
       10`. += `LegacyHeroBattleStateV9 = Omit<HeroBattleState,
       "chillTokens">`, and `LegacyHeroBattleStateV8` derives from it. +=
       `LegacyBattleTeamStateV9`; `PersistedBattleStateV9.p1/p2` use it,
       doc comment says it's only the source for `battleMigrations[9]`. +=
       `PersistedBattleStateV10`.
-- [ ] M12. `lib/persistence/storage.ts`: += `upgradeV9ToV10 =
+- [x] M12. `lib/persistence/storage.ts`: += `upgradeV9ToV10 =
       addHeroFieldsStep<PersistedBattleStateV10>(10, { chillTokens: 0 })`;
       `battleMigrations` += `9: upgradeV9ToV10`. `saveBattleState`,
       `isValidPersistedBattleState` and the import use
       `PersistedBattleStateV10`. M6's loop validates `chillTokens` with no
       extra line, and doesn't check who holds Chill.
-- [ ] M13. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
+- [x] M13. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
       `chill: { owner: "dazeem", targets: "enemies" }`.
-- [ ] M14. Fixtures and tests:
+- [x] M14. Fixtures and tests:
       - every hand-written `HeroBattleState` gains `chillTokens: 0`
         (`reducer.test.ts`, `storage.test.ts`, `useBattle.test.tsx`,
         `HeroCard.test.tsx`, `BattleMapScreen.test.tsx`,
@@ -160,15 +160,15 @@ frontend/e2e/
 
 ### Chill UI
 
-- [ ] M15. `app/globals.css`: += `--color-chill: #5ccfe6`, with a comment
+- [x] M15. `app/globals.css`: += `--color-chill: #5ccfe6`, with a comment
       like `--color-stone`'s (the rulebook token's blue, as a frost cyan
       brighter and greener than `--color-immobilize`).
-- [ ] M16. `components/TokenChip/ChillTokenIcon.tsx` (new): the canvas's
+- [x] M16. `components/TokenChip/ChillTokenIcon.tsx` (new): the canvas's
       snowflake (the spec's one path: three crossing strokes with a V
       near each tip), 16px viewBox stroke SVG in `currentColor`,
       `aria-hidden`, `size` prop (12px on the Board, 14px in the picker,
       13px on the Map).
-- [ ] M17. `components/battleTokens.ts`: `BATTLE_TOKENS` += the
+- [x] M17. `components/battleTokens.ts`: `BATTLE_TOKENS` += the
       `"+1 Chill"` row after Stone (`kind: "counted"`,
       `field: "chillTokens"`, `ChillTokenIcon`, `label` "+1 Chill",
       `var(--color-chill)`, `HERO_COUNTED_TOKEN_CEILINGS.chillTokens`,
@@ -177,25 +177,31 @@ frontend/e2e/
       `app/page.tsx`: `setHeroToken` += `chillTokens`. Check that
       `HeroCard`, `BattleTeamPanel`, `BattleBoardScreen` and
       `MapTeamStatusPanel` need no edit (the spec's claim); note any that
-      did.
-- [ ] M18. Spec open item: does `--color-chill` `#5ccfe6` read apart from
+      did. **None did:** `battleTokens.ts` is the only component source
+      change.
+- [x] M18. Spec open item: does `--color-chill` `#5ccfe6` read apart from
       Immobilize's ice blue on the same card, and from P2's teal, at
       1280x800? Decide in the browser; adjust on the canvas and in the
-      spec if not.
-- [ ] M19. Spec open item: is `ChillTokenIcon` legible at 12px on the
+      spec if not. **Kept:** it reads clearly apart from both.
+- [x] M19. Spec open item: is `ChillTokenIcon` legible at 12px on the
       Board and 13px on the Map? If the six V tips blur at 12px, drop
-      them and keep the three strokes. Update the spec.
-- [ ] M20. Spec open item: Board at 1280x800 with the seven-token case
+      them and keep the three strokes. Update the spec. **Kept as
+      drawn:** the V tips stay legible at both sizes.
+- [x] M20. Spec open item: Board at 1280x800 with the seven-token case
       (an ally of Cyrus who's an enemy of Kunoichi, Sedusa and Dazeem)
       holding +1 Attack ×9, Confuse, Immobilize, Death Mark, Shield ×9,
       Stone ×3 and Chill ×5: the card wraps to two lines, not three, and
       the Board doesn't scroll, with any stepper open. Also the Map's
       token line for that hero in the 170px panel. Decide in the
-      browser, and update the spec.
+      browser, and update the spec. **Accepted at three lines:** the
+      chips fit on two, but the "+" picker wraps alone to a third. The
+      Board still fits with no scroll, open or closed; tightening is left
+      to BACKLOG.md's token-display review. The Map line wraps to two
+      and fits.
 
 ### Tests & verification
 
-- [ ] M21. Tests:
+- [x] M21. Tests:
       - `HeroCard`: "+1 Chill" option only when `tokens.chillTokens` is
         passed, after "+1 Stone", disabled at 5; chip shown while held
         or open, its + disabled at 5
@@ -214,10 +220,10 @@ frontend/e2e/
         and when Dazeem's does; adding +1 Attack to the same hero leaves
         Chill unchanged; Dazeem's team's pickers have no "+1 Chill";
         stepping to 0 removes the chip on both screens
-- [ ] M22. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green
+- [x] M22. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green
       (the existing attack, shield and stone e2e specs too, since their
       setters changed underneath).
-- [ ] M23. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M23. Manual QA at 1280x800 (`/qa-screens`):
       - "+1 Chill" offered only on Dazeem's enemies, never on his own
         team; the cyan chip reads apart from Immobilize and P2's teal
         (M18); hover and focus outline in cyan
@@ -231,7 +237,7 @@ frontend/e2e/
         0 Chill and its Stone, Shield, Death Mark, Immobilize, Confuse and
         +1 Attack values kept
       - New Draft resets every count
-- [ ] M24. `npm version minor --no-git-tag-version` (→ 0.13.0). In
+- [x] M24. `npm version minor --no-git-tag-version` (→ 0.13.0). In
       `BACKLOG.md`, mark Chill done in Dazeem's entry and the
       hero-specific table, linking intent 13 and v0.13.0, as intent 12
       did for Stone. Mark spec 13 **BUILT**.

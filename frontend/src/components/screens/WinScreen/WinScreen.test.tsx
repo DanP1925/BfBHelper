@@ -20,7 +20,7 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling"), makeHero("felix", "F
 
 function makeBattleState(): BattleState {
   return {
-    schemaVersion: 9,
+    schemaVersion: 10,
     initiative: "p1",
     p1: {
       gold: 5,
@@ -34,6 +34,7 @@ function makeBattleState(): BattleState {
           deathMarked: false,
           shieldTokens: 0,
           stoneTokens: 0,
+          chillTokens: 0,
         },
         caligar: {
           hp: 0,
@@ -44,6 +45,7 @@ function makeBattleState(): BattleState {
           deathMarked: false,
           shieldTokens: 0,
           stoneTokens: 0,
+          chillTokens: 0,
         },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
@@ -61,6 +63,7 @@ function makeBattleState(): BattleState {
           deathMarked: false,
           shieldTokens: 0,
           stoneTokens: 0,
+          chillTokens: 0,
         },
         felix: {
           hp: 9,
@@ -71,6 +74,7 @@ function makeBattleState(): BattleState {
           deathMarked: false,
           shieldTokens: 0,
           stoneTokens: 0,
+          chillTokens: 0,
         },
       },
       structures: { top: 11, middle: 0, bottom: 11, bit: 0 },
@@ -95,7 +99,7 @@ describe("WinScreen", () => {
     expect(screen.getByText("Winner")).toBeInTheDocument();
   });
 
-  it("shows no token controls on the cards (intents 06-12)", () => {
+  it("shows no token controls on the cards (intents 06-13)", () => {
     const base = makeBattleState();
     render(
       <WinScreen
@@ -107,7 +111,12 @@ describe("WinScreen", () => {
             ...base.p1,
             heroes: {
               ...base.p1.heroes,
-              boreas: { ...base.p1.heroes.boreas, shieldTokens: 3, stoneTokens: 2 },
+              boreas: {
+                ...base.p1.heroes.boreas,
+                shieldTokens: 3,
+                stoneTokens: 2,
+                chillTokens: 4,
+              },
             },
           },
         }}
@@ -122,6 +131,7 @@ describe("WinScreen", () => {
     expect(screen.queryByRole("button", { name: /^Death Mark token on / })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /\+1 Shield token/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /\+1 Stone token/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+1 Chill token/ })).not.toBeInTheDocument();
   });
 
   it("renders a 'Player 2 Wins!' heading when p2 wins", () => {

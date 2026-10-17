@@ -21,7 +21,7 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 9,
+    schemaVersion: 10,
     initiative: "p1",
     p1: {
       gold: 0,
@@ -35,6 +35,7 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
           deathMarked: false,
           shieldTokens: 0,
           stoneTokens: 0,
+          chillTokens: 0,
         },
         caligar: {
           hp: 0,
@@ -45,6 +46,7 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
           deathMarked: false,
           shieldTokens: 0,
           stoneTokens: 0,
+          chillTokens: 0,
         },
       },
       structures: { top: 11, middle: 11, bottom: 0, bit: 16 },
@@ -62,6 +64,7 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
           deathMarked: false,
           shieldTokens: 0,
           stoneTokens: 0,
+          chillTokens: 0,
         },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
@@ -145,6 +148,7 @@ describe("BattleMapScreen", () => {
                 deathMarked: false,
                 shieldTokens: 0,
                 stoneTokens: 0,
+                chillTokens: 0,
               },
             },
           },
@@ -185,6 +189,7 @@ describe("BattleMapScreen", () => {
                 deathMarked: false,
                 shieldTokens: 0,
                 stoneTokens: 0,
+                chillTokens: 0,
               },
             },
           },
@@ -201,6 +206,7 @@ describe("BattleMapScreen", () => {
                 deathMarked: false,
                 shieldTokens: 0,
                 stoneTokens: 0,
+                chillTokens: 0,
               },
             },
           },
@@ -242,6 +248,7 @@ describe("BattleMapScreen", () => {
                 deathMarked: false,
                 shieldTokens: 0,
                 stoneTokens: 0,
+                chillTokens: 0,
               },
             },
           },
@@ -258,6 +265,7 @@ describe("BattleMapScreen", () => {
                 deathMarked: false,
                 shieldTokens: 0,
                 stoneTokens: 0,
+                chillTokens: 0,
               },
             },
           },
@@ -303,6 +311,7 @@ describe("BattleMapScreen", () => {
                 deathMarked: true,
                 shieldTokens: 0,
                 stoneTokens: 0,
+                chillTokens: 0,
               },
             },
           },
@@ -319,6 +328,7 @@ describe("BattleMapScreen", () => {
                 deathMarked: true,
                 shieldTokens: 0,
                 stoneTokens: 0,
+                chillTokens: 0,
               },
             },
           },
@@ -432,6 +442,53 @@ describe("BattleMapScreen", () => {
     const shield = screen.getByLabelText("2 +1 Shield tokens");
     expect(
       shield.compareDocumentPosition(caligarStone) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows a hero's +1 Chill count in the status panel only above 0, after Stone", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: {
+              ...base.p1.heroes,
+              caligar: { ...base.p1.heroes.caligar, stoneTokens: 2, chillTokens: 5 },
+            },
+          },
+          p2: {
+            ...base.p2,
+            heroes: {
+              ...base.p2.heroes,
+              sterling: { ...base.p2.heroes.sterling, chillTokens: 1 },
+            },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    // Caligar (0 HP) keeps his 5; Sterling gets a token line for Chill alone;
+    // Boreas holds none.
+    expect(screen.getAllByLabelText(/\+1 Chill token/)).toHaveLength(2);
+    const caligarChill = screen.getByLabelText("5 +1 Chill tokens");
+    expect(caligarChill).toHaveTextContent("5");
+    expect(caligarChill).toHaveAttribute("title", "+1 Chill tokens");
+    expect(caligarChill.style.getPropertyValue("--token-accent")).toBe("var(--color-chill)");
+    expect(screen.getByLabelText("1 +1 Chill token")).toBeInTheDocument();
+    const stone = screen.getByLabelText("2 +1 Stone tokens");
+    expect(
+      stone.compareDocumentPosition(caligarChill) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -558,7 +615,7 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 9,
+      schemaVersion: 10,
       initiative: "p1",
       p1: {
         gold: 0,
@@ -574,6 +631,7 @@ describe("BattleMapScreen", () => {
               deathMarked: false,
               shieldTokens: 0,
               stoneTokens: 0,
+              chillTokens: 0,
             },
           ]),
         ),

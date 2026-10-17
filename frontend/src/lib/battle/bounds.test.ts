@@ -3,13 +3,13 @@ import {
   clamp,
   clampGold,
   clampGoldPile,
-  clampHeroAttackTokens,
+  clampHeroCountedToken,
   clampHeroHp,
   clampHeroLevel,
   clampStructureHp,
 } from "./bounds";
 import {
-  HERO_ATTACK_TOKEN_CEILING,
+  HERO_COUNTED_TOKEN_CEILINGS,
   HERO_HP_CEILING,
   HERO_MAX_LEVEL,
   HERO_STARTING_LEVEL,
@@ -72,19 +72,23 @@ describe("clampHeroLevel", () => {
   });
 });
 
-describe("clampHeroAttackTokens", () => {
+describe.each(
+  (Object.keys(HERO_COUNTED_TOKEN_CEILINGS) as (keyof typeof HERO_COUNTED_TOKEN_CEILINGS)[]).map(
+    (field) => ({ field, ceiling: HERO_COUNTED_TOKEN_CEILINGS[field] }),
+  ),
+)("clampHeroCountedToken($field)", ({ field, ceiling }) => {
   it.each([
     [-1, 0],
     [0, 0],
-    [3, 3],
-    [HERO_ATTACK_TOKEN_CEILING, HERO_ATTACK_TOKEN_CEILING],
-    [HERO_ATTACK_TOKEN_CEILING + 1, HERO_ATTACK_TOKEN_CEILING],
-  ])("clampHeroAttackTokens(%d) -> %d", (value, expected) => {
-    expect(clampHeroAttackTokens(value)).toBe(expected);
+    [2, 2],
+    [ceiling, ceiling],
+    [ceiling + 1, ceiling],
+  ])("%d -> %d", (value, expected) => {
+    expect(clampHeroCountedToken(field, value)).toBe(expected);
   });
 
   it("NaN falls back to the floor", () => {
-    expect(clampHeroAttackTokens(Number.NaN)).toBe(0);
+    expect(clampHeroCountedToken(field, Number.NaN)).toBe(0);
   });
 });
 

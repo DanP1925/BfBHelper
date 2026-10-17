@@ -11,8 +11,9 @@ export type StructuresState = {
 export type HeroBattleState = {
   hp: number;
   level: number;
-  /** +1 Attack tokens on this hero (intent/06). 0..HERO_ATTACK_TOKEN_CEILING,
-   * changed only by hand: never cleared on defeat, respawn or a new round. */
+  /** +1 Attack tokens on this hero (intent/06).
+   * 0..HERO_COUNTED_TOKEN_CEILINGS.attackTokens, changed only by hand:
+   * never cleared on defeat, respawn or a new round. */
   attackTokens: number;
   /** A Confuse token on this hero (intent/07). On/off, not a count:
    * the rules give one top-of-deck card however many are stacked.
@@ -29,18 +30,33 @@ export type HeroBattleState = {
    * respawn or a new round. */
   deathMarked: boolean;
   /** Shield tokens on this hero (intent/11), given by Cyrus's Holy Aura
-   * and power cards. 0..HERO_SHIELD_TOKEN_CEILING. Only the UI limits it
-   * to Cyrus's team (heroSpecificTokens.ts). Changed only by hand: never
-   * spent on damage, and never cleared on defeat (either hero's),
-   * respawn or a new round. */
+   * and power cards. 0..HERO_COUNTED_TOKEN_CEILINGS.shieldTokens. Only the
+   * UI limits it to Cyrus's team (heroSpecificTokens.ts). Changed only by
+   * hand: never spent on damage, and never cleared on defeat (either
+   * hero's), respawn or a new round. */
   shieldTokens: number;
   /** Stone tokens on this hero (intent/12), given by Sedusa's Stony
-   * Glare and power cards. 0..HERO_STONE_TOKEN_CEILING. Only the UI
-   * limits it to Sedusa's enemies (heroSpecificTokens.ts). Changed only
-   * by hand: reaching 3 doesn't defeat the hero, and defeat, respawn
-   * and a new round don't clear it. */
+   * Glare and power cards. 0..HERO_COUNTED_TOKEN_CEILINGS.stoneTokens.
+   * Only the UI limits it to Sedusa's enemies (heroSpecificTokens.ts).
+   * Changed only by hand: reaching 3 doesn't defeat the hero, and
+   * defeat, respawn and a new round don't clear it. */
   stoneTokens: number;
+  /** Chill tokens on this hero (intent/13), given by Dazeem's Winter's
+   * Chill and power cards: each is -1 to all of the hero's attacks.
+   * 0..HERO_COUNTED_TOKEN_CEILINGS.chillTokens. Only the UI limits it to
+   * Dazeem's enemies (heroSpecificTokens.ts). Changed only by hand:
+   * never cleared at the end of an action, on defeat, respawn or a new
+   * round, and never netted against attackTokens. */
+  chillTokens: number;
 };
+
+/** A per-hero counted token's stored field (intents 06, 11, 12, 13). Each
+ * one's ceiling is in HERO_COUNTED_TOKEN_CEILINGS, and they share one
+ * reducer action (SET_HERO_COUNTED_TOKEN) and one useBattle setter. */
+export type CountedTokenField = keyof Pick<
+  HeroBattleState,
+  "attackTokens" | "shieldTokens" | "stoneTokens" | "chillTokens"
+>;
 
 export type BattleTeamState = {
   gold: number;
@@ -53,7 +69,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 9;
+  schemaVersion: 10;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

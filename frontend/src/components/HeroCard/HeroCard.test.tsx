@@ -6,8 +6,9 @@ import { HeroCard } from "./HeroCard";
 
 const boreas = getHeroById("boreas");
 
-/** The hero-specific tokens (`deathMarked`, `shieldTokens`, `stoneTokens`)
- * are only passed when set, as the Board does for heroes who can take them. */
+/** The hero-specific tokens (`deathMarked`, `shieldTokens`, `stoneTokens`,
+ * `chillTokens`) are only passed when set, as the Board does for heroes who
+ * can take them. */
 type RowState = {
   attackTokens?: number;
   confused?: boolean;
@@ -15,6 +16,7 @@ type RowState = {
   deathMarked?: boolean;
   shieldTokens?: number;
   stoneTokens?: number;
+  chillTokens?: number;
 };
 
 /** `openChip` names the counted chip whose stepper is open, if any. */
@@ -29,6 +31,7 @@ function renderRow(
     deathMarked: vi.fn(),
     shield: vi.fn(),
     stone: vi.fn(),
+    chill: vi.fn(),
   };
   render(
     <HeroCard
@@ -66,6 +69,15 @@ function renderRow(
                 count: state.stoneTokens,
                 onChange: handlers.stone,
                 expanded: openChip === "stoneTokens",
+                onExpandedChange: vi.fn(),
+              },
+        chillTokens:
+          state.chillTokens === undefined
+            ? undefined
+            : {
+                count: state.chillTokens,
+                onChange: handlers.chill,
+                expanded: openChip === "chillTokens",
                 onExpandedChange: vi.fn(),
               },
       }}
@@ -260,6 +272,42 @@ describe("HeroCard token row", () => {
     renderRow();
     expect(optionNames()).not.toContain("Add +1 Stone");
     expect(screen.queryByRole("button", { name: /\+1 Stone token/ })).toBeNull();
+  });
+
+  it("offers +1 Chill last, after +1 Stone, adding one per tap, with its cyan chip while held", () => {
+    const handlers = renderRow({ shieldTokens: 0, stoneTokens: 0, chillTokens: 2 });
+
+    expect(optionNames()).toEqual([
+      "Add +1 Attack",
+      "Add Confuse",
+      "Add Immobilize",
+      "Add +1 Shield",
+      "Add +1 Stone",
+      "Add +1 Chill",
+    ]);
+    fireEvent.click(within(popover()!).getByRole("button", { name: "Add +1 Chill" }));
+    expect(handlers.chill).toHaveBeenCalledWith(3);
+    const chip = screen.getByRole("button", { name: "Boreas: 2 +1 Chill tokens. Show controls" });
+    expect(chip).toHaveTextContent("×2");
+    expect(chip).toHaveAttribute("title", "+1 Chill tokens");
+  });
+
+  it("disables +1 Chill at 5, in the picker and on the open chip's +", () => {
+    renderRow({ chillTokens: 5 }, { openChip: "chillTokens" });
+
+    expect(within(popover()!).getByRole("button", { name: "Add +1 Chill" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add +1 Chill token to Boreas" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Remove +1 Chill token from Boreas" })).toBeEnabled();
+  });
+
+  it("shows no Chill chip at 0", () => {
+    renderRow({ chillTokens: 0 }, { open: false });
+    expect(screen.queryByRole("button", { name: /\+1 Chill token/ })).toBeNull();
+  });
+
+  it("offers no +1 Chill option when chillTokens isn't passed", () => {
+    renderRow();
+    expect(optionNames()).not.toContain("Add +1 Chill");
   });
 
   it("has no token row without a picker (the Win Screen)", () => {
