@@ -342,6 +342,53 @@ describe("useBattle", () => {
     expect(readRawState().goldPiles[pileId]).toBe(GOLD_PILE_STARTING_COUNT);
   });
 
+  describe("setIceWall (intent/16)", () => {
+    it("persists the placed wall, which survives a reload and goes back to its holder", () => {
+      const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+      act(() => {
+        result.current.setIceWall({ xPct: 48.6, yPct: 121 });
+      });
+      expect(result.current.state?.iceWall).toEqual({ xPct: 48.6, yPct: 100 });
+      expect(readRawState().iceWall).toEqual({ xPct: 48.6, yPct: 100 });
+      unmount();
+
+      const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      expect(reloaded.current.state?.iceWall).toEqual({ xPct: 48.6, yPct: 100 });
+
+      act(() => {
+        reloaded.current.setIceWall(null);
+      });
+      expect(reloaded.current.state?.iceWall).toBeNull();
+      expect(readRawState().iceWall).toBeNull();
+    });
+
+    it("setHeroHp to 0 (with its move to respawn) and passInitiative leave it on the board", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+      act(() => {
+        result.current.setIceWall({ xPct: 30, yPct: 40 });
+        result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+      });
+      act(() => {
+        result.current.setHeroHp("p1", HERO_A.id, 0);
+        result.current.passInitiative();
+      });
+      expect(result.current.state?.iceWall).toEqual({ xPct: 30, yPct: 40 });
+    });
+
+    it("a battle for a different draft starts with the wall in its holder", () => {
+      const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      act(() => {
+        result.current.setIceWall({ xPct: 30, yPct: 40 });
+      });
+      unmount();
+
+      const { result: next } = renderHook(() => useBattle([HERO_B], [HERO_A], "p1"));
+      expect(next.current.state?.iceWall).toBeNull();
+    });
+  });
+
   it("setHeroHp to 0 also moves the hero to its respawn area, in one update", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
     const spaceId = MAP_SPACE_IDS[0];

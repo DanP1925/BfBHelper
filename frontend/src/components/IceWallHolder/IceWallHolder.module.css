@@ -1,0 +1,36 @@
+/* Mirrors RespawnAreaStrip's label and box, in Dazeem's frost cyan
+   (intent/16) instead of the team colour. */
+.holder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-left: 6px;
+  border-left: 3px solid var(--color-chill);
+}
+
+.box {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-panel-bg);
+  border: 1px dashed var(--color-chill);
+  border-radius: 8px;
+  transition:
+    background-color 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.boxDragOver {
+  background: rgba(92, 207, 230, 0.14);
+  box-shadow: 0 0 0 2px var(--color-chill) inset;
+}

@@ -129,7 +129,11 @@ when the hero who uses them is in the battle, on either team.
   A frost-cyan "+1 Chill" counted chip (0-5), added through the "+" picker
   on Dazeem's enemies only, and a snowflake icon with the count in the Map's
   status panel. Never cleared or netted against +1 Attack automatically.
-  Ice Wall is still open.
+  **Ice Wall done:** scoped in `intent/16_ice-wall.md`, built in v0.16.0.
+  A frost-cyan brick-wall marker dragged freely onto the Map's board art
+  from a holder under the respawn area in Dazeem's team column, and back
+  to remove it. It doesn't snap to paths, rotate, enforce adjacency or
+  leave the board on its own.
 - **Dolgolae (Yomp):** *Square Meal* (+2 Attack vs enemies at full HP) is
   checked at the table: current HP and level are in the app, base HP is on the
   card. No "full HP" indicator for now. Power cards confuse and gain +1 Attack
@@ -204,7 +208,7 @@ Hero-specific (only when that hero is in the battle):
 | Bear Trap | single marker on a map space | Boreas |
 | Shield (done, v0.11.0) | count per hero | Cyrus |
 | Chill (done, v0.13.0) | count per hero | Dazeem |
-| Ice Wall (intent 16) | single marker on a path between spaces | Dazeem |
+| Ice Wall (done, v0.16.0) | single marker on a path between spaces | Dazeem |
 | "To the Pain" Arena (done, v0.14.0) | isolated space for Felix + one enemy | Felix |
 | Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
 | Artifacts (x3) | named on/off toggles on Runika | Runika |
@@ -217,6 +221,15 @@ All tokens are added and removed one tap at a time, by hand. The app doesn't
 apply any rule automatically (expiry, defeat, damage absorption).
 
 ## Follow-ups
+
+- [ ] **The Arena overlaps a long side column on the Map.** Found in
+  intent 16's QA, added 2026-10-18. The Arena's slot (spec 14) hangs out of
+  flow beside the gold bar, into the space under a side column (Player 2's,
+  or Player 1's when Dazeem's Ice Wall holder is on Player 2). At 1280x800,
+  once that column runs long (every hero with two token lines and the
+  respawn area holding 3-4 heroes), the Arena box covers the bottom of its
+  respawn area. Decide where the Arena should go when there's no room
+  under the column.
 
 - [ ] **Review every token's display again once all tokens exist.** Do this
   after the hero-specific tokens are built, Runika's Artifacts last. Added

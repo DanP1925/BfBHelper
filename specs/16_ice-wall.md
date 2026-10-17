@@ -1,8 +1,9 @@
 # Spec 16: Ice Wall
 
-> **DRAFT.** Architecture for intent 16's scope. Build-out has not started
-> yet. See [../intent/16_ice-wall.md](../intent/16_ice-wall.md) for the
-> product-level problem, scope, and behavior this spec exists to satisfy.
+> **BUILT.** Architecture for intent 16's scope, all built in one PR
+> (plan 16). See [../intent/16_ice-wall.md](../intent/16_ice-wall.md) for
+> the product-level problem, scope, and behavior this spec exists to
+> satisfy.
 
 ## Architecture Overview
 - Same frontend-only architecture as intents 01-15: React + TypeScript,
@@ -235,10 +236,14 @@ export function iceWallOwnerSide(state: BattleState): PlayerId | null;
   - The same element renders in both places: absolutely positioned at
     `iceWall.xPct`/`yPct` inside `.boardTransform`, and in flow inside
     the holder.
-  - **On the board,** it's rendered after the `MapSpace`s, so it sits
-    above the board art. It counter-scales by `1 / Math.sqrt(zoom)`,
-    like hero tokens, so it still grows with the paths it covers but not
-    as fast as the art. Checked in the browser (Open Items).
+  - **On the board,** it's rendered after the `MapSpace`s, so it's
+    always grabbable, and gets `pointer-events: none` while a hero is
+    dragged, so it never takes a hero's drop (Open Items).
+    `BattleMapScreen` tracks that with an `isHeroDragging` flag, set on
+    a `dragstart` that carries the hero drag type and cleared on any
+    drop (capture) or `dragend` on the screen. It counter-scales by
+    `1 / Math.sqrt(zoom)`, like hero tokens, so it still grows with the
+    paths it covers but not as fast as the art.
 - **`IceWallHolder`** (new, `components/IceWallHolder/`):
   ```ts
   type IceWallHolderProps = {
@@ -271,6 +276,15 @@ export function iceWallOwnerSide(state: BattleState): PlayerId | null;
   (`align-items: flex-start`), so the holder can sit in normal flow at
   the end of the `.sideGroup`. If `.row` is ever centred, the holder has
   to hang out of flow below the column instead, as the canvas draws it.
+- **The Arena flips left when the holder is on the right** (decided
+  2026-10-18, found in QA). The Arena's slot (spec 14) hangs out of flow
+  to the right of the gold bar, into the space under Player 2's column,
+  so with Dazeem on Player 2 it covered the holder. When
+  `iceWallSide === "p2"`, `.arenaSlot` also gets `.arenaSlotLeft`
+  (`right: calc(100% + 28px)`), so it hangs to the left of the gold bar,
+  under Player 1's column. Nothing changes when Dazeem is on Player 1 or
+  wasn't drafted. The canvas's "Battle Map — Arena" artboard has Dazeem
+  on Player 2 but still draws the Arena on the right; the build wins.
 - **Height at 1280x800.** The holder adds about 75px (label, gap and a
   48px box) to one side column. The board is `min(70vh, 700px)`, about
   560px there, and a column with a busy status panel and the respawn
@@ -334,20 +348,28 @@ infra.
 - ~~Confirm the battle schema version at build time.~~
   **Decided:** 13. `main` is at 12 after the Arena (11) and Favored
   Enemy (12).
-- Check the marker's size in the browser at every zoom step: with
-  `1 / sqrt(zoom)` it should still read as covering a path at 100%, and
-  not hide whole spaces at 250%. Switch to the gold marker's full
-  `1 / zoom` if it looks too big zoomed in.
-- Check a wall sitting on top of a space: the marker is above the
-  `MapSpace` drop target, so a hero dropped exactly onto the marker lands
-  on the board (and does nothing), not on the space. Paths are between
-  spaces, so this should be rare. If it gets in the way, set
-  `pointer-events: none` on the marker during a hero drag.
-- Check the Map at 1280x800 with Dazeem drafted and his team's status
-  panel at its busiest (many token rows wrapping), on each side: does
-  his column, with the holder, stay within the board's height without
-  making the Map scroll? If not, shrink the holder's box first, before
-  touching the status panel or respawn area.
+- ~~Check the marker's size in the browser at every zoom step.~~
+  **Decided:** keep `1 / sqrt(zoom)`. At 100%-250% it reads as a small
+  tile on a path and never covers a whole space.
+- ~~Check a wall sitting on top of a space.~~
+  **Decided:** above the spaces, letting the pointer through while a
+  hero is dragged (Layout). Drawing it *under* the spaces was tried
+  first, to keep heroes visible, but each space's invisible 60px drop
+  circle then covered a wall placed near it, and it couldn't be picked
+  up. Now a hero dropped onto a space under the wall lands there, and
+  the wall is always grabbable. The catch: a wall dropped right on an
+  occupied space covers the heroes there until it's dragged off. The
+  card puts it on a path, so that's a visible misplacement the player
+  fixes with one drag.
+- ~~Check the Map at 1280x800 with Dazeem drafted and his team's status
+  panel at its busiest.~~
+  **Decided (2026-10-18): accepted as is.** His column fits at the start
+  of a battle and mid-game with one or two token lines per hero and up
+  to 2 heroes respawning. The Map scrolls 66px only when 3-4 of his team
+  are respawning *and* every hero on it has a two-line token row (6+
+  tokens each). The user accepted that over shrinking the holder, which
+  would still scroll about 25px in that case. Neither team's panel
+  moves, on either side.
 - ~~Decide whether `IceWallHolder` shares the drag-depth counter with
   `RespawnAreaStrip` and `ArenaPanel`.~~
   **Decided:** yes. The Arena's build already moved that counter into

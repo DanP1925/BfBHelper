@@ -52,3 +52,9 @@ export function clampStructureHp(value: number, ceiling: number): number {
 export function clampGoldPile(value: number): number {
   return clamp(value, 0, GOLD_PILE_STARTING_COUNT);
 }
+
+/** One Ice Wall coordinate (intent/16): a percentage of the board art,
+ * 0-100, so a drop at the board's very edge stays on it. */
+export function clampIceWallPct(value: number): number {
+  return clamp(value, 0, 100);
+}

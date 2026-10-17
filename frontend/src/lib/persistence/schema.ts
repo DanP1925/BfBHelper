@@ -1,5 +1,10 @@
 import type { HeroId, PlayerId } from "../draft/types";
-import type { BattleTeamState, HeroBattleState, StructuresState } from "../battle/types";
+import type {
+  BattleTeamState,
+  HeroBattleState,
+  IceWallPosition,
+  StructuresState,
+} from "../battle/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 
 /**
@@ -28,7 +33,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 12 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 13 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -220,7 +225,10 @@ export type PersistedBattleStateV11 = Omit<
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 12
- * (intent/15: per-hero `favoredEnemy`). */
+ * (intent/15: per-hero `favoredEnemy`) — now only the migration source
+ * shape `battleMigrations[12]` upgrades from. Its top-level fields come
+ * from `PersistedBattleStateV2` onward, not `BattleState`, so it never
+ * gains `iceWall`. */
 export type PersistedBattleStateV12 = Omit<
   PersistedBattleStateV11,
   "schemaVersion" | "p1" | "p2"
@@ -228,6 +236,13 @@ export type PersistedBattleStateV12 = Omit<
   schemaVersion: 12;
   p1: BattleTeamState;
   p2: BattleTeamState;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 13
+ * (intent/16: a top-level `iceWall`, `null` while it's in its holder). */
+export type PersistedBattleStateV13 = Omit<PersistedBattleStateV12, "schemaVersion"> & {
+  schemaVersion: 13;
+  iceWall: IceWallPosition | null;
 };
 
 /** Which screen is showing once a draft is done. Only a non-`"results"`

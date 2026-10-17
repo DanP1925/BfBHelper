@@ -6,6 +6,7 @@ import {
   clampHeroCountedToken,
   clampHeroHp,
   clampHeroLevel,
+  clampIceWallPct,
   clampStructureHp,
 } from "./bounds";
 import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "./constants";
@@ -107,5 +108,17 @@ describe("clampGoldPile", () => {
 
   it("NaN falls back to the floor", () => {
     expect(clampGoldPile(Number.NaN)).toBe(0);
+  });
+});
+
+describe("clampIceWallPct", () => {
+  it.each([
+    [-3, 0],
+    [0, 0],
+    [48.6, 48.6],
+    [100, 100],
+    [104.2, 100],
+  ])("clampIceWallPct(%d) -> %d", (value, expected) => {
+    expect(clampIceWallPct(value)).toBe(expected);
   });
 });

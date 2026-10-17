@@ -67,6 +67,14 @@
   left: calc(100% + 28px);
 }
 
+/* When Dazeem's Ice Wall holder (intent/16) sits under Player 2's
+   column, the Arena would cover it, so it hangs to the left of the gold
+   bar instead, under Player 1's column. */
+.arenaSlotLeft {
+  left: auto;
+  right: calc(100% + 28px);
+}
+
 /* Status panel on top, respawn area below it (per the mockup) — one
    narrow column per side, so the board gets the width. */
 .sideGroup {
@@ -94,6 +102,14 @@
 
 .board:active {
   cursor: grabbing;
+}
+
+/* Only while the Ice Wall is dragged over the board (intent/16). An
+   outline, since it's painted above the board art, which an inset
+   box-shadow would sit under. */
+.boardWallDragOver {
+  outline: 2px solid var(--color-chill);
+  outline-offset: -2px;
 }
 
 .boardTransform {

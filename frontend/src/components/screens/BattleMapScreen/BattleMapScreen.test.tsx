@@ -5,7 +5,7 @@ import type { BattleState } from "../../../lib/battle/types";
 import type { Hero } from "../../../lib/draft/types";
 import { ARENA_POSITION } from "../../../lib/map/constants";
 import { createFreshGoldPiles, MAP_SPACE_IDS } from "../../../data/mapSpaces";
-import { dropHero } from "../../../test/heroDrag";
+import { dropHero, dropIceWall, fakeDataTransfer } from "../../../test/heroDrag";
 import { NO_TOKENS } from "../../../test/heroState";
 import { BattleMapScreen, INITIAL_MAP_CAMERA } from "./BattleMapScreen";
 
@@ -25,8 +25,9 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 11,
+    schemaVersion: 13,
     initiative: "p1",
+    iceWall: null,
     p1: {
       gold: 0,
       heroes: {
@@ -63,11 +64,12 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
 
 /** No test here exercises zoom/pan, so the camera is fixed at its default;
  * the initiative badge's own behavior is covered by InitiativeBadge.test
- * and page.test. */
+ * and page.test. The Ice Wall's tests pass their own `setIceWall`. */
 const fixedProps = {
   camera: INITIAL_MAP_CAMERA,
   onCameraChange: () => {},
   onPassInitiative: () => {},
+  setIceWall: () => {},
 };
 
 describe("BattleMapScreen", () => {
@@ -607,8 +609,9 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 12,
+      schemaVersion: 13,
       initiative: "p1",
+      iceWall: null,
       p1: {
         gold: 0,
         heroes: Object.fromEntries(
@@ -748,6 +751,216 @@ describe("BattleMapScreen", () => {
       dropOnArena("p1", "boreas");
       dropOnArena("p2", "caligar");
       expect(setHeroPosition).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the Ice Wall (intent/16)", () => {
+    const dazeemTeam = [makeHero("dazeem", "Dazeem"), makeHero("boreas", "Boreas")];
+    const otherTeam = [makeHero("sterling", "Sterling")];
+
+    function renderWall({
+      p1 = dazeemTeam,
+      p2 = otherTeam,
+      iceWall = null,
+    }: {
+      p1?: Hero[];
+      p2?: Hero[];
+      iceWall?: BattleState["iceWall"];
+    } = {}) {
+      const setIceWall = vi.fn();
+      const setHeroPosition = vi.fn();
+      const battleState = { ...createInitialBattleState(p1, p2, "p1"), iceWall };
+      const { container } = render(
+        <BattleMapScreen
+          p1Heroes={p1}
+          p2Heroes={p2}
+          battleState={battleState}
+          winner={null}
+          setHeroPosition={setHeroPosition}
+          setGoldPile={() => {}}
+          onNewDraft={() => {}}
+          onEndBattle={() => {}}
+          onSwitchView={() => {}}
+          {...fixedProps}
+          setIceWall={setIceWall}
+        />,
+      );
+      // The board art sits in the pan/zoom layer, inside the board viewport.
+      const boardTransform = container.querySelector('img[src="/map/board.jpg"]')!
+        .parentElement as HTMLElement;
+      return { setIceWall, setHeroPosition, boardTransform, board: boardTransform.parentElement! };
+    }
+
+    const holder = () => screen.queryByRole("region", { name: "Ice Wall" });
+    const respawnArea = (label: string) =>
+      screen.getByRole("region", { name: `${label} respawning area` });
+
+    it("shows nothing without Dazeem", () => {
+      renderWall({ p1: [makeHero("boreas", "Boreas")], iceWall: { xPct: 50, yPct: 50 } });
+      expect(holder()).toBeNull();
+      expect(screen.queryByRole("img", { name: "Ice Wall" })).toBeNull();
+    });
+
+    it.each([
+      ["p1", "Player 1"],
+      ["p2", "Player 2"],
+    ] as const)("puts the holder in Dazeem's column when he's on %s", (side, label) => {
+      const teams =
+        side === "p1" ? { p1: dazeemTeam, p2: otherTeam } : { p1: otherTeam, p2: dazeemTeam };
+      renderWall(teams);
+      const column = respawnArea(label).parentElement!;
+      expect(within(column).getByRole("region", { name: "Ice Wall" })).toBeInTheDocument();
+      // The holder comes after the respawn area, so nothing above it moves.
+      expect(column.lastElementChild).toBe(holder());
+    });
+
+    it("holds the wall while it's off the board", () => {
+      renderWall();
+      expect(within(holder()!).getByRole("img", { name: "Ice Wall" })).toBeInTheDocument();
+      expect(screen.getAllByRole("img", { name: "Ice Wall" })).toHaveLength(1);
+    });
+
+    it("draws a placed wall at its spot on the board art, not in the holder", () => {
+      const { boardTransform } = renderWall({ iceWall: { xPct: 48.6, yPct: 21.9 } });
+      const marker = within(boardTransform).getByRole("img", { name: "Ice Wall" });
+      expect(marker.style.left).toBe("48.6%");
+      expect(marker.style.top).toBe("21.9%");
+      expect(within(holder()!).queryByRole("img", { name: "Ice Wall" })).toBeNull();
+    });
+
+    it("places the wall where it's dropped on the board, as a percentage of the art", () => {
+      const { setIceWall, board, boardTransform } = renderWall();
+      vi.spyOn(boardTransform, "getBoundingClientRect").mockReturnValue({
+        left: 100,
+        top: 50,
+        width: 500,
+        height: 500,
+      } as DOMRect);
+
+      dropIceWall(board, { clientX: 350, clientY: 175 });
+
+      expect(setIceWall).toHaveBeenCalledWith({ xPct: 50, yPct: 25 });
+    });
+
+    it("takes a wall dropped over a space, without moving any hero", () => {
+      const { setIceWall, setHeroPosition, boardTransform } = renderWall();
+      vi.spyOn(boardTransform, "getBoundingClientRect").mockReturnValue({
+        left: 0,
+        top: 0,
+        width: 400,
+        height: 400,
+      } as DOMRect);
+      // A `MapSpace` drop target (its `.space` class), not a structure icon.
+      const space = boardTransform.querySelector('[class*="space"]')!;
+
+      dropIceWall(space, { clientX: 40, clientY: 80 });
+
+      expect(setIceWall).toHaveBeenCalledWith({ xPct: 10, yPct: 20 });
+      expect(setHeroPosition).not.toHaveBeenCalled();
+    });
+
+    it("sends the wall back to the holder on a drop there", () => {
+      const { setIceWall } = renderWall({ iceWall: { xPct: 50, yPct: 50 } });
+      dropIceWall(holder()!, { clientX: 0, clientY: 0 });
+      expect(setIceWall).toHaveBeenCalledWith(null);
+    });
+
+    it.each([
+      ["p2", true],
+      ["p1", false],
+    ] as const)(
+      "with Dazeem on %s, hangs the Arena left of the gold bar: %s",
+      (dazeemSide, left) => {
+        const felix = makeHero("felix", "Felix");
+        const dazeem = makeHero("dazeem", "Dazeem");
+        const [p1, p2] =
+          dazeemSide === "p2"
+            ? [[felix], [dazeem]]
+            : [[felix, dazeem], [makeHero("sterling", "Sterling")]];
+        const base = createInitialBattleState(p1, p2, "p1");
+        const battleState: BattleState = {
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: { ...base.p1.heroes, felix: { ...base.p1.heroes.felix, level: 4 } },
+            heroPositions: { ...base.p1.heroPositions, felix: MAP_SPACE_IDS[0] },
+          },
+        };
+        render(
+          <BattleMapScreen
+            p1Heroes={p1}
+            p2Heroes={p2}
+            battleState={battleState}
+            winner={null}
+            setHeroPosition={() => {}}
+            setGoldPile={() => {}}
+            onNewDraft={() => {}}
+            onEndBattle={() => {}}
+            onSwitchView={() => {}}
+            {...fixedProps}
+          />,
+        );
+        const slot = screen.getByRole("region", { name: "The Arena" }).parentElement!;
+        expect(slot.className.includes("arenaSlotLeft")).toBe(left);
+      },
+    );
+
+    it("ignores a hero dropped on bare board art", () => {
+      const { setIceWall, setHeroPosition, board } = renderWall();
+      dropHero(board, { side: "p1", heroId: "dazeem" });
+      expect(setIceWall).not.toHaveBeenCalled();
+      expect(setHeroPosition).not.toHaveBeenCalled();
+    });
+
+    it("lets the pointer through the placed wall only while a hero is dragged", () => {
+      const { boardTransform } = renderWall({ iceWall: { xPct: 50, yPct: 50 } });
+      const marker = within(boardTransform).getByRole("img", { name: "Ice Wall" });
+      const heroToken = screen.getAllByAltText("Boreas")[0];
+      expect(marker.style.pointerEvents).toBe("");
+
+      fireEvent.dragStart(heroToken, { dataTransfer: fakeDataTransfer() });
+      expect(marker.style.pointerEvents).toBe("none");
+
+      dropHero(screen.getByRole("region", { name: "Player 1 respawning area" }), {
+        side: "p1",
+        heroId: "boreas",
+      });
+      expect(marker.style.pointerEvents).toBe("");
+
+      // Dragging the wall itself never makes it click-through.
+      fireEvent.dragStart(marker, { dataTransfer: fakeDataTransfer() });
+      expect(marker.style.pointerEvents).toBe("");
+    });
+
+    it("doesn't pan the board when the wall's icon is pressed", () => {
+      const onCameraChange = vi.fn();
+      const p1 = dazeemTeam;
+      render(
+        <BattleMapScreen
+          p1Heroes={p1}
+          p2Heroes={otherTeam}
+          battleState={{
+            ...createInitialBattleState(p1, otherTeam, "p1"),
+            iceWall: { xPct: 50, yPct: 50 },
+          }}
+          winner={null}
+          setHeroPosition={() => {}}
+          setGoldPile={() => {}}
+          onNewDraft={() => {}}
+          onEndBattle={() => {}}
+          onSwitchView={() => {}}
+          {...fixedProps}
+          camera={{ zoomIndex: 2, pan: { x: 0, y: 0 } }}
+          onCameraChange={onCameraChange}
+        />,
+      );
+      // The press lands on the brick icon's SVG, inside the draggable tile.
+      const icon = screen.getAllByRole("img", { name: "Ice Wall" })[0].querySelector("path")!;
+
+      fireEvent.mouseDown(icon, { clientX: 100, clientY: 100 });
+      fireEvent.mouseMove(icon, { clientX: 140, clientY: 130 });
+
+      expect(onCameraChange).not.toHaveBeenCalled();
     });
   });
 });
