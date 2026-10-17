@@ -1,5 +1,13 @@
-import type { PlayerId } from "../draft/types";
+import type { HeroId, PlayerId } from "../draft/types";
 import type { BattleState } from "./types";
+
+/** The side `heroId` was drafted on, or `null` if neither side has them.
+ * The draft never picks a hero twice, so it's at most one side. */
+export function heroSide(state: BattleState, heroId: HeroId): PlayerId | null {
+  if (heroId in state.p1.heroes) return "p1";
+  if (heroId in state.p2.heroes) return "p2";
+  return null;
+}
 
 /**
  * The one place battle state is read for a derived conclusion rather than

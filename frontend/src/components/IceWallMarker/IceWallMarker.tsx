@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, DragEvent } from "react";
+import type { CSSProperties } from "react";
 import { serializeIceWallDrag } from "../../lib/map/dragPayload";
 import styles from "./IceWallMarker.module.css";
 
@@ -17,16 +17,12 @@ type IceWallMarkerProps = {
  * `IceWallHolder` take.
  */
 export function IceWallMarker({ style }: IceWallMarkerProps) {
-  function handleDragStart(event: DragEvent<HTMLDivElement>) {
-    serializeIceWallDrag(event);
-  }
-
   return (
     <div
       className={styles.marker}
       style={style}
       draggable
-      onDragStart={handleDragStart}
+      onDragStart={serializeIceWallDrag}
       role="img"
       aria-label="Ice Wall"
       title="Ice Wall"

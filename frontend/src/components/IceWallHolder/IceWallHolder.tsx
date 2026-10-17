@@ -19,7 +19,7 @@ type IceWallHolderProps = {
  * pass through (`useIceWallDropTarget`).
  */
 export function IceWallHolder({ holdsWall, onDrop }: IceWallHolderProps) {
-  const { isDragOver, dropHandlers } = useIceWallDropTarget(() => onDrop());
+  const { isDragOver, dropHandlers } = useIceWallDropTarget(onDrop);
 
   return (
     <section className={styles.holder} aria-label="Ice Wall" {...dropHandlers}>

@@ -169,21 +169,24 @@ export function BattleMapScreen({
     },
   );
 
+  const iceWallSide = iceWallOwnerSide(battleState);
+  const wallOnBoard = iceWallSide !== null && battleState.iceWall !== null;
+
   // Whether a hero token is being dragged, so the Ice Wall can let drops
-  // through to the space under it. Set from the drag's own start (which
-  // carries the hero's drag type) and cleared on any drop or drag end on
-  // this screen: a token that moved has remounted elsewhere, so its own
-  // `dragend` may not reach here, but the drop always does.
+  // through to the space under it. Only tracked while a wall is on the
+  // board, so other hero drags don't re-render the screen. Set from the
+  // drag's own start (which carries the hero's drag type) and cleared on
+  // any drop or drag end on this screen: a token that moved has remounted
+  // elsewhere, so its own `dragend` may not reach here, but the drop does.
   const [isHeroDragging, setIsHeroDragging] = useState(false);
   const heroDragTracking = {
     onDragStart: (event: ReactDragEvent<HTMLElement>) => {
-      if (isHeroDrag(event)) setIsHeroDragging(true);
+      if (wallOnBoard && isHeroDrag(event)) setIsHeroDragging(true);
     },
     onDropCapture: () => setIsHeroDragging(false),
     onDragEnd: () => setIsHeroDragging(false),
   };
 
-  const iceWallSide = iceWallOwnerSide(battleState);
   const iceWallHolder = (
     <IceWallHolder holdsWall={battleState.iceWall === null} onDrop={() => setIceWall(null)} />
   );

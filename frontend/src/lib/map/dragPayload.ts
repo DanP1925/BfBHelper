@@ -51,7 +51,7 @@ export function serializeIceWallDrag(event: DragEvent): void {
 /** Whether a drag carries `mimeType`. Unlike its data, a drag's MIME
  * *types* are readable during dragenter/dragover, not just on drop. */
 function carries(event: DragEvent, mimeType: string): boolean {
-  return Array.from(event.dataTransfer?.types ?? []).includes(mimeType);
+  return event.dataTransfer?.types?.includes(mimeType) ?? false;
 }
 
 /** Whether a drag is the Ice Wall. Works during the whole drag. */

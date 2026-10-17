@@ -1,12 +1,5 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
-import { dragElementTo } from "./helpers";
-
-/** Drags `source` onto the center of `target`. */
-async function dragTo(page: Page, source: Locator, target: Locator) {
-  const box = await target.boundingBox();
-  if (box === null) throw new Error("drop target has no bounding box");
-  await dragElementTo(page, source, box.x + box.width / 2, box.y + box.height / 2);
-}
+import { dragElementTo, dragTo } from "./helpers";
 
 /** Drags `source` onto a point of the board art, as fractions of its box. */
 async function dragToArt(page: Page, source: Locator, art: Locator, x: number, y: number) {

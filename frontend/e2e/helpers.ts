@@ -14,3 +14,10 @@ export async function dragElementTo(page: Page, source: Locator, targetX: number
   await page.mouse.move(targetX, targetY, { steps: 10 });
   await page.mouse.up();
 }
+
+/** Drags `source` onto the center of `target`. */
+export async function dragTo(page: Page, source: Locator, target: Locator) {
+  const box = await target.boundingBox();
+  if (box === null) throw new Error("drop target has no bounding box");
+  await dragElementTo(page, source, box.x + box.width / 2, box.y + box.height / 2);
+}
