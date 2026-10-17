@@ -127,10 +127,11 @@ alongside the physical cards.
   (decided 2026-10-15).
 - **Chill on the Win Screen.** It's passing combat state, not part of a
   battle's final result.
-- **Dazeem's Ice Wall** (decided 2026-10-17). It's a marker placed on a
-  map space, not a hero token. It will be built later together with
-  Boreas's Bear Trap, which works the same way, as one design. Both are
-  already in `BACKLOG.md`.
+- **Dazeem's Ice Wall** (decided 2026-10-17). It's a marker on the Map,
+  not a hero token. It's scoped on its own in intent 16, separate from
+  Boreas's Bear Trap: Ice Wall sits on a path between spaces, Bear Trap
+  on a space (revised 2026-10-17; this originally planned them as one
+  design).
 - **Dazeem's Immobilize.** It's the general Immobilize token (intent 08),
   already built.
 - **The other hero-specific features** (Favored Enemy, Bear Trap, the

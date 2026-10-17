@@ -120,9 +120,11 @@ when the hero who uses them is in the battle, on either team.
   Attack Chill token. All Chill tokens are removed at the end of that hero's
   action. Chill tokens are hero-specific, counted per hero, added and removed
   one tap per token (no "clear all"). Power cards give more Chill, use
-  Immobilize (general), and place the Ice Wall token on a map space, handled
-  like Boreas's Bear Trap (a marker placed on a space and removed). Needs Chill
-  tokens and an Ice Wall marker (hero-specific), plus Immobilize.
+  Immobilize (general), and place the Ice Wall token on a path between two
+  map spaces (a marker placed on the Map and removed). It's built on its own,
+  not together with Boreas's Bear Trap, which sits on a space instead
+  (decided 2026-10-17). Needs Chill tokens and an Ice Wall marker
+  (hero-specific), plus Immobilize.
   **Chill done:** scoped in `intent/13_chill-tokens.md`, built in v0.13.0.
   A frost-cyan "+1 Chill" counted chip (0-5), added through the "+" picker
   on Dazeem's enemies only, and a snowflake icon with the count in the Map's
@@ -202,7 +204,7 @@ Hero-specific (only when that hero is in the battle):
 | Bear Trap | single marker on a map space | Boreas |
 | Shield (done, v0.11.0) | count per hero | Cyrus |
 | Chill (done, v0.13.0) | count per hero | Dazeem |
-| Ice Wall | single marker on a map space | Dazeem |
+| Ice Wall (intent 16) | single marker on a path between spaces | Dazeem |
 | "To the Pain" Arena (done, v0.14.0) | isolated space for Felix + one enemy | Felix |
 | Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
 | Artifacts (x3) | named on/off toggles on Runika | Runika |
