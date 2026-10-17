@@ -22,6 +22,7 @@ import type {
   CountedTokenField,
   HeroBattleState,
   HeroPosition,
+  OnOffTokenField,
   StructuresState,
 } from "./types";
 
@@ -36,9 +37,13 @@ export type BattleAction =
       field: CountedTokenField;
       value: number;
     }
-  | { type: "SET_HERO_CONFUSED"; side: PlayerId; heroId: HeroId; value: boolean }
-  | { type: "SET_HERO_IMMOBILIZED"; side: PlayerId; heroId: HeroId; value: boolean }
-  | { type: "SET_HERO_DEATH_MARKED"; side: PlayerId; heroId: HeroId; value: boolean }
+  | {
+      type: "SET_HERO_ON_OFF_TOKEN";
+      side: PlayerId;
+      heroId: HeroId;
+      field: OnOffTokenField;
+      value: boolean;
+    }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: HeroPosition }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
@@ -106,21 +111,14 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
         clampHeroCountedToken(action.field, action.value),
       );
 
-    // Manual only (intent/07), like attackTokens: defeat, respawn and a
-    // passed round all leave it alone.
-    case "SET_HERO_CONFUSED":
-      return setHeroField(state, action.side, action.heroId, "confused", action.value);
-
-    // Manual only (intent/08), like confused: a move, defeat, respawn and a
-    // passed round all leave it alone, and nothing here blocks a move.
-    case "SET_HERO_IMMOBILIZED":
-      return setHeroField(state, action.side, action.heroId, "immobilized", action.value);
-
-    // Manual only (intent/09): neither hero's defeat, a respawn nor a passed
-    // round clears it. No visibility check either: only the UI limits it to
-    // Kunoichi's enemies.
-    case "SET_HERO_DEATH_MARKED":
-      return setHeroField(state, action.side, action.heroId, "deathMarked", action.value);
+    // Manual only (intents 07-09, 15): nothing else in this reducer ever
+    // touches an on/off token — not HP to 0 (either hero's defeat), not a
+    // position change, not a passed round. Immobilize never blocks a move,
+    // and Favored Enemy is never moved to another hero. No visibility or
+    // one-holder check: only the UI limits the hero-specific ones to their
+    // targets, and Favored Enemy to one hero at a time.
+    case "SET_HERO_ON_OFF_TOKEN":
+      return setHeroField(state, action.side, action.heroId, action.field, action.value);
 
     case "SET_STRUCTURE_HP": {
       const team = state[action.side];
@@ -172,7 +170,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
  * loadBattleState's own validator would then reject as corrupt on the
  * very next reload. Every hero starts with no +1 Attack tokens,
  * unconfused, standing (not immobilized), unmarked, with no Shield
- * tokens, no Stone tokens and no Chill tokens. */
+ * tokens, no Stone tokens, no Chill tokens and no Favored Enemy. */
 export function createInitialHeroState(hero: Hero): HeroBattleState {
   return {
     hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL),
@@ -184,6 +182,7 @@ export function createInitialHeroState(hero: Hero): HeroBattleState {
     shieldTokens: 0,
     stoneTokens: 0,
     chillTokens: 0,
+    favoredEnemy: false,
   };
 }
 
@@ -215,7 +214,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 11,
+    schemaVersion: 12,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

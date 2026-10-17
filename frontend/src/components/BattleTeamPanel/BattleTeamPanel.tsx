@@ -38,11 +38,15 @@ export type TeamTokenSetters = {
 
 /** A hero's token controls, built by one loop over BATTLE_TOKENS. A counted
  * chip's open key is `${side}:${heroId}:${field}`, so each chip on a hero
- * opens on its own (intents 06, 11). */
+ * opens on its own (intents 06, 11). A `oneHolder` token (intent/15) gets
+ * no control on a hero who doesn't hold it while a teammate does, so no
+ * picker offers it until the holder taps it off. Checking this side is
+ * enough: the Board only gives one side a hero-specific token's setter. */
 function heroTokens(
   side: PlayerId,
   hero: Hero,
   heroState: HeroBattleState,
+  teamHeroes: BattleTeamState["heroes"],
   setters: TeamTokenSetters,
   openTokenKey: string | null,
   onOpenTokenKeyChange: (key: string | null) => void,
@@ -62,6 +66,14 @@ function heroTokens(
     } else {
       const set = setters[token.field];
       if (!set) continue;
+      const { field } = token;
+      if (
+        token.oneHolder &&
+        !heroState[field] &&
+        Object.values(teamHeroes).some((other) => other[field])
+      ) {
+        continue;
+      }
       tokens[token.field] = {
         on: heroState[token.field],
         onChange: (value) => set(hero.id, value),
@@ -127,6 +139,7 @@ export function BattleTeamPanel({
                 side,
                 hero,
                 heroState,
+                team.heroes,
                 onHeroTokenChange,
                 openTokenKey,
                 onOpenTokenKeyChange,

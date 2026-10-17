@@ -1,19 +1,14 @@
 import type { ComponentType } from "react";
 import type { HeroSpecificTokenId } from "../lib/battle/heroSpecificTokens";
-import type { CountedTokenField, HeroBattleState } from "../lib/battle/types";
+import type { CountedTokenField, OnOffTokenField } from "../lib/battle/types";
 import { AttackTokenIcon } from "./TokenChip/AttackTokenIcon";
 import { ShieldTokenIcon } from "./TokenChip/ShieldTokenIcon";
 import { StoneTokenIcon } from "./TokenChip/StoneTokenIcon";
 import { ChillTokenIcon } from "./TokenChip/ChillTokenIcon";
 import { ConfuseTokenIcon } from "./TokenToggle/ConfuseTokenIcon";
 import { DeathMarkIcon } from "./TokenToggle/DeathMarkIcon";
+import { FavoredEnemyIcon } from "./TokenToggle/FavoredEnemyIcon";
 import { ImmobilizeIcon } from "./TokenToggle/ImmobilizeIcon";
-
-/** A per-hero on/off token's stored field (intents 07-09). */
-export type OnOffTokenField = keyof Pick<
-  HeroBattleState,
-  "confused" | "immobilized" | "deathMarked"
->;
 
 /** Every token's stored field. Its value type is `HeroBattleState[field]`. */
 export type BattleTokenField = CountedTokenField | OnOffTokenField;
@@ -45,21 +40,27 @@ export type OnOffToken = TokenLook & {
   chipLabel: string;
   /** The Map icon's accessible name, e.g. "Confused". */
   mapLabel: string;
+  /** At most one hero holds it (intent/15): while one does, no other hero
+   * gets a control for it, so its picker option is gone everywhere until
+   * the holder taps it off. */
+  oneHolder?: true;
 };
 
 /** How one token looks, shared by the Board's token row and picker
  * (HeroCard) and the Map's read-only token line (MapTeamStatusPanel). */
 export type BattleToken = CountedToken | OnOffToken;
 
-/** Every token in the fixed order (intents 09, 11-13): +1 Attack,
+/** Every token in the fixed order (intents 09, 11-13, 15): +1 Attack,
  * Confuse, Immobilize, then the hero-specific ones (Death Mark, Shield,
- * Stone, Chill). HeroCard's row and picker, the Board's wiring and the
- * Map's token line all loop over this, so a new counted token is one row
- * here plus its stored field and its HERO_COUNTED_TOKEN_CEILINGS entry (the
- * counted tokens share one action and setter, SET_HERO_COUNTED_TOKEN). A new
- * on/off token also needs its setter. Which heroes may carry a
- * hero-specific token comes from the rule its `heroSpecific` id names. The
- * stored fields and migrations stay one plain field per token. */
+ * Stone, Chill, Favored Enemy). HeroCard's row and picker, the Board's
+ * wiring and the Map's token line all loop over this, so a new counted
+ * token is one row here plus its stored field and its
+ * HERO_COUNTED_TOKEN_CEILINGS entry, and a new on/off token one row plus
+ * its stored field and its ON_OFF_TOKEN_FIELDS entry (each kind shares one
+ * action and setter, SET_HERO_COUNTED_TOKEN and SET_HERO_ON_OFF_TOKEN).
+ * Which heroes may carry a hero-specific token comes from the rule its
+ * `heroSpecific` id names. The stored fields and migrations stay one plain
+ * field per token. */
 export const BATTLE_TOKENS: readonly BattleToken[] = [
   {
     kind: "counted",
@@ -122,5 +123,16 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     label: "+1 Chill",
     accent: "var(--color-chill)",
     heroSpecific: "chill",
+  },
+  {
+    kind: "onOff",
+    field: "favoredEnemy",
+    Icon: FavoredEnemyIcon,
+    chipLabel: "Favored Enemy token",
+    optionLabel: "Favored Enemy",
+    mapLabel: "Favored Enemy",
+    accent: "var(--color-favored-enemy)",
+    heroSpecific: "favoredEnemy",
+    oneHolder: true,
   },
 ];

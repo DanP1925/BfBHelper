@@ -3,8 +3,13 @@
 import { useState } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { heroSpecificTokenSide } from "../../../lib/battle/heroSpecificTokens";
-import type { BattleState, CountedTokenField, StructuresState } from "../../../lib/battle/types";
-import { BATTLE_TOKENS, type OnOffTokenField } from "../../battleTokens";
+import type {
+  BattleState,
+  CountedTokenField,
+  OnOffTokenField,
+  StructuresState,
+} from "../../../lib/battle/types";
+import { BATTLE_TOKENS } from "../../battleTokens";
 import { BattleTeamPanel, type TeamTokenSetters } from "../../BattleTeamPanel/BattleTeamPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
@@ -31,12 +36,11 @@ type BattleBoardScreenProps = {
   onPassInitiative: () => void;
 };
 
-/** useBattle's one setter for every counted token, named by its field, plus
- * one setter per on/off token field. */
+/** useBattle's one setter for every counted token and one for every on/off
+ * token, each named by its field. */
 export type BoardTokenSetters = {
   counted: (side: PlayerId, heroId: HeroId, field: CountedTokenField, value: number) => void;
-} & {
-  [F in OnOffTokenField]: (side: PlayerId, heroId: HeroId, value: boolean) => void;
+  onOff: (side: PlayerId, heroId: HeroId, field: OnOffTokenField, value: boolean) => void;
 };
 
 /** The token setters one side's panel gets: every token, minus each
@@ -57,8 +61,8 @@ function teamTokenSetters(
       const { field } = token;
       team[field] = (heroId, value) => setters.counted(side, heroId, field, value);
     } else {
-      const set = setters[token.field];
-      team[token.field] = (heroId, value) => set(side, heroId, value);
+      const { field } = token;
+      team[field] = (heroId, value) => setters.onOff(side, heroId, field, value);
     }
   }
   return team;

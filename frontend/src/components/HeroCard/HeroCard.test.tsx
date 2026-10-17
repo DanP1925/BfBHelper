@@ -7,8 +7,8 @@ import { HeroCard } from "./HeroCard";
 const boreas = getHeroById("boreas");
 
 /** The hero-specific tokens (`deathMarked`, `shieldTokens`, `stoneTokens`,
- * `chillTokens`) are only passed when set, as the Board does for heroes who
- * can take them. */
+ * `chillTokens`, `favoredEnemy`) are only passed when set, as the Board does
+ * for heroes who can take them. */
 type RowState = {
   attackTokens?: number;
   confused?: boolean;
@@ -17,6 +17,7 @@ type RowState = {
   shieldTokens?: number;
   stoneTokens?: number;
   chillTokens?: number;
+  favoredEnemy?: boolean;
 };
 
 /** `openChip` names the counted chip whose stepper is open, if any. */
@@ -32,6 +33,7 @@ function renderRow(
     shield: vi.fn(),
     stone: vi.fn(),
     chill: vi.fn(),
+    favoredEnemy: vi.fn(),
   };
   // A counted token's props, or undefined when it isn't passed. +1 Attack
   // is always passed, at 0 by default.
@@ -65,6 +67,10 @@ function renderRow(
         shieldTokens: counted("shieldTokens", handlers.shield),
         stoneTokens: counted("stoneTokens", handlers.stone),
         chillTokens: counted("chillTokens", handlers.chill),
+        favoredEnemy:
+          state.favoredEnemy === undefined
+            ? undefined
+            : { on: state.favoredEnemy, onChange: handlers.favoredEnemy },
       }}
     />,
   );
@@ -293,6 +299,37 @@ describe("HeroCard token row", () => {
   it("offers no +1 Chill option when chillTokens isn't passed", () => {
     renderRow();
     expect(optionNames()).not.toContain("Add +1 Chill");
+  });
+
+  it("offers Favored Enemy last, after +1 Chill, and picking it turns it on", () => {
+    const handlers = renderRow({ chillTokens: 0, favoredEnemy: false });
+
+    expect(optionNames()).toEqual([
+      "Add +1 Attack",
+      "Add Confuse",
+      "Add Immobilize",
+      "Add +1 Chill",
+      "Add Favored Enemy",
+    ]);
+    fireEvent.click(within(popover()!).getByRole("button", { name: "Add Favored Enemy" }));
+    expect(handlers.favoredEnemy).toHaveBeenCalledWith(true);
+  });
+
+  it("shows a lit Favored Enemy chip after Chill while held, not in the picker, and a tap removes it", () => {
+    const handlers = renderRow({ chillTokens: 1, favoredEnemy: true });
+
+    expect(optionNames()).not.toContain("Add Favored Enemy");
+    const chip = screen.getByRole("button", { name: "Favored Enemy token on Boreas" });
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+    const chill = screen.getByRole("button", { name: /^Boreas: 1 \+1 Chill token/ });
+    expect(chill.compareDocumentPosition(chip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(chip);
+    expect(handlers.favoredEnemy).toHaveBeenCalledWith(false);
+  });
+
+  it("offers no Favored Enemy when it isn't passed", () => {
+    renderRow();
+    expect(optionNames()).not.toContain("Add Favored Enemy");
   });
 
   it("has no token row without a picker (the Win Screen)", () => {

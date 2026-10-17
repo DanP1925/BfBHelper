@@ -127,9 +127,7 @@ export default function Home() {
           setHeroLevel={battle.setHeroLevel}
           setHeroToken={{
             counted: battle.setHeroCountedToken,
-            confused: battle.setHeroConfused,
-            immobilized: battle.setHeroImmobilized,
-            deathMarked: battle.setHeroDeathMarked,
+            onOff: battle.setHeroOnOffToken,
           }}
           setStructureHp={battle.setStructureHp}
           onNewDraft={draft.returnToStart}

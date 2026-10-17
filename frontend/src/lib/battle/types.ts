@@ -55,6 +55,12 @@ export type HeroBattleState = {
    * never cleared at the end of an action, on defeat, respawn or a new
    * round, and never netted against attackTokens. */
   chillTokens: number;
+  /** The Favored Enemy token on this hero (intent/15), placed by Boreas at
+   * the start of the game. On/off. Only the UI limits it to Boreas's
+   * enemies (heroSpecificTokens.ts) and to one hero at a time
+   * (BATTLE_TOKENS' oneHolder). Changed only by hand: never cleared on
+   * defeat (either hero's), respawn or a new round. */
+  favoredEnemy: boolean;
 };
 
 /** A per-hero counted token's stored field (intents 06, 11, 12, 13). Each
@@ -63,6 +69,14 @@ export type HeroBattleState = {
 export type CountedTokenField = keyof Pick<
   HeroBattleState,
   "attackTokens" | "shieldTokens" | "stoneTokens" | "chillTokens"
+>;
+
+/** A per-hero on/off token's stored field (intents 07-09, 15). Each one is
+ * listed in ON_OFF_TOKEN_FIELDS, and they share one reducer action
+ * (SET_HERO_ON_OFF_TOKEN) and one useBattle setter. */
+export type OnOffTokenField = keyof Pick<
+  HeroBattleState,
+  "confused" | "immobilized" | "deathMarked" | "favoredEnemy"
 >;
 
 export type BattleTeamState = {
@@ -74,7 +88,7 @@ export type BattleTeamState = {
 };
 
 export type BattleState = {
-  schemaVersion: 11;
+  schemaVersion: 12;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,
