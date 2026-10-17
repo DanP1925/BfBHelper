@@ -64,7 +64,8 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
 
 /** No test here exercises zoom/pan, so the camera is fixed at its default;
  * the initiative badge's own behavior is covered by InitiativeBadge.test
- * and page.test. The Ice Wall's tests pass their own `setIceWall`. */
+ * and page.test. The Ice Wall's tests (`renderWall`) pass their own
+ * `setIceWall` and, where they need it, a camera. */
 const fixedProps = {
   camera: INITIAL_MAP_CAMERA,
   onCameraChange: () => {},
@@ -762,14 +763,21 @@ describe("BattleMapScreen", () => {
       p1 = dazeemTeam,
       p2 = otherTeam,
       iceWall = null,
+      adjust = (state) => state,
+      camera = INITIAL_MAP_CAMERA,
+      onCameraChange = () => {},
     }: {
       p1?: Hero[];
       p2?: Hero[];
       iceWall?: BattleState["iceWall"];
+      /** Further changes to the fresh battle, e.g. Felix's level. */
+      adjust?: (state: BattleState) => BattleState;
+      camera?: typeof INITIAL_MAP_CAMERA;
+      onCameraChange?: () => void;
     } = {}) {
       const setIceWall = vi.fn();
       const setHeroPosition = vi.fn();
-      const battleState = { ...createInitialBattleState(p1, p2, "p1"), iceWall };
+      const battleState = adjust({ ...createInitialBattleState(p1, p2, "p1"), iceWall });
       const { container } = render(
         <BattleMapScreen
           p1Heroes={p1}
@@ -783,6 +791,8 @@ describe("BattleMapScreen", () => {
           onSwitchView={() => {}}
           {...fixedProps}
           setIceWall={setIceWall}
+          camera={camera}
+          onCameraChange={onCameraChange}
         />,
       );
       // The board art sits in the pan/zoom layer, inside the board viewport.
@@ -877,29 +887,19 @@ describe("BattleMapScreen", () => {
           dazeemSide === "p2"
             ? [[felix], [dazeem]]
             : [[felix, dazeem], [makeHero("sterling", "Sterling")]];
-        const base = createInitialBattleState(p1, p2, "p1");
-        const battleState: BattleState = {
-          ...base,
-          p1: {
-            ...base.p1,
-            heroes: { ...base.p1.heroes, felix: { ...base.p1.heroes.felix, level: 4 } },
-            heroPositions: { ...base.p1.heroPositions, felix: MAP_SPACE_IDS[0] },
-          },
-        };
-        render(
-          <BattleMapScreen
-            p1Heroes={p1}
-            p2Heroes={p2}
-            battleState={battleState}
-            winner={null}
-            setHeroPosition={() => {}}
-            setGoldPile={() => {}}
-            onNewDraft={() => {}}
-            onEndBattle={() => {}}
-            onSwitchView={() => {}}
-            {...fixedProps}
-          />,
-        );
+        // Felix at level 4 on a space: the Arena shows.
+        renderWall({
+          p1,
+          p2,
+          adjust: (base) => ({
+            ...base,
+            p1: {
+              ...base.p1,
+              heroes: { ...base.p1.heroes, felix: { ...base.p1.heroes.felix, level: 4 } },
+              heroPositions: { ...base.p1.heroPositions, felix: MAP_SPACE_IDS[0] },
+            },
+          }),
+        });
         const slot = screen.getByRole("region", { name: "The Arena" }).parentElement!;
         expect(slot.className.includes("arenaSlotLeft")).toBe(left);
       },
@@ -934,28 +934,15 @@ describe("BattleMapScreen", () => {
 
     it("doesn't pan the board when the wall's icon is pressed", () => {
       const onCameraChange = vi.fn();
-      const p1 = dazeemTeam;
-      render(
-        <BattleMapScreen
-          p1Heroes={p1}
-          p2Heroes={otherTeam}
-          battleState={{
-            ...createInitialBattleState(p1, otherTeam, "p1"),
-            iceWall: { xPct: 50, yPct: 50 },
-          }}
-          winner={null}
-          setHeroPosition={() => {}}
-          setGoldPile={() => {}}
-          onNewDraft={() => {}}
-          onEndBattle={() => {}}
-          onSwitchView={() => {}}
-          {...fixedProps}
-          camera={{ zoomIndex: 2, pan: { x: 0, y: 0 } }}
-          onCameraChange={onCameraChange}
-        />,
-      );
+      const { boardTransform } = renderWall({
+        iceWall: { xPct: 50, yPct: 50 },
+        camera: { zoomIndex: 2, pan: { x: 0, y: 0 } },
+        onCameraChange,
+      });
       // The press lands on the brick icon's SVG, inside the draggable tile.
-      const icon = screen.getAllByRole("img", { name: "Ice Wall" })[0].querySelector("path")!;
+      const icon = within(boardTransform)
+        .getByRole("img", { name: "Ice Wall" })
+        .querySelector("path")!;
 
       fireEvent.mouseDown(icon, { clientX: 100, clientY: 100 });
       fireEvent.mouseMove(icon, { clientX: 140, clientY: 130 });

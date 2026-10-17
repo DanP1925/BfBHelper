@@ -2,6 +2,7 @@ import type { HeroId, PlayerId } from "../draft/types";
 import { otherPlayer } from "../draft/selectors";
 import { ARENA_POSITION } from "../map/constants";
 import type { HeroDragPayload } from "../map/dragPayload";
+import { heroSide } from "./selectors";
 import type { BattleState } from "./types";
 
 /** The hero whose level-4 power card opens the Arena (intent/14). */
@@ -17,7 +18,7 @@ const SIDES: readonly PlayerId[] = ["p1", "p2"];
  * battle state, which is built from the draft, so it agrees with the
  * rosters. */
 export function arenaOwnerSide(state: BattleState): PlayerId | null {
-  return SIDES.find((side) => ARENA_OWNER in state[side].heroes) ?? null;
+  return heroSide(state, ARENA_OWNER);
 }
 
 /** Every hero whose position is the Arena, with their side, P1 first. */

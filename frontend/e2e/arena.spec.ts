@@ -1,12 +1,5 @@
-import { test, expect, type Locator, type Page } from "@playwright/test";
-import { dragElementTo } from "./helpers";
-
-/** Drags `source` onto the center of `target`. */
-async function dragTo(page: Page, source: Locator, target: Locator) {
-  const box = await target.boundingBox();
-  if (box === null) throw new Error("drop target has no bounding box");
-  await dragElementTo(page, source, box.x + box.width / 2, box.y + box.height / 2);
-}
+import { test, expect, type Page } from "@playwright/test";
+import { dragTo } from "./helpers";
 
 /** A hero's draggable token, wherever it is on the Map. */
 const token = (page: Page, name: string) =>

@@ -167,16 +167,8 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
               xPct: clampIceWallPct(action.position.xPct),
               yPct: clampIceWallPct(action.position.yPct),
             };
-      const current = state.iceWall;
-      if (next === current) return state;
-      if (
-        next !== null &&
-        current !== null &&
-        next.xPct === current.xPct &&
-        next.yPct === current.yPct
-      ) {
-        return state;
-      }
+      // Both null, or the same point: no change.
+      if (next?.xPct === state.iceWall?.xPct && next?.yPct === state.iceWall?.yPct) return state;
       return { ...state, iceWall: next };
     }
 
