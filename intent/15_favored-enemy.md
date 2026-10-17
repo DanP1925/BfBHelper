@@ -136,9 +136,9 @@ alongside the physical cards.
 - **Favored Enemy on the Win Screen.** It's combat state, not part of a
   battle's final result.
 - **Boreas's Bear Trap.** It's a marker placed on a map space, not a hero
-  token. It will be built later together with Dazeem's Ice Wall, which
-  works the same way, as one design (decided 2026-10-17, intent 13).
-  Both are already in `BACKLOG.md`.
+  token. It's its own backlog item, separate from Dazeem's Ice Wall
+  (intent 16), which sits on a path between spaces instead (revised
+  2026-10-17; this originally planned them as one design).
 - **Boreas's Immobilize.** It's the general Immobilize token (intent 08),
   already built.
 - **The other hero-specific features** (Bear Trap, Ice Wall, Artifacts).
