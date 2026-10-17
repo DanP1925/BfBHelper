@@ -38,6 +38,7 @@ import {
   type PersistedBattleStateV10,
   type PersistedBattleStateV11,
   type PersistedBattleStateV12,
+  type PersistedBattleStateV13,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -201,6 +202,19 @@ function upgradeV10ToV11(data: unknown): PersistedBattleStateV11 | null {
  * "upgrades in place", with no hero holding it). */
 const upgradeV11ToV12 = addHeroFieldsStep<PersistedBattleStateV12>(12, { favoredEnemy: false });
 
+/** Schema 12 → 13: a top-level `iceWall: null` (intent/16: "upgrades in
+ * place", with the wall in its holder). Everything else passes through
+ * unchanged; the current-shape validator checks it afterward. */
+function upgradeV12ToV13(data: unknown): PersistedBattleStateV13 | null {
+  if (typeof data !== "object" || data === null) return null;
+  return {
+    ...(data as PersistedBattleStateV12),
+    schemaVersion: 13,
+    iceWall: null,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -218,6 +232,7 @@ const battleMigrations: MigrationSteps = {
   9: upgradeV9ToV10,
   10: upgradeV10ToV11,
   11: upgradeV11ToV12,
+  12: upgradeV12ToV13,
 };
 
 function isBrowser(): boolean {
@@ -404,7 +419,16 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV12 {
+/** `null` (in its holder) or a point on the board art, each coordinate a
+ * 0-100 percentage (intent/16). */
+function isValidIceWall(value: unknown): boolean {
+  if (value === null) return true;
+  if (typeof value !== "object") return false;
+  const wall = value as Record<string, unknown>;
+  return isNumberInRange(wall.xPct, 0, 100) && isNumberInRange(wall.yPct, 0, 100);
+}
+
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV13 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -420,6 +444,8 @@ function isValidPersistedBattleState(data: unknown): data is PersistedBattleStat
   for (const id of GOLD_PILE_SPACE_IDS) {
     if (!isNumberInRange(piles[id], 0, GOLD_PILE_STARTING_COUNT)) return false;
   }
+
+  if (!isValidIceWall(candidate.iceWall)) return false;
 
   return true;
 }
@@ -582,12 +608,13 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV12 = {
+  const payload: PersistedBattleStateV13 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
     goldPiles: state.goldPiles,
     initiative: state.initiative,
+    iceWall: state.iceWall,
     updatedAt: new Date().toISOString(),
   };
 
@@ -611,11 +638,12 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 12,
+    schemaVersion: 13,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,
     initiative: data.initiative,
+    iceWall: data.iceWall,
   };
 }
 

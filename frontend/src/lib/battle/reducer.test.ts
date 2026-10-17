@@ -90,12 +90,16 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 12", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 13", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(12);
+    expect(state.schemaVersion).toBe(13);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
+  });
+
+  it("starts the Ice Wall in its holder", () => {
+    expect(baseState().iceWall).toBeNull();
   });
 });
 
@@ -542,6 +546,62 @@ describe("battleReducer", () => {
       const next = battleReducer(state, { type: "SET_GOLD_PILE", pileId, value: 0 });
       expect(next.p1.gold).toBe(state.p1.gold);
       expect(next.p2.gold).toBe(state.p2.gold);
+    });
+  });
+
+  describe("SET_ICE_WALL", () => {
+    const placed = (state: BattleState) =>
+      battleReducer(state, { type: "SET_ICE_WALL", position: { xPct: 48.6, yPct: 21.9 } });
+
+    it("places, moves and sends the wall back to its holder", () => {
+      const onBoard = placed(baseState());
+      expect(onBoard.iceWall).toEqual({ xPct: 48.6, yPct: 21.9 });
+
+      const moved = battleReducer(onBoard, {
+        type: "SET_ICE_WALL",
+        position: { xPct: 70, yPct: 40 },
+      });
+      expect(moved.iceWall).toEqual({ xPct: 70, yPct: 40 });
+
+      expect(battleReducer(moved, { type: "SET_ICE_WALL", position: null }).iceWall).toBeNull();
+    });
+
+    it("clamps each coordinate to the board art (0-100)", () => {
+      const next = battleReducer(baseState(), {
+        type: "SET_ICE_WALL",
+        position: { xPct: -4, yPct: 103 },
+      });
+      expect(next.iceWall).toEqual({ xPct: 0, yPct: 100 });
+    });
+
+    it("is a no-op (same reference) when the wall doesn't move", () => {
+      const inHolder = baseState();
+      expect(battleReducer(inHolder, { type: "SET_ICE_WALL", position: null })).toBe(inHolder);
+
+      const onBoard = placed(inHolder);
+      expect(placed(onBoard)).toBe(onBoard);
+    });
+
+    it("changes nothing but the wall", () => {
+      const state = baseState();
+      const next = placed(state);
+      expect(next.p1).toBe(state.p1);
+      expect(next.p2).toBe(state.p2);
+      expect(next.goldPiles).toBe(state.goldPiles);
+      expect(next.initiative).toBe(state.initiative);
+    });
+
+    it.each<[string, BattleAction]>([
+      ["a hero's HP to 0", { type: "SET_HERO_HP", side: "p1", heroId: HERO_A.id, value: 0 }],
+      ["a level change", { type: "SET_HERO_LEVEL", side: "p1", heroId: HERO_A.id, value: 4 }],
+      [
+        "a hero moving",
+        { type: "SET_HERO_POSITION", side: "p1", heroId: HERO_A.id, spaceId: MAP_SPACE_IDS[0] },
+      ],
+      ["a passed round", { type: "PASS_INITIATIVE" }],
+    ])("is left alone by %s", (_label, action) => {
+      const onBoard = placed(baseState());
+      expect(battleReducer(onBoard, action).iceWall).toBe(onBoard.iceWall);
     });
   });
 

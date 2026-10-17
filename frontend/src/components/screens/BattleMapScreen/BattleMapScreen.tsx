@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type {
   Dispatch,
+  DragEvent as ReactDragEvent,
   MouseEvent as ReactMouseEvent,
   SetStateAction,
   WheelEvent as ReactWheelEvent,
@@ -10,13 +11,18 @@ import type {
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { clamp } from "../../../lib/battle/bounds";
 import { canEnterArena, isArenaShown } from "../../../lib/battle/arena";
-import type { BattleState, HeroPosition } from "../../../lib/battle/types";
+import { iceWallOwnerSide } from "../../../lib/battle/iceWall";
+import type { BattleState, HeroPosition, IceWallPosition } from "../../../lib/battle/types";
 import { ARENA_POSITION } from "../../../lib/map/constants";
+import { isHeroDrag } from "../../../lib/map/dragPayload";
+import { useIceWallDropTarget } from "../../../lib/map/useIceWallDropTarget";
 import type { GoldPileSpaceId, MapSpaceId } from "../../../data/mapSpaces";
 import { MAP_SPACES } from "../../../data/mapSpaces";
 import { ArenaPanel } from "../../ArenaPanel/ArenaPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { GoldPilesBar } from "../../GoldPilesBar/GoldPilesBar";
+import { IceWallHolder } from "../../IceWallHolder/IceWallHolder";
+import { IceWallMarker } from "../../IceWallMarker/IceWallMarker";
 import { MapTeamStatusPanel } from "../../MapTeamStatusPanel/MapTeamStatusPanel";
 import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
@@ -33,6 +39,8 @@ type BattleMapScreenProps = {
   winner: PlayerId | "draw" | null;
   setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: HeroPosition) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
+  /** Places, moves or (with `null`) removes Dazeem's Ice Wall (intent/16). */
+  setIceWall: (position: IceWallPosition | null) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
   onEndBattle: () => void;
@@ -69,6 +77,7 @@ export function BattleMapScreen({
   winner,
   setHeroPosition,
   setGoldPile,
+  setIceWall,
   onNewDraft,
   onEndBattle,
   onSwitchView,
@@ -80,6 +89,7 @@ export function BattleMapScreen({
 
   const { zoomIndex, pan } = camera;
   const viewportRef = useRef<HTMLDivElement>(null);
+  const boardTransformRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     startX: number;
     startY: number;
@@ -111,11 +121,12 @@ export function BattleMapScreen({
 
   function handleMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
     // Don't start a pan when the mousedown is actually the start of a
-    // hero token's native drag (`MapToken`'s own `draggable` div) — this
-    // event bubbles up from the token before the browser's own drag
+    // native drag (a `MapToken`'s or the `IceWallMarker`'s own `draggable`
+    // div) — this event bubbles up from it before the browser's own drag
     // gesture takes over, and without this check, panning would start
-    // alongside it and visibly fight the hero's drag.
-    if (event.target instanceof HTMLElement && event.target.closest('[draggable="true"]')) return;
+    // alongside it and visibly fight the drag. `Element`, not
+    // `HTMLElement`: pressing the Ice Wall lands on its SVG icon.
+    if (event.target instanceof Element && event.target.closest('[draggable="true"]')) return;
     dragRef.current = { startX: event.clientX, startY: event.clientY, startPan: pan };
   }
 
@@ -141,6 +152,41 @@ export function BattleMapScreen({
   function resetZoomPan() {
     onCameraChange(INITIAL_MAP_CAMERA);
   }
+
+  // The Ice Wall (intent/16) is free-placed: the cursor's point becomes a
+  // percentage of the board art's on-screen box, which already includes
+  // the zoom and pan transform, so the wall stays on that spot of the art
+  // at any zoom or pan. A wall dropped over a space lands here too: the
+  // space's own drop handler ignores it and doesn't stop propagation.
+  const { isDragOver: isWallOverBoard, dropHandlers: boardWallDropHandlers } = useIceWallDropTarget(
+    (event: ReactDragEvent<HTMLElement>) => {
+      const rect = boardTransformRef.current?.getBoundingClientRect();
+      if (!rect || rect.width === 0 || rect.height === 0) return;
+      setIceWall({
+        xPct: ((event.clientX - rect.left) / rect.width) * 100,
+        yPct: ((event.clientY - rect.top) / rect.height) * 100,
+      });
+    },
+  );
+
+  // Whether a hero token is being dragged, so the Ice Wall can let drops
+  // through to the space under it. Set from the drag's own start (which
+  // carries the hero's drag type) and cleared on any drop or drag end on
+  // this screen: a token that moved has remounted elsewhere, so its own
+  // `dragend` may not reach here, but the drop always does.
+  const [isHeroDragging, setIsHeroDragging] = useState(false);
+  const heroDragTracking = {
+    onDragStart: (event: ReactDragEvent<HTMLElement>) => {
+      if (isHeroDrag(event)) setIsHeroDragging(true);
+    },
+    onDropCapture: () => setIsHeroDragging(false),
+    onDragEnd: () => setIsHeroDragging(false),
+  };
+
+  const iceWallSide = iceWallOwnerSide(battleState);
+  const iceWallHolder = (
+    <IceWallHolder holdsWall={battleState.iceWall === null} onDrop={() => setIceWall(null)} />
+  );
 
   const teams: Array<{ side: PlayerId; label: string; heroes: Hero[] }> = [
     { side: "p1", label: "Player 1", heroes: p1Heroes },
@@ -174,7 +220,7 @@ export function BattleMapScreen({
   ];
 
   return (
-    <div className={styles.screen}>
+    <div className={styles.screen} {...heroDragTracking}>
       <div className={styles.topBar}>
         <ViewToggle active="map" onSwitchView={onSwitchView} />
         <div className={styles.topBarActions}>
@@ -199,6 +245,7 @@ export function BattleMapScreen({
                 heroes={respawn.p1}
                 onDrop={(heroId) => setHeroPosition("p1", heroId, null)}
               />
+              {iceWallSide === "p1" && iceWallHolder}
             </div>
 
             {/* The gold piles sit right under the board, not under the whole
@@ -207,14 +254,18 @@ export function BattleMapScreen({
             <div className={styles.boardColumn}>
               <div
                 ref={viewportRef}
-                className={styles.board}
+                className={
+                  isWallOverBoard ? `${styles.board} ${styles.boardWallDragOver}` : styles.board
+                }
                 onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={endDrag}
                 onMouseLeave={endDrag}
+                {...boardWallDropHandlers}
               >
                 <div
+                  ref={boardTransformRef}
                   className={styles.boardTransform}
                   style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
                 >
@@ -231,6 +282,25 @@ export function BattleMapScreen({
                       onDropHero={(side, heroId) => setHeroPosition(side, heroId, space.id)}
                     />
                   ))}
+                  {/* After the spaces, so it's always grabbable, even near a
+                      space whose invisible drop circle would otherwise sit
+                      on top of it. While a hero is dragged it lets the
+                      pointer through, so it never takes a drop meant for
+                      the space under it. It counter-scales by 1/sqrt(zoom)
+                      like a hero token: still growing with the paths it
+                      covers, just slower than the art. */}
+                  {iceWallSide !== null && battleState.iceWall !== null && (
+                    <IceWallMarker
+                      style={{
+                        position: "absolute",
+                        left: `${battleState.iceWall.xPct}%`,
+                        top: `${battleState.iceWall.yPct}%`,
+                        transform: `translate(-50%, -50%) scale(${1 / Math.sqrt(zoom)})`,
+                        zIndex: 3,
+                        pointerEvents: isHeroDragging ? "none" : undefined,
+                      }}
+                    />
+                  )}
                 </div>
 
                 <div className={styles.zoomControls}>
@@ -283,7 +353,13 @@ export function BattleMapScreen({
                   onChange={(pileId, value) => setGoldPile(pileId, value)}
                 />
                 {isArenaShown(battleState) && (
-                  <div className={styles.arenaSlot}>
+                  <div
+                    className={
+                      iceWallSide === "p2"
+                        ? `${styles.arenaSlot} ${styles.arenaSlotLeft}`
+                        : styles.arenaSlot
+                    }
+                  >
                     <ArenaPanel
                       occupants={arena}
                       canDrop={(payload) => canEnterArena(battleState, payload)}
@@ -307,6 +383,7 @@ export function BattleMapScreen({
                 heroes={respawn.p2}
                 onDrop={(heroId) => setHeroPosition("p2", heroId, null)}
               />
+              {iceWallSide === "p2" && iceWallHolder}
             </div>
           </div>
         </div>

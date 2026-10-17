@@ -75,28 +75,28 @@ frontend/e2e/
 
 ### Data & state layer
 
-- [ ] M1. `lib/battle/types.ts`: += `IceWallPosition = { xPct: number;
+- [x] M1. `lib/battle/types.ts`: += `IceWallPosition = { xPct: number;
       yPct: number }` with the spec's doc comment. `BattleState` +=
       `iceWall: IceWallPosition | null` (doc: `null` = in its holder,
       changed only by hand), `schemaVersion: 13`.
-- [ ] M2. `lib/battle/bounds.ts`: += `clampIceWallPct(value)`, 0-100,
+- [x] M2. `lib/battle/bounds.ts`: += `clampIceWallPct(value)`, 0-100,
       next to `clampGoldPile`.
-- [ ] M3. `lib/battle/reducer.ts`: += `SET_ICE_WALL { position:
+- [x] M3. `lib/battle/reducer.ts`: += `SET_ICE_WALL { position:
       IceWallPosition | null }`. It clamps both coordinates and returns
       the same state for an equal write (both `null`, or the same point).
       No roster check. `createInitialBattleState` writes `iceWall: null`
       and `schemaVersion: 13`. A comment says nothing else in the reducer
       touches the wall (not HP to 0, a position change or a passed
       round).
-- [ ] M4. `lib/battle/iceWall.ts` (new): `ICE_WALL_OWNER = "dazeem"` and
+- [x] M4. `lib/battle/iceWall.ts` (new): `ICE_WALL_OWNER = "dazeem"` and
       `iceWallOwnerSide(state)`, the side whose `heroes` hold Dazeem, else
       `null`, like `arenaOwnerSide`. No level, HP or position check.
-- [ ] M5. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
+- [x] M5. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
       13`. += `PersistedBattleStateV13` = `PersistedBattleStateV12` with
       `schemaVersion: 13` and `iceWall: IceWallPosition | null`.
       `PersistedBattleStateV12`'s doc comment says it's now only the
       source for `battleMigrations[12]`.
-- [ ] M6. `lib/persistence/storage.ts`:
+- [x] M6. `lib/persistence/storage.ts`:
       - += `upgradeV12ToV13`, a top-level step like `upgradeV2ToV3`
         (`iceWall: null`), and `battleMigrations` += `12:
         upgradeV12ToV13`
@@ -105,18 +105,18 @@ frontend/e2e/
         (`isNumberInRange`), and rejects anything else
       - `saveBattleState` writes `iceWall`, `loadBattleState` returns it,
         and both use `PersistedBattleStateV13` and `schemaVersion: 13`
-- [ ] M7. `lib/useBattle.ts`: += `setIceWall(position)`, modelled on
+- [x] M7. `lib/useBattle.ts`: += `setIceWall(position)`, modelled on
       `setGoldPile`. `app/page.tsx` passes `battle.setIceWall` to
       `BattleMapScreen`.
 
 ### Drag layer
 
-- [ ] M8. `lib/map/dragPayload.ts`: += `ICE_WALL_DRAG_MIME_TYPE`,
+- [x] M8. `lib/map/dragPayload.ts`: += `ICE_WALL_DRAG_MIME_TYPE`,
       `serializeIceWallDrag(event)` (no data, `effectAllowed = "move"`),
       `isIceWallDrag(event)` and `isHeroDrag(event)`. Both checks read
       `event.dataTransfer.types`, which browsers expose during a drag,
       unlike the data.
-- [ ] M9. `lib/map/`:
+- [x] M9. `lib/map/`:
       - `useDragHighlight.ts` (new): `useHeroDropTarget`'s enter/over/
         leave depth counter and `isDragOver`, counting only drags that
         `matches(event)`. Its `onDragOver` only calls `preventDefault`
@@ -130,20 +130,20 @@ frontend/e2e/
 
 ### UI
 
-- [ ] M10. `components/IceWallMarker/` (new): the canvas's marker, a
+- [x] M10. `components/IceWallMarker/` (new): the canvas's marker, a
       `draggable` tile with `aria-label="Ice Wall"`, an
       `rgba(24, 19, 16, 0.9)` fill, a 1.5px `--color-chill` border, 6px
       radius, and the brick-wall icon (24x12 viewBox, 1.5 stroke, inline
       SVG, `aria-hidden`). Its `onDragStart` calls
       `serializeIceWallDrag`. Takes an optional `style` for its on-board
       transform. No rotate control.
-- [ ] M11. `components/IceWallHolder/` (new): `<section
+- [x] M11. `components/IceWallHolder/` (new): `<section
       aria-label="Ice Wall">` with `useIceWallDropTarget(() => onDrop())`.
       It has the respawn area's heading style with a cyan left bar
       instead of the team colour, over a full-width, 48px dashed cyan box
       on `--color-panel-bg`. It renders `IceWallMarker` inside while
       `holdsWall`. Hero drops are ignored.
-- [ ] M12. `screens/BattleMapScreen/BattleMapScreen.tsx`:
+- [x] M12. `screens/BattleMapScreen/BattleMapScreen.tsx`:
       - += `setIceWall` prop and a `boardTransformRef` on
         `.boardTransform`
       - `const iceWallSide = iceWallOwnerSide(battleState)`. When it isn't
@@ -158,20 +158,32 @@ frontend/e2e/
       - When `iceWallSide !== null && battleState.iceWall !== null`,
         render `IceWallMarker` inside `.boardTransform` after the
         `MapSpace`s, at `xPct`/`yPct`, with `translate(-50%, -50%)
-        scale(1 / Math.sqrt(zoom))`
-- [ ] M13. Spec Open Item: the marker's size at every zoom step (100%,
+        scale(1 / Math.sqrt(zoom))`. **Added (M14):** `pointer-events:
+        none` while a hero is dragged (`isHeroDragging`, from the
+        screen's `dragstart` / drop / `dragend`).
+      - **Added in QA:** with Dazeem on Player 2, the Arena's out-of-flow
+        slot covered the holder, so `.arenaSlot` gains `.arenaSlotLeft`
+        and hangs left of the gold bar instead (spec Layout updated).
+- [x] M13. Spec Open Item: the marker's size at every zoom step (100%,
       150%, 200%, 250%). With `1 / sqrt(zoom)` it should read as covering
       a path at 100% without hiding whole spaces at 250%. Switch to the
       full `1 / zoom` if not. Decide in the browser and update the spec.
-- [ ] M14. Spec Open Item: a wall dropped onto a space. The marker sits
+      **Kept `1 / sqrt(zoom)`:** a small tile on a path at every step.
+- [x] M14. Spec Open Item: a wall dropped onto a space. The marker sits
       above the `MapSpace` drop target, so a hero dropped exactly on it
       lands on the board and does nothing. If that gets in the way in
       practice, set `pointer-events: none` on the on-board marker while a
       hero is dragged. Decide in the browser and update the spec.
+      **Click-through while a hero is dragged.** Drawing it under the
+      spaces was tried first, but a space's 60px drop circle then made a
+      nearby wall ungrabbable (the e2e caught it). Now it's always
+      grabbable and never takes a hero's drop; a wall dropped right on a
+      hero covers it until it's dragged off. The e2e drops a hero onto a
+      space under the wall.
 
 ### Tests & verification
 
-- [ ] M15. Tests:
+- [x] M15. Tests:
       - fixtures: every hand-written `BattleState` gains `iceWall: null`
         and `schemaVersion: 13` (`tsc` finds them:
         `BattleMapScreen.test.tsx`, `selectors.test.ts`,
@@ -215,16 +227,19 @@ frontend/e2e/
         zooming and panning (same spot on the art) and a reload; drag it
         to another spot; Dazeem's HP to 0 leaves it on the board; drag it
         back to the holder; a draft without Dazeem shows no holder
-- [ ] M16. Spec Open Item: the Map at 1280x800 with Dazeem drafted and
+- [x] M16. Spec Open Item: the Map at 1280x800 with Dazeem drafted and
       his team's status panel at its busiest (many token rows wrapping),
       on each side. His column, with the holder, stays within the board's
       height without making the Map scroll, and the other column doesn't
       move. If it doesn't fit, shrink the holder's box first. Decide in
-      the browser and update the spec.
-- [ ] M17. `tsc --noEmit`, ESLint, full Vitest and Playwright suites
+      the browser and update the spec. **Accepted (user, 2026-10-18):** it
+      fits at the start and mid-game with up to 2 heroes respawning; the
+      Map scrolls 66px only with 3-4 respawning *and* two token lines on
+      every hero. Neither team's panel moves.
+- [x] M17. `tsc --noEmit`, ESLint, full Vitest and Playwright suites
       green (the existing battle-map and arena e2e specs too, since
       `useHeroDropTarget` changed underneath).
-- [ ] M18. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M18. Manual QA at 1280x800 (`/qa-screens`):
       - the holder only with Dazeem drafted, in his team's column, on
         either side; neither team's panel or respawn area moves
       - dragging the wall: only the board and holder light up, not the
@@ -236,7 +251,12 @@ frontend/e2e/
       - an existing schema-12 battle upgrades in place with the wall in
         its holder and every token, Arena position and gold pile kept
       - New Draft sends the wall back to its holder
-- [ ] M19. `npm version minor --no-git-tag-version` (→ 0.16.0). In
+      Done with one-off Playwright scripts at 1280x800 and 2560x1440.
+      The drag highlight was checked by the unit tests, not by eye
+      (a native drag can't be screenshotted mid-drag). QA found the Arena
+      clash fixed in M12 and an existing Arena overlap with a long column,
+      logged in `BACKLOG.md`'s Follow-ups.
+- [x] M19. `npm version minor --no-git-tag-version` (→ 0.16.0). In
       `BACKLOG.md`, mark Ice Wall done in Dazeem's entry and the
       hero-specific table, linking intent 16 and v0.16.0 (Bear Trap stays
       open). Mark spec 16 **BUILT**.

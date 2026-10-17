@@ -1,7 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Hero } from "../../lib/draft/types";
-import { dropHero, fakeDataTransfer } from "../../test/heroDrag";
+import {
+  dropHero,
+  fakeDataTransfer,
+  heroDragTransfer,
+  iceWallDragTransfer,
+} from "../../test/heroDrag";
 import { RespawnAreaStrip } from "./RespawnAreaStrip";
 
 function makeHero(id: Hero["id"], name: string): Hero {
@@ -97,10 +102,26 @@ describe("RespawnAreaStrip", () => {
     );
     const strip = screen.getByRole("region", { name: "Player 1 respawning area" });
 
-    fireEvent.dragEnter(strip, { dataTransfer: fakeDataTransfer() });
+    fireEvent.dragEnter(strip, { dataTransfer: heroDragTransfer() });
     expect(container.querySelector('[class*="stripDragOver"]')).not.toBeNull();
 
     fireEvent.dragLeave(strip);
+    expect(container.querySelector('[class*="stripDragOver"]')).toBeNull();
+  });
+
+  it("doesn't highlight for the Ice Wall or an unknown drag (intent/16)", () => {
+    const { container } = render(
+      <RespawnAreaStrip
+        side="p1"
+        label="Player 1"
+        heroes={[makeHero("boreas", "Boreas")]}
+        onDrop={() => {}}
+      />,
+    );
+    const strip = screen.getByRole("region", { name: "Player 1 respawning area" });
+
+    fireEvent.dragEnter(strip, { dataTransfer: iceWallDragTransfer() });
+    fireEvent.dragEnter(strip, { dataTransfer: fakeDataTransfer() });
     expect(container.querySelector('[class*="stripDragOver"]')).toBeNull();
   });
 
@@ -115,7 +136,7 @@ describe("RespawnAreaStrip", () => {
     );
     const strip = screen.getByRole("region", { name: "Player 1 respawning area" });
 
-    fireEvent.dragEnter(strip, { dataTransfer: fakeDataTransfer() });
+    fireEvent.dragEnter(strip, { dataTransfer: heroDragTransfer() });
     expect(container.querySelector('[class*="stripDragOver"]')).not.toBeNull();
 
     dropHero(strip, { side: "p1", heroId: "boreas" });

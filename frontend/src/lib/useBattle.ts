@@ -7,6 +7,7 @@ import type {
   BattleState,
   CountedTokenField,
   HeroPosition,
+  IceWallPosition,
   OnOffTokenField,
   StructuresState,
 } from "./battle/types";
@@ -41,6 +42,9 @@ export type UseBattleResult = {
    * is just another `HeroPosition`. */
   setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: HeroPosition) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
+  /** Places or moves Dazeem's Ice Wall (intent/16), or sends it back to its
+   * holder with `null`. Clamped in the reducer. */
+  setIceWall: (position: IceWallPosition | null) => void;
   passInitiative: () => void;
 };
 
@@ -187,6 +191,12 @@ export function useBattle(
     );
   }, []);
 
+  const setIceWall = useCallback((position: IceWallPosition | null) => {
+    setState((prev) =>
+      prev === null ? prev : battleReducer(prev, { type: "SET_ICE_WALL", position }),
+    );
+  }, []);
+
   const passInitiative = useCallback(() => {
     setState((prev) => (prev === null ? prev : battleReducer(prev, { type: "PASS_INITIATIVE" })));
   }, []);
@@ -202,6 +212,7 @@ export function useBattle(
     setStructureHp,
     setHeroPosition,
     setGoldPile,
+    setIceWall,
     passInitiative,
   };
 }

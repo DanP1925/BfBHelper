@@ -85,8 +85,13 @@ export type BattleTeamState = {
   heroPositions: Record<HeroId, HeroPosition>;
 };
 
+/** Where Dazeem's Ice Wall sits on the board art (intent/16), in the same
+ * 0-100 percentages as MapSpaceDef's xPct/yPct. Free placement: it isn't
+ * tied to a path or to the spaces it separates. */
+export type IceWallPosition = { xPct: number; yPct: number };
+
 export type BattleState = {
-  schemaVersion: 12;
+  schemaVersion: 13;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,
@@ -95,4 +100,8 @@ export type BattleState = {
   /** Who holds the initiative marker right now (intent/05). Starts on the
    * draft's coin-flip winner and flips on every PASS_INITIATIVE. */
   initiative: PlayerId;
+  /** Dazeem's Ice Wall (intent/16): `null` while it's in its holder.
+   * Changed only by hand: never cleared on Dazeem's defeat, a level
+   * change or a new round. */
+  iceWall: IceWallPosition | null;
 };

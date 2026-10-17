@@ -35,3 +35,32 @@ export function parseHeroDragPayload(event: DragEvent): HeroDragPayload | null {
 
   return { side: candidate.side, heroId: candidate.heroId as HeroId };
 }
+
+/** Dazeem's Ice Wall (intent/16) travels under its own MIME type, so hero
+ * drop targets never take it and the wall's drop targets never take a
+ * hero. */
+const ICE_WALL_DRAG_MIME_TYPE = "application/x-bfbhelper-ice-wall";
+
+/** Called from `IceWallMarker`'s `onDragStart`. Carries no data: there's
+ * only one wall, and where it lands is the drop's own cursor position. */
+export function serializeIceWallDrag(event: DragEvent): void {
+  event.dataTransfer.setData(ICE_WALL_DRAG_MIME_TYPE, "1");
+  event.dataTransfer.effectAllowed = "move";
+}
+
+/** Whether a drag carries `mimeType`. Unlike its data, a drag's MIME
+ * *types* are readable during dragenter/dragover, not just on drop. */
+function carries(event: DragEvent, mimeType: string): boolean {
+  return Array.from(event.dataTransfer?.types ?? []).includes(mimeType);
+}
+
+/** Whether a drag is the Ice Wall. Works during the whole drag. */
+export function isIceWallDrag(event: DragEvent): boolean {
+  return carries(event, ICE_WALL_DRAG_MIME_TYPE);
+}
+
+/** Whether a drag is a hero token. Works during the whole drag; the
+ * payload itself is still only readable on drop (parseHeroDragPayload). */
+export function isHeroDrag(event: DragEvent): boolean {
+  return carries(event, HERO_DRAG_MIME_TYPE);
+}
