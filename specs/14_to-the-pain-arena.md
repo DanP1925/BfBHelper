@@ -1,7 +1,7 @@
 # Spec 14: The Arena
 
-> **DRAFT.** Architecture for intent 14's scope. Build-out has not started
-> yet. See [../intent/14_to-the-pain-arena.md](../intent/14_to-the-pain-arena.md)
+> **BUILT.** Architecture for intent 14's scope, all built in one PR
+> (plan 14). See [../intent/14_to-the-pain-arena.md](../intent/14_to-the-pain-arena.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -83,25 +83,27 @@
   - `heroPositions`' doc comment points at `HeroPosition` instead of
     describing `null` inline.
 - `createInitialBattleState` (`reducer.ts`) writes `schemaVersion: 11`.
-  `seedHeroPositions` still seeds `null`; its casts change from
-  `MapSpaceId | null` to `HeroPosition`.
+  `seedHeroPositions` still seeds `null` and keeps its
+  `MapSpaceId | null` return type (the schema-1 migration uses it too);
+  `createInitialTeamState` drops its cast, since that type already fits
+  `HeroPosition`.
 - **`SET_HERO_POSITION`** keeps its shape, with `spaceId: HeroPosition`.
   Its branch doesn't change: same-value writes return the same state
   reference, and a hero not on that side is ignored. It doesn't check who
   may enter the Arena (Arena Logic).
 - `frontend/src/lib/persistence/schema.ts`:
   - `CURRENT_BATTLE_SCHEMA_VERSION = 11`. The draft schema doesn't change.
-  - **Legacy types pin the old positions.** `LegacyBattleTeamStateV9` is
-    built from `BattleTeamState` today, so it would silently widen. A new
-    `LegacyBattleTeamStateV10` fixes that:
+  - **Legacy types pin the old positions.** Every legacy team type from
+    schema 2 to 9 was built from `BattleTeamState`, so it would silently
+    widen. A new `LegacyBattleTeamStateV10` fixes that:
     ```ts
-    type LegacyHeroPositions = Record<HeroId, MapSpaceId | null>;
     export type LegacyBattleTeamStateV10 = Omit<BattleTeamState, "heroPositions"> & {
-      heroPositions: LegacyHeroPositions;
+      heroPositions: Record<HeroId, MapSpaceId | null>;
     };
     ```
-    `LegacyBattleTeamStateV9` is built from it instead of
-    `BattleTeamState`, and `PersistedBattleStateV10.p1/p2` become
+    `LegacyBattleTeamStateV2` and `V4`-`V9` are built from it instead of
+    `BattleTeamState` (one `Omit<…, "heroes">` each, so the build changed
+    all of them, not just V9), and `PersistedBattleStateV10.p1/p2` become
     `LegacyBattleTeamStateV10`. Its doc comment says it's now only the
     migration source for `battleMigrations[10]`.
   - New `PersistedBattleStateV11` = `PersistedBattleStateV10` with
@@ -242,19 +244,24 @@ export function canEnterArena(state: BattleState, hero: HeroDragPayload): boolea
     `onDrop={({ side, heroId }) => setHeroPosition(side, heroId,
     ARENA_POSITION)}`.
   - `setHeroPosition`'s prop type widens to `HeroPosition`.
-- **Placement** (canvas, UI Design Reference): the board column, in one
-  row with `GoldPilesBar` under the board, the Arena to its right. The side
-  columns are per team, and the Arena is shared. `boardColumn` gains a
-  row wrapper holding both. That row has room at 1280x800: the board is
-  `min(70vh, 700px)`, about 560px wide, and the gold bar takes about half
-  of it.
-- **Height at 1280x800.** The Arena appears and disappears mid-game, so
-  it must not make the Map scroll when shown, and it shouldn't jolt the
-  board when it toggles. If it's in the gold bar's row, the row grows to
-  the token box's height (a 46px `MapToken` plus its out-of-flow name
-  label, about 80px with padding) instead of the bar's ~44px. Whether
-  that fits next to the side columns, and whether to reserve the row's
-  height while it's hidden, is checked in the browser (Open Items).
+- **Placement** (canvas, UI Design Reference): to the right of
+  `GoldPilesBar` under the board. The side columns are per team, and the
+  Arena is shared. `boardColumn`'s gold bar sits in a
+  `position: relative` `.bottomRow`, and the Arena in an absolutely
+  positioned `.arenaSlot` inside it (`top: 0; left: calc(100% + 28px)`),
+  top-aligned with the bar.
+- **Out of flow, so nothing moves** (decided 2026-10-17 in the browser,
+  plan M12). In flow, the Arena made the bottom row taller than the gold
+  bar, moving the board up 19px when it appeared, and the bar plus the
+  Arena were wider than the board, pushing the side columns out (further
+  in a duel, since "Agatha Trunch" widens the box). Out of flow, the
+  board, gold bar and side columns stay put whether the Arena is hidden,
+  empty or full. At 1280x800 it hangs into the empty space below Player
+  2's column, ending at 775px with no scroll; on the 2560x1440 monitor it
+  ends at 1165px. It doesn't reserve height while hidden. The catch: being
+  out of flow, it doesn't grow the scroll area, so a viewport much
+  shorter than 800px could clip it. Only 1280x800 and 2560x1440 are signed
+  off.
 - **Not shown** on the Battle Board, `ResultsScreen`, `WinScreen` or in
   `MapTeamStatusPanel`, which lists each team's heroes and tokens but
   never positions (intent's Scope and Out of Scope).
@@ -319,10 +326,16 @@ infra.
 - The Arena uses `--color-gold` for its label and dashed border, so it
   reads as neutral, belonging to neither team. Check in the browser that it
   doesn't look like a gold-pile control next to `GoldPilesBar`.
+  **Decided (2026-10-17):** kept. With its "The Arena" label and dashed
+  box it reads as a separate drop zone, not a gold-pile stepper.
 - Check the Map at 1280x800 with the Arena shown and two heroes inside:
   no scroll, and the side columns and board keep their size. Decide
   whether the Arena's row keeps its height while hidden, so the board
   doesn't move when Felix reaches level 4 or the Arena empties.
+  **Decided (2026-10-17):** in flow it moved the board and side columns,
+  so it's out of flow instead, and nothing moves (see Layout). No height
+  is reserved.
 - Decide whether `ArenaPanel` shares a base with `RespawnAreaStrip` (the
   drag-depth counter and highlight), or copies the ~20 lines. Copy first;
   extract only if `/simplify` flags it.
+  **Decided (2026-10-17):** copied. `/simplify` wasn't run on this PR.

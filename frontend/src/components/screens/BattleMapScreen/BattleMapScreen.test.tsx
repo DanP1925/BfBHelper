@@ -1,7 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { createInitialBattleState } from "../../../lib/battle/reducer";
 import type { BattleState } from "../../../lib/battle/types";
 import type { Hero } from "../../../lib/draft/types";
+import { ARENA_POSITION } from "../../../lib/map/constants";
 import { createFreshGoldPiles, MAP_SPACE_IDS } from "../../../data/mapSpaces";
 import { NO_TOKENS } from "../../../test/heroState";
 import { BattleMapScreen, INITIAL_MAP_CAMERA } from "./BattleMapScreen";
@@ -22,7 +24,7 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 10,
+    schemaVersion: 11,
     initiative: "p1",
     p1: {
       gold: 0,
@@ -569,7 +571,7 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 10,
+      schemaVersion: 11,
       initiative: "p1",
       p1: {
         gold: 0,
@@ -619,5 +621,102 @@ describe("BattleMapScreen", () => {
     // No two tokens in the group land on the exact same transform (which
     // would mean the fan-out collapsed them on top of each other).
     expect(new Set(offsets).size).toBe(4);
+  });
+
+  describe("the Arena (intent/14)", () => {
+    const felixTeam = [makeHero("felix", "Felix"), makeHero("boreas", "Boreas")];
+    const enemyTeam = [makeHero("sterling", "Sterling"), makeHero("caligar", "Caligar")];
+
+    /** Felix (p1) deployed at `felixLevel`, with `inArena` already inside. */
+    function arenaState(felixLevel: number, inArena: Hero["id"][] = []): BattleState {
+      const base = createInitialBattleState(felixTeam, enemyTeam, "p1");
+      const place = (side: "p1" | "p2") =>
+        Object.fromEntries(
+          Object.keys(base[side].heroPositions).map((id) => [
+            id,
+            inArena.includes(id as Hero["id"]) ? ARENA_POSITION : MAP_SPACE_IDS[0],
+          ]),
+        ) as BattleState["p1"]["heroPositions"];
+      return {
+        ...base,
+        p1: {
+          ...base.p1,
+          heroes: { ...base.p1.heroes, felix: { ...base.p1.heroes.felix, level: felixLevel } },
+          heroPositions: place("p1"),
+        },
+        p2: { ...base.p2, heroPositions: place("p2") },
+      };
+    }
+
+    function renderArena(battleState: BattleState, setHeroPosition = vi.fn()) {
+      render(
+        <BattleMapScreen
+          p1Heroes={felixTeam}
+          p2Heroes={enemyTeam}
+          battleState={battleState}
+          winner={null}
+          setHeroPosition={setHeroPosition}
+          setGoldPile={() => {}}
+          onNewDraft={() => {}}
+          onEndBattle={() => {}}
+          onSwitchView={() => {}}
+          {...fixedProps}
+        />,
+      );
+      return setHeroPosition;
+    }
+
+    function dropOnArena(side: "p1" | "p2", heroId: Hero["id"]) {
+      const raw = JSON.stringify({ side, heroId });
+      fireEvent.drop(screen.getByRole("region", { name: "The Arena" }), {
+        dataTransfer: {
+          getData: (type: string) => (type === "application/x-bfbhelper-hero" ? raw : ""),
+        },
+      });
+    }
+
+    it("isn't shown without Felix", () => {
+      renderArena(makeBattleState());
+      expect(screen.queryByRole("region", { name: "The Arena" })).toBeNull();
+    });
+
+    it("isn't shown with Felix below level 4", () => {
+      renderArena(arenaState(3));
+      expect(screen.queryByRole("region", { name: "The Arena" })).toBeNull();
+    });
+
+    it("shows an empty Arena with Felix at level 4", () => {
+      renderArena(arenaState(4));
+      const arena = screen.getByRole("region", { name: "The Arena" });
+      expect(arena.querySelectorAll('div[draggable="true"]')).toHaveLength(0);
+    });
+
+    it("shows its occupants in the Arena, not on their space", () => {
+      renderArena(arenaState(4, ["felix", "sterling"]));
+      const arena = screen.getByRole("region", { name: "The Arena" });
+      expect(within(arena).getByAltText("Felix")).toBeInTheDocument();
+      expect(within(arena).getByAltText("Sterling")).toBeInTheDocument();
+      // Each hero's token renders once: the Arena's copy is the only one.
+      expect(screen.getAllByAltText("Felix")).toHaveLength(1);
+      expect(screen.getAllByAltText("Sterling")).toHaveLength(1);
+    });
+
+    it("stays shown while occupied, even with Felix set back to level 1", () => {
+      renderArena(arenaState(1, ["sterling"]));
+      expect(screen.getByRole("region", { name: "The Arena" })).toBeInTheDocument();
+    });
+
+    it("moves Felix or an enemy in on a drop", () => {
+      const setHeroPosition = renderArena(arenaState(4));
+      dropOnArena("p2", "sterling");
+      expect(setHeroPosition).toHaveBeenCalledWith("p2", "sterling", ARENA_POSITION);
+    });
+
+    it("refuses Felix's ally and a second enemy", () => {
+      const setHeroPosition = renderArena(arenaState(4, ["sterling"]));
+      dropOnArena("p1", "boreas");
+      dropOnArena("p2", "caligar");
+      expect(setHeroPosition).not.toHaveBeenCalled();
+    });
   });
 });

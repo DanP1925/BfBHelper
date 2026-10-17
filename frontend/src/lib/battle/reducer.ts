@@ -15,12 +15,13 @@ import {
   TOWER_STARTING_HP,
 } from "./constants";
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
-import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
+import type { GoldPileSpaceId } from "../../data/mapSpaces";
 import type {
   BattleState,
   BattleTeamState,
   CountedTokenField,
   HeroBattleState,
+  HeroPosition,
   StructuresState,
 } from "./types";
 
@@ -39,7 +40,7 @@ export type BattleAction =
   | { type: "SET_HERO_IMMOBILIZED"; side: PlayerId; heroId: HeroId; value: boolean }
   | { type: "SET_HERO_DEATH_MARKED"; side: PlayerId; heroId: HeroId; value: boolean }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
-  | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: MapSpaceId | null }
+  | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: HeroPosition }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
   | { type: "PASS_INITIATIVE" };
 
@@ -198,10 +199,7 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
       bottom: TOWER_STARTING_HP,
       bit: BIT_STARTING_HP,
     },
-    heroPositions: seedHeroPositions(heroEntries.map(([id]) => id)) as Record<
-      HeroId,
-      MapSpaceId | null
-    >,
+    heroPositions: seedHeroPositions(heroEntries.map(([id]) => id)),
   };
 }
 
@@ -217,7 +215,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 10,
+    schemaVersion: 11,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

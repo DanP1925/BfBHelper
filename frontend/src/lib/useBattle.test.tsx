@@ -5,7 +5,7 @@ import { BATTLE_STATE_STORAGE_KEY } from "./persistence/schema";
 import { saveBattleState } from "./persistence/storage";
 import { createInitialBattleState } from "./battle/reducer";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../data/mapSpaces";
-import { GOLD_PILE_STARTING_COUNT } from "./map/constants";
+import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "./map/constants";
 import { heroIdSetsMatch, useBattle } from "./useBattle";
 import { COUNTED_TOKENS } from "../test/countedTokens";
 import { NO_TOKENS } from "../test/heroState";
@@ -440,5 +440,50 @@ describe("useBattle", () => {
 
     expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(5);
     expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
+  });
+
+  describe("the Arena (intent/14)", () => {
+    // Felix (p1) against Cyrus (p2).
+    function renderDuel() {
+      const hook = renderHook(() => useBattle([OTHER_HERO], [HERO_B], "p1"));
+      act(() => {
+        hook.result.current.setHeroPosition("p1", OTHER_HERO.id, ARENA_POSITION);
+        hook.result.current.setHeroPosition("p2", HERO_B.id, ARENA_POSITION);
+      });
+      return hook;
+    }
+
+    it("an Arena position persists and survives a reload", () => {
+      const { unmount } = renderDuel();
+      expect(readRawState().p1.heroPositions[OTHER_HERO.id]).toBe(ARENA_POSITION);
+      unmount();
+
+      const { result } = renderHook(() => useBattle([OTHER_HERO], [HERO_B], "p1"));
+      expect(result.current.state?.p1.heroPositions[OTHER_HERO.id]).toBe(ARENA_POSITION);
+      expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBe(ARENA_POSITION);
+    });
+
+    it("setHeroHp to 0 sends the defeated duellist to its respawn area, and the other stays", () => {
+      const { result } = renderDuel();
+
+      act(() => {
+        result.current.setHeroHp("p2", HERO_B.id, 0);
+      });
+
+      expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBeNull();
+      expect(result.current.state?.p1.heroPositions[OTHER_HERO.id]).toBe(ARENA_POSITION);
+    });
+
+    it("setHeroLevel and passInitiative leave Arena positions alone", () => {
+      const { result } = renderDuel();
+
+      act(() => {
+        result.current.setHeroLevel("p1", OTHER_HERO.id, 1);
+        result.current.passInitiative();
+      });
+
+      expect(result.current.state?.p1.heroPositions[OTHER_HERO.id]).toBe(ARENA_POSITION);
+      expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBe(ARENA_POSITION);
+    });
   });
 });

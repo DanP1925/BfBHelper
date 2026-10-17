@@ -16,7 +16,7 @@ import {
   HERO_STARTING_LEVEL,
   TOWER_STARTING_HP,
 } from "../battle/constants";
-import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
+import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import type { BattleState, BattleTeamState } from "../battle/types";
 import {
   BATTLE_STATE_STORAGE_KEY,
@@ -35,6 +35,7 @@ import {
   type PersistedBattleStateV8,
   type PersistedBattleStateV9,
   type PersistedBattleStateV10,
+  type PersistedBattleStateV11,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -182,6 +183,18 @@ const upgradeV8ToV9 = addHeroFieldsStep<PersistedBattleStateV9>(9, { stoneTokens
  * "upgrades in place", every hero's Chill at 0). */
 const upgradeV9ToV10 = addHeroFieldsStep<PersistedBattleStateV10>(10, { chillTokens: 0 });
 
+/** Schema 10 → 11: `heroPositions` may now hold `"arena"` (intent/14). No
+ * save holds it yet, so nothing changes but the version: every battle
+ * upgrades in place with the Arena empty. */
+function upgradeV10ToV11(data: unknown): PersistedBattleStateV11 | null {
+  if (typeof data !== "object" || data === null) return null;
+  return {
+    ...(data as PersistedBattleStateV10),
+    schemaVersion: 11,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -197,6 +210,7 @@ const battleMigrations: MigrationSteps = {
   7: upgradeV7ToV8,
   8: upgradeV8ToV9,
   9: upgradeV9ToV10,
+  10: upgradeV10ToV11,
 };
 
 function isBrowser(): boolean {
@@ -351,8 +365,9 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * within bounds, each counted token within `HERO_COUNTED_TOKEN_CEILINGS`,
  * and a boolean `confused`, `immobilized` and `deathMarked` (shape only: it doesn't check
  * hero-specific visibility, `HERO_SPECIFIC_TOKENS`), and every one of those
- * hero ids also has a `heroPositions` entry that's either `null` or a real
- * map-space id.
+ * hero ids also has a `heroPositions` entry that's either `null`, `"arena"`
+ * or a real map-space id (shape only: it doesn't check who may be in the
+ * Arena, `canEnterArena`).
  */
 function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   if (!hasValidLegacyBattleTeamShape(data)) return false;
@@ -374,13 +389,15 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
     if (typeof hv.deathMarked !== "boolean") return false;
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
-    if (position !== null && !isMapSpaceIdLike(position)) return false;
+    if (position !== null && position !== ARENA_POSITION && !isMapSpaceIdLike(position)) {
+      return false;
+    }
   }
 
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV10 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV11 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -558,7 +575,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV10 = {
+  const payload: PersistedBattleStateV11 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -587,7 +604,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 10,
+    schemaVersion: 11,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,

@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
-import type { BattleState, CountedTokenField, StructuresState } from "./battle/types";
+import type { BattleState, CountedTokenField, HeroPosition, StructuresState } from "./battle/types";
 import type { Hero, HeroId, PlayerId } from "./draft/types";
-import type { GoldPileSpaceId, MapSpaceId } from "../data/mapSpaces";
+import type { GoldPileSpaceId } from "../data/mapSpaces";
 import { loadBattleState, saveBattleState } from "./persistence/storage";
 
 export type UseBattleResult = {
@@ -26,7 +26,9 @@ export type UseBattleResult = {
   setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroDeathMarked: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
-  setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => void;
+  /** Also moves a hero into or out of the Arena (intent/14): its position
+   * is just another `HeroPosition`. */
+  setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: HeroPosition) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
   passInitiative: () => void;
 };
@@ -173,16 +175,13 @@ export function useBattle(
     [],
   );
 
-  const setHeroPosition = useCallback(
-    (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => {
-      setState((prev) =>
-        prev === null
-          ? prev
-          : battleReducer(prev, { type: "SET_HERO_POSITION", side, heroId, spaceId }),
-      );
-    },
-    [],
-  );
+  const setHeroPosition = useCallback((side: PlayerId, heroId: HeroId, spaceId: HeroPosition) => {
+    setState((prev) =>
+      prev === null
+        ? prev
+        : battleReducer(prev, { type: "SET_HERO_POSITION", side, heroId, spaceId }),
+    );
+  }, []);
 
   const setGoldPile = useCallback((pileId: GoldPileSpaceId, value: number) => {
     setState((prev) =>

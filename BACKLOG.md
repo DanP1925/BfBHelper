@@ -137,6 +137,11 @@ when the hero who uses them is in the battle, on either team.
   respawn areas) holding at most Felix + one enemy, with heroes dragged in and
   out by hand. No tokens on Felix's cards. Needs the Arena space
   (hero-specific).
+  **Done:** scoped in `intent/14_to-the-pain-arena.md`, built in v0.14.0.
+  "The Arena", a gold dashed drop zone to the right of the gold piles on the
+  Map, shown once Felix is level 4 and on the board, or while anyone is
+  inside. It takes Felix and one enemy only; heroes are dragged in and out
+  by hand, and a defeated duellist goes to their respawn area as usual.
 - **Kerrick (Wizard):** *Spellbook* (swap the assigned action card with a
   Wizard power card from hand before revealing it) is handled with the
   physical cards. One power card confuses. Needs Confuse tokens.
@@ -193,7 +198,7 @@ Hero-specific (only when that hero is in the battle):
 | Shield (done, v0.11.0) | count per hero | Cyrus |
 | Chill (done, v0.13.0) | count per hero | Dazeem |
 | Ice Wall | single marker on a map space | Dazeem |
-| "To the Pain" Arena | isolated space for Felix + one enemy | Felix |
+| "To the Pain" Arena (done, v0.14.0) | isolated space for Felix + one enemy | Felix |
 | Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
 | Artifacts (x3) | named on/off toggles on Runika | Runika |
 | Stone (done, v0.12.0) | count per hero | Sedusa |

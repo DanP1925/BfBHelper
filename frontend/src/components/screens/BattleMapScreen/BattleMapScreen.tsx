@@ -9,9 +9,12 @@ import type {
 } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { clamp } from "../../../lib/battle/bounds";
-import type { BattleState } from "../../../lib/battle/types";
+import { canEnterArena, isArenaShown } from "../../../lib/battle/arena";
+import type { BattleState, HeroPosition } from "../../../lib/battle/types";
+import { ARENA_POSITION } from "../../../lib/map/constants";
 import type { GoldPileSpaceId, MapSpaceId } from "../../../data/mapSpaces";
 import { MAP_SPACES } from "../../../data/mapSpaces";
+import { ArenaPanel } from "../../ArenaPanel/ArenaPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { GoldPilesBar } from "../../GoldPilesBar/GoldPilesBar";
 import { MapTeamStatusPanel } from "../../MapTeamStatusPanel/MapTeamStatusPanel";
@@ -28,7 +31,7 @@ type BattleMapScreenProps = {
   /** Caller guarantees this is non-null — `useBattle` is only active once a draft is done. */
   battleState: BattleState;
   winner: PlayerId | "draw" | null;
-  setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => void;
+  setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: HeroPosition) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
@@ -146,11 +149,15 @@ export function BattleMapScreen({
 
   const bySpace = new Map<MapSpaceId, HeroOnBoard[]>();
   const respawn: Record<PlayerId, Hero[]> = { p1: [], p2: [] };
+  // P1 first, matching arenaOccupants.
+  const arena: HeroOnBoard[] = [];
   for (const team of teams) {
     for (const hero of team.heroes) {
       const spaceId = battleState[team.side].heroPositions[hero.id];
       if (spaceId === null) {
         respawn[team.side].push(hero);
+      } else if (spaceId === ARENA_POSITION) {
+        arena.push({ hero, side: team.side });
       } else {
         const existing = bySpace.get(spaceId) ?? [];
         existing.push({ hero, side: team.side });
@@ -270,10 +277,21 @@ export function BattleMapScreen({
                 </div>
               </div>
 
-              <GoldPilesBar
-                goldPiles={battleState.goldPiles}
-                onChange={(pileId, value) => setGoldPile(pileId, value)}
-              />
+              <div className={styles.bottomRow}>
+                <GoldPilesBar
+                  goldPiles={battleState.goldPiles}
+                  onChange={(pileId, value) => setGoldPile(pileId, value)}
+                />
+                {isArenaShown(battleState) && (
+                  <div className={styles.arenaSlot}>
+                    <ArenaPanel
+                      occupants={arena}
+                      canDrop={(payload) => canEnterArena(battleState, payload)}
+                      onDrop={({ side, heroId }) => setHeroPosition(side, heroId, ARENA_POSITION)}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className={styles.sideGroup}>
