@@ -18,8 +18,8 @@
     token line, after the Chill icon.
 - No new store or storage key. Per intent's Affected Systems, the flag is
   one new field on each hero's `HeroBattleState`, next to `chillTokens`.
-  That makes this a battle schema bump (10 → 11) with an in-place
-  migration, as intents 04-13 did.
+  That makes this a battle schema bump (11 → 12) with an in-place
+  migration, as intents 04-14 did.
 - **One shared path for on/off tokens** (decided 2026-10-17, folded into
   this intent's build PR). Spec 13 merged the counted tokens into one
   action and setter but left Confuse, Immobilize and Death Mark with their
@@ -120,7 +120,7 @@
   >;
 
   export type BattleState = {
-    schemaVersion: 11;
+    schemaVersion: 12;
     // p1, p2, goldPiles, initiative: unchanged
   };
   ```
@@ -148,24 +148,29 @@
   `favoredEnemy: false`, and its doc comment adds "no Favored Enemy". Per
   intent's Constraints, new battles, upgraded saves and the
   `?? createInitialHeroState(hero)` fallbacks all agree.
-  `createInitialBattleState` writes `schemaVersion: 11`.
-- `frontend/src/lib/persistence/schema.ts`:
-  - `CURRENT_BATTLE_SCHEMA_VERSION = 11`. The draft schema doesn't change.
-  - The legacy hero chain gains a link at the top:
+  `createInitialBattleState` writes `schemaVersion: 12`.
+- `frontend/src/lib/persistence/schema.ts` (updated 2026-10-17: intent
+  14's Arena was built first and took schema 11, so this is 11 → 12):
+  - `CURRENT_BATTLE_SCHEMA_VERSION = 12`. The draft schema doesn't change.
+  - The legacy hero chain gains a link at the top. Schemas 10 and 11 have
+    the same hero shape, so one type covers both:
     ```ts
-    type LegacyHeroBattleStateV10 = Omit<HeroBattleState, "favoredEnemy">;
-    type LegacyHeroBattleStateV9 = Omit<LegacyHeroBattleStateV10, "chillTokens">;
+    type LegacyHeroBattleStateV11 = Omit<HeroBattleState, "favoredEnemy">;
+    type LegacyHeroBattleStateV9 = Omit<LegacyHeroBattleStateV11, "chillTokens">;
     ```
-  - New `LegacyBattleTeamStateV10` (heroes: `LegacyHeroBattleStateV10`).
-    `PersistedBattleStateV10.p1/p2` become `LegacyBattleTeamStateV10`, and
+  - New `LegacyBattleTeamStateV11` = `BattleTeamState` with heroes of
+    `LegacyHeroBattleStateV11`. `LegacyBattleTeamStateV10` derives from it
+    (not from `BattleTeamState`), so the older team types, which all
+    derive from V10, never pick up `favoredEnemy`.
+  - `PersistedBattleStateV11.p1/p2` become `LegacyBattleTeamStateV11`, and
     its doc comment says it's now only the migration source for
-    `battleMigrations[10]`.
-  - New `PersistedBattleStateV11` = `PersistedBattleStateV10` with
-    `p1`/`p2: BattleTeamState` and `schemaVersion: 11`. It's the shape
+    `battleMigrations[11]`.
+  - New `PersistedBattleStateV12` = `PersistedBattleStateV11` with
+    `p1`/`p2: BattleTeamState` and `schemaVersion: 12`. It's the shape
     `saveBattleState` writes and `isValidPersistedBattleState` narrows to.
 - `storage.ts`:
-  - The payload types move from `PersistedBattleStateV10` to `V11`, plus
-    the `schemaVersion` literal (to 11). No field copying, since
+  - The payload types move from `PersistedBattleStateV11` to `V12`, plus
+    the `schemaVersion` literal (to 12). No field copying, since
     `favoredEnemy` rides inside `p1`/`p2`.
   - **Validation:** `hasValidBattleTeamShape` replaces its three boolean
     checks with one loop, which covers `favoredEnemy` too:
@@ -180,22 +185,19 @@
     shape, not game rules.
   - **Migration:**
     ```ts
-    /** Schema 10 → 11: every hero gets `favoredEnemy: false` (intent/15:
+    /** Schema 11 → 12: every hero gets `favoredEnemy: false` (intent/15:
      * "upgrades in place", with no hero holding it). */
-    const upgradeV10ToV11 = addHeroFieldsStep<PersistedBattleStateV11>(11, {
+    const upgradeV11ToV12 = addHeroFieldsStep<PersistedBattleStateV12>(12, {
       favoredEnemy: false,
     });
     ```
-    `battleMigrations` gains `10: upgradeV10ToV11`. `loadPersisted` chains
-    steps, so saves from schema 1-9 also land on 11.
-- **Schema number vs. intent 14.** Intent 14 (the Arena) also bumps the
-  battle schema and isn't built yet. Whichever builds first takes 11 and
-  the other takes 12, rebasing its migration step on top (Open Items).
+    `battleMigrations` gains `11: upgradeV11ToV12`. `loadPersisted` chains
+    steps, so saves from schema 1-10 also land on 12.
 - **Test fixtures.** Every hand-written `HeroBattleState` in tests gains
   `favoredEnemy: false`. Most use `src/test/heroState.ts`'s `NO_TOKENS`,
   which gains it once. The type checker finds the rest.
   `storage.test.ts`'s `withoutHeroFields` calls for older schemas also
-  strip `"favoredEnemy"`, and a new schema-10 case checks the upgrade. No
+  strip `"favoredEnemy"`, and a new schema-11 case checks the upgrade. No
   e2e spec seeds a persisted battle, so `e2e/` needs no fixture edits.
 
 ## Favored Enemy Logic
@@ -386,6 +388,8 @@ infra.
 - Keep `ON_OFF_TOKEN_FIELDS` and `OnOffTokenField` in step: a type test
   (e.g. `expectTypeOf`) that the list's element type equals the field
   union, so adding a field without listing it fails `tsc`.
-- Schema number: if intent 14's build lands first and takes 11, this
+- ~~Schema number: if intent 14's build lands first and takes 11, this
   becomes 11 → 12, with `PersistedBattleStateV12` and
-  `upgradeV11ToV12`.
+  `upgradeV11ToV12`.~~
+  **Decided (2026-10-17):** intent 14 landed first (v0.14.0), so this is
+  11 → 12. Data Model above is updated.
