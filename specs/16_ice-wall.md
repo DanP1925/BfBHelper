@@ -100,8 +100,10 @@
     shape `saveBattleState` writes and `isValidPersistedBattleState`
     narrows to.
   - `PersistedBattleStateV12` stays the migration source and must not
-    gain `iceWall`. If it's built from `BattleState` or a type that will
-    widen, pin it the way spec 14 pins `LegacyBattleTeamStateV10`.
+    gain `iceWall`. No pin is needed: its top-level fields come from
+    `PersistedBattleStateV2` onward, never from `BattleState`, and
+    `iceWall` isn't on `BattleTeamState`. Its doc comment says it's now
+    only the source for `battleMigrations[12]`.
 - `storage.ts`:
   - `saveBattleState` writes `iceWall: state.iceWall`, and
     `loadBattleState` returns it.
@@ -205,10 +207,16 @@ export function iceWallOwnerSide(state: BattleState): PlayerId | null;
   `IceWallHolder` ignores hero drags too.
 - **Highlights only for the right drag.** Since the MIME type is
   readable during a drag, the board and holder highlight only while the
-  wall is dragged. `MapSpace` and `RespawnAreaStrip` switch their
-  `dragenter` counters to only count hero drags (`isHeroDrag`), so
-  dragging the wall doesn't light up every space it passes. That's a
-  two-line change in each. Their drop handlers don't change.
+  wall is dragged. `lib/map/useHeroDropTarget.ts`, which `MapSpace`,
+  `RespawnAreaStrip` and `ArenaPanel` already share, counts only hero
+  drags (`isHeroDrag`) in its enter/over/leave handlers, so dragging the
+  wall doesn't light up every space it passes. One change covers all
+  three. Its drop handler doesn't change.
+- **One shared drag counter.** The enter/leave depth counter moves out
+  of `useHeroDropTarget` into a private `useDragHighlight(matches)` in
+  the same folder. `useHeroDropTarget` passes `isHeroDrag`, and a new
+  `useIceWallDropTarget(onDrop)` passes `isIceWallDrag`, so the holder
+  and the board reuse it instead of copying it.
 - **Panning:** `handleMouseDown` already skips any `[draggable="true"]`
   target, so grabbing the marker never starts a pan.
 
@@ -239,8 +247,8 @@ export function iceWallOwnerSide(state: BattleState): PlayerId | null;
     onDrop: () => void;
   };
   ```
-  - A `<section aria-label="Ice Wall">` drop target with
-    `RespawnAreaStrip`'s drag-depth counter and highlight, sized for the
+  - A `<section aria-label="Ice Wall">` drop target using
+    `useIceWallDropTarget` for its handlers and highlight, sized for the
     one marker. Empty (wall on the board), it shows only its outline, as
     an empty respawn area does.
 - **`BattleMapScreen`:**
@@ -340,7 +348,9 @@ infra.
   his column, with the holder, stay within the board's height without
   making the Map scroll? If not, shrink the holder's box first, before
   touching the status panel or respawn area.
-- Decide whether `IceWallHolder` shares the drag-depth counter with
-  `RespawnAreaStrip` and `ArenaPanel`. That would be a third copy of
-  the same ~20 lines, so a small `useDragDepth` hook is likely worth
-  extracting here, or when `/simplify` flags it.
+- ~~Decide whether `IceWallHolder` shares the drag-depth counter with
+  `RespawnAreaStrip` and `ArenaPanel`.~~
+  **Decided:** yes. The Arena's build already moved that counter into
+  `lib/map/useHeroDropTarget.ts`, so it's split into a shared
+  `useDragHighlight(matches)` for the hero and wall hooks (Drag and
+  Drop).
