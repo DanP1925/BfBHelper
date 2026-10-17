@@ -1,0 +1,43 @@
+.arena {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+/* Small, on top of the box (decided 2026-10-17), so it takes no width
+   beside it. Gold reads as neutral: the Arena belongs to neither team. */
+.label {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-gold);
+  padding-left: 2px;
+}
+
+.box {
+  box-sizing: border-box;
+  /* Two 46px tokens side by side, with room below for their out-of-flow
+     name labels. */
+  min-width: 132px;
+  min-height: 76px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 22px;
+  padding: 8px 14px 20px;
+  background: var(--color-panel-bg);
+  border: 1px dashed var(--color-gold);
+  border-radius: 8px;
+  transition:
+    background-color 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.boxDragOver {
+  background: rgba(201, 162, 75, 0.14);
+  box-shadow: 0 0 0 2px var(--color-gold) inset;
+}

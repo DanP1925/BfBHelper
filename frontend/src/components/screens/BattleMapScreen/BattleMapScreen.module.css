@@ -50,6 +50,23 @@
   gap: 16px;
 }
 
+/* The row under the board: the gold piles, and the Arena to their right
+   when it's shown (intent/14). The side columns are per team, and the
+   Arena is shared. */
+.bottomRow {
+  position: relative;
+}
+
+/* Out of flow, so the Arena appearing or filling up never moves the
+   board, the gold bar or the side columns: it's taller than the gold bar
+   and, with the bar, wider than the board. Top-aligned with the bar, it
+   hangs into the empty space below the right side column. */
+.arenaSlot {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 28px);
+}
+
 /* Status panel on top, respawn area below it (per the mockup) — one
    narrow column per side, so the board gets the width. */
 .sideGroup {

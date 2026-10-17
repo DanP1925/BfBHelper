@@ -1,6 +1,6 @@
 import type { HeroId, PlayerId } from "../draft/types";
 import type { BattleTeamState, HeroBattleState, StructuresState } from "../battle/types";
-import type { GoldPileSpaceId } from "../../data/mapSpaces";
+import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 
 /**
  * The single stable key drafts are persisted under. Versioning lives inside
@@ -28,7 +28,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 10 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 11 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -56,7 +56,7 @@ export type LegacyBattleTeamStateV1 = {
 
 /** One side's battle-team state in schemas 2-3: heroPositions, but no
  * per-hero attackTokens yet (intent/06). */
-export type LegacyBattleTeamStateV2 = Omit<BattleTeamState, "heroes"> & {
+export type LegacyBattleTeamStateV2 = Omit<LegacyBattleTeamStateV10, "heroes"> & {
   heroes: Record<HeroId, { hp: number; level: number }>;
 };
 
@@ -82,7 +82,7 @@ export type PersistedBattleStateV3 = Omit<PersistedBattleStateV2, "schemaVersion
 
 /** One side's battle-team state in schema 4: per-hero attackTokens,
  * but no confused flag yet (intent/07). */
-export type LegacyBattleTeamStateV4 = Omit<BattleTeamState, "heroes"> & {
+export type LegacyBattleTeamStateV4 = Omit<LegacyBattleTeamStateV10, "heroes"> & {
   heroes: Record<HeroId, Omit<LegacyHeroBattleStateV5, "confused">>;
 };
 
@@ -97,7 +97,7 @@ export type PersistedBattleStateV4 = Omit<PersistedBattleStateV3, "schemaVersion
 
 /** One side's battle-team state in schema 5: per-hero confused,
  * but no immobilized flag yet (intent/08). */
-export type LegacyBattleTeamStateV5 = Omit<BattleTeamState, "heroes"> & {
+export type LegacyBattleTeamStateV5 = Omit<LegacyBattleTeamStateV10, "heroes"> & {
   heroes: Record<HeroId, LegacyHeroBattleStateV5>;
 };
 
@@ -120,7 +120,7 @@ export type PersistedBattleStateV5 = Omit<PersistedBattleStateV4, "schemaVersion
 
 /** One side's battle-team state in schema 6: per-hero immobilized,
  * but no deathMarked flag yet (intent/09). */
-export type LegacyBattleTeamStateV6 = Omit<BattleTeamState, "heroes"> & {
+export type LegacyBattleTeamStateV6 = Omit<LegacyBattleTeamStateV10, "heroes"> & {
   heroes: Record<HeroId, LegacyHeroBattleStateV6>;
 };
 
@@ -135,7 +135,7 @@ export type PersistedBattleStateV6 = Omit<PersistedBattleStateV5, "schemaVersion
 
 /** One side's battle-team state in schema 7: per-hero deathMarked,
  * but no shieldTokens count yet (intent/11). */
-export type LegacyBattleTeamStateV7 = Omit<BattleTeamState, "heroes"> & {
+export type LegacyBattleTeamStateV7 = Omit<LegacyBattleTeamStateV10, "heroes"> & {
   heroes: Record<HeroId, LegacyHeroBattleStateV7>;
 };
 
@@ -150,7 +150,7 @@ export type PersistedBattleStateV7 = Omit<PersistedBattleStateV6, "schemaVersion
 
 /** One side's battle-team state in schema 8: per-hero shieldTokens,
  * but no stoneTokens count yet (intent/12). */
-export type LegacyBattleTeamStateV8 = Omit<BattleTeamState, "heroes"> & {
+export type LegacyBattleTeamStateV8 = Omit<LegacyBattleTeamStateV10, "heroes"> & {
   heroes: Record<HeroId, LegacyHeroBattleStateV8>;
 };
 
@@ -165,7 +165,7 @@ export type PersistedBattleStateV8 = Omit<PersistedBattleStateV7, "schemaVersion
 
 /** One side's battle-team state in schema 9: per-hero stoneTokens,
  * but no chillTokens count yet (intent/13). */
-export type LegacyBattleTeamStateV9 = Omit<BattleTeamState, "heroes"> & {
+export type LegacyBattleTeamStateV9 = Omit<LegacyBattleTeamStateV10, "heroes"> & {
   heroes: Record<HeroId, LegacyHeroBattleStateV9>;
 };
 
@@ -178,13 +178,33 @@ export type PersistedBattleStateV9 = Omit<PersistedBattleStateV8, "schemaVersion
   p2: LegacyBattleTeamStateV9;
 };
 
+/** One side's battle-team state in schemas 2-10: a hero's position is a
+ * board space or the respawn area, never the Arena yet (intent/14). The
+ * older legacy team types build on it, so widening `BattleTeamState`'s
+ * positions doesn't widen them. */
+export type LegacyBattleTeamStateV10 = Omit<BattleTeamState, "heroPositions"> & {
+  heroPositions: Record<HeroId, MapSpaceId | null>;
+};
+
 /** The on-disk (localStorage) shape of a persisted battle state, version 10
- * (intent/13: per-hero `chillTokens`). */
+ * (intent/13: per-hero `chillTokens`) — now only the migration source shape
+ * `battleMigrations[10]` upgrades from. */
 export type PersistedBattleStateV10 = Omit<
   PersistedBattleStateV9,
   "schemaVersion" | "p1" | "p2"
 > & {
   schemaVersion: 10;
+  p1: LegacyBattleTeamStateV10;
+  p2: LegacyBattleTeamStateV10;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 11
+ * (intent/14: `heroPositions` may hold `"arena"`). */
+export type PersistedBattleStateV11 = Omit<
+  PersistedBattleStateV10,
+  "schemaVersion" | "p1" | "p2"
+> & {
+  schemaVersion: 11;
   p1: BattleTeamState;
   p2: BattleTeamState;
 };

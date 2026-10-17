@@ -3,7 +3,7 @@ import type { Hero } from "../draft/types";
 import { BIT_STARTING_HP, HERO_HP_CEILING, TOWER_STARTING_HP } from "./constants";
 import { COUNTED_TOKENS } from "../../test/countedTokens";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
-import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
+import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import {
   battleReducer,
   createInitialBattleState,
@@ -99,9 +99,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 10", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 11", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(10);
+    expect(state.schemaVersion).toBe(11);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -608,6 +608,37 @@ describe("battleReducer", () => {
         spaceId: MAP_SPACE_IDS[0],
       });
       expect(next).toBe(state);
+    });
+
+    // intent/14: the Arena is just another position, with no rule here
+    // (Baldwin and Cyrus, no Felix drafted, still get in).
+    it("moves a hero into the Arena and back out to a space or the respawn area", () => {
+      const toArena = (state: BattleState) =>
+        battleReducer(state, {
+          type: "SET_HERO_POSITION",
+          side: "p1",
+          heroId: HERO_A.id,
+          spaceId: ARENA_POSITION,
+        });
+      const inArena = toArena(baseState());
+      expect(inArena.p1.heroPositions[HERO_A.id]).toBe(ARENA_POSITION);
+      expect(toArena(inArena)).toBe(inArena);
+
+      const onSpace = battleReducer(inArena, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: MAP_SPACE_IDS[0],
+      });
+      expect(onSpace.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
+
+      const respawning = battleReducer(inArena, {
+        type: "SET_HERO_POSITION",
+        side: "p1",
+        heroId: HERO_A.id,
+        spaceId: null,
+      });
+      expect(respawning.p1.heroPositions[HERO_A.id]).toBeNull();
     });
 
     it("never mutates the other side", () => {

@@ -1,5 +1,12 @@
 import type { HeroId, PlayerId } from "../draft/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
+import type { ARENA_POSITION } from "../map/constants";
+
+/** Where a hero is (intents 04 and 14): a board space, the Arena
+ * (intent/14, off the board's spaces), or `null` for its team's respawn
+ * area (not yet deployed, or defeated and awaiting respawn) — see
+ * battle/reducer.ts's SET_HERO_POSITION and useBattle.ts's setHeroHp. */
+export type HeroPosition = MapSpaceId | typeof ARENA_POSITION | null;
 
 export type StructuresState = {
   top: number;
@@ -62,14 +69,12 @@ export type BattleTeamState = {
   gold: number;
   heroes: Record<HeroId, HeroBattleState>;
   structures: StructuresState;
-  /** `null` = this hero is in its team's respawn area (not yet deployed,
-   * or defeated and awaiting respawn) — see battle/reducer.ts's
-   * SET_HERO_POSITION and useBattle.ts's setHeroHp. */
-  heroPositions: Record<HeroId, MapSpaceId | null>;
+  /** Each hero's `HeroPosition`. */
+  heroPositions: Record<HeroId, HeroPosition>;
 };
 
 export type BattleState = {
-  schemaVersion: 10;
+  schemaVersion: 11;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

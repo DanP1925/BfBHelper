@@ -70,47 +70,52 @@ frontend/e2e/
 
 ### Data & state layer
 
-- [ ] M1. `lib/map/constants.ts`: += `ARENA_POSITION = "arena" as const`.
+- [x] M1. `lib/map/constants.ts`: += `ARENA_POSITION = "arena" as const`.
       `lib/battle/types.ts`: += `HeroPosition = MapSpaceId | typeof
       ARENA_POSITION | null` with the spec's doc comment;
       `BattleTeamState.heroPositions: Record<HeroId, HeroPosition>` (its
       comment points at `HeroPosition`); `BattleState.schemaVersion: 11`.
-- [ ] M2. `lib/battle/reducer.ts`: `SET_HERO_POSITION`'s `spaceId:
+- [x] M2. `lib/battle/reducer.ts`: `SET_HERO_POSITION`'s `spaceId:
       HeroPosition` (branch unchanged, no Arena rule);
       `createInitialBattleState`'s cast → `HeroPosition`, writes
       `schemaVersion: 11`. `data/mapSpaces.ts`: `seedHeroPositions`'s
       return type → `Record<HeroId, HeroPosition>` if that drops the
-      casts, else leave it.
-- [ ] M3. `lib/useBattle.ts`: `setHeroPosition`'s last parameter →
+      casts, else leave it. **Left as is:** its `MapSpaceId | null` return
+      already fits `HeroPosition`, so `createInitialTeamState` just drops
+      its cast (and the schema-1 migration keeps the narrow type).
+- [x] M3. `lib/useBattle.ts`: `setHeroPosition`'s last parameter →
       `HeroPosition`, in the type and the callback. `setHeroHp` unchanged.
-- [ ] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
+- [x] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
       11`. += `LegacyHeroPositions` and `LegacyBattleTeamStateV10`
       (`BattleTeamState` with the old positions);
       `LegacyBattleTeamStateV9` builds on it instead of
       `BattleTeamState`; `PersistedBattleStateV10.p1/p2` use it, doc
       comment says it's only the source for `battleMigrations[10]`. +=
       `PersistedBattleStateV11`. `tsc` confirms no older legacy type
-      widened.
-- [ ] M5. `lib/persistence/storage.ts`: `hasValidBattleTeamShape`
+      widened. **Wider than planned:** `LegacyBattleTeamStateV2` and
+      `V4`-`V9` were all built from `BattleTeamState`, so all of them now
+      build on `LegacyBattleTeamStateV10`. No separate
+      `LegacyHeroPositions` alias; spec updated.
+- [x] M5. `lib/persistence/storage.ts`: `hasValidBattleTeamShape`
       accepts `ARENA_POSITION` (doc comment: "`null`, `"arena"` or a real
       map-space id"); += `upgradeV10ToV11` (version only, the spec's
       snippet), `battleMigrations` += `10: upgradeV10ToV11`;
       `saveBattleState`, `isValidPersistedBattleState` and the import use
       `PersistedBattleStateV11`.
-- [ ] M6. Fixtures: every hand-written `BattleState` /
+- [x] M6. Fixtures: every hand-written `BattleState` /
       `PersistedBattleState` fixture's `schemaVersion` literal → 11
       (`tsc` finds them). No field changes.
 
 ### Arena rules
 
-- [ ] M7. `lib/battle/arena.ts` (new), per the spec's Arena Logic:
+- [x] M7. `lib/battle/arena.ts` (new), per the spec's Arena Logic:
       `ARENA_OWNER = "felix"`, `ARENA_UNLOCK_LEVEL = 4` (its own
       constant, not `HERO_MAX_LEVEL`), `arenaOwnerSide(state)` (from
       `state.p1/p2.heroes`), `arenaOccupants(state)` (P1 first),
       `isArenaShown(state)` (occupied, or Felix drafted, `level >= 4`,
       `hp > 0` and position not `null`), `canEnterArena(state, payload)`
       (Felix on his side, or an enemy when no *other* enemy is inside).
-- [ ] M8. `lib/battle/arena.test.ts` (new):
+- [x] M8. `lib/battle/arena.test.ts` (new):
       - `arenaOwnerSide`: Felix on p1 → `"p1"`, on p2 → `"p2"`, not
         drafted → `null`
       - `isArenaShown`: false without Felix; false at level 1-3; true at
@@ -125,19 +130,19 @@ frontend/e2e/
 
 ### UI
 
-- [ ] M9. `components/ArenaPanel/ArenaPanel.module.css` (new): the
+- [x] M9. `components/ArenaPanel/ArenaPanel.module.css` (new): the
       canvas's look. A column with a small label on top (Cinzel 9px,
       600, uppercase, `--color-gold`, letter-spacing 0.06em), then a
       dashed `--color-gold` box on `--color-panel-bg`, sized for two
       `MapToken`s with room below for their out-of-flow names (about
       132x76px), and a drag-over highlight like `RespawnAreaStrip`'s.
-- [ ] M10. `components/ArenaPanel/ArenaPanel.tsx` (new): props
+- [x] M10. `components/ArenaPanel/ArenaPanel.tsx` (new): props
       `{ occupants, canDrop, onDrop }`; `<section aria-label="The
       Arena">` with "The Arena" label; drag-enter/leave depth counter and
       highlight copied from `RespawnAreaStrip`; `drop` parses with
       `parseHeroDragPayload` and calls `onDrop` only when `canDrop`
       passes. Occupants are plain `MapToken`s in their team ring.
-- [ ] M11. `components/screens/BattleMapScreen/BattleMapScreen.tsx`:
+- [x] M11. `components/screens/BattleMapScreen/BattleMapScreen.tsx`:
       `setHeroPosition` prop → `HeroPosition`; the `teams` loop sorts
       `ARENA_POSITION` into a new `arena` list (never into `bySpace`);
       `boardColumn`'s gold bar becomes a row (new class in
@@ -146,22 +151,30 @@ frontend/e2e/
       `canDrop={(p) => canEnterArena(battleState, p)}` and
       `onDrop={({ side, heroId }) => setHeroPosition(side, heroId,
       ARENA_POSITION)}`. `page.tsx` needs no change (check).
-- [ ] M12. Spec open item: at 1280x800 with the Arena shown and two
+- [x] M12. Spec open item: at 1280x800 with the Arena shown and two
       heroes inside, the Map doesn't scroll and the side columns and
       board keep their size. Decide whether the bottom row keeps the
       Arena's height while it's hidden, so the board doesn't move when
       Felix reaches level 4 or the Arena empties. Decide in the browser
-      and update the spec.
-- [ ] M13. Spec open item: the gold label and dashed border read as
+      and update the spec. **Decided: out of flow.** In the gold bar's row
+      it moved the board up 19px and pushed the side columns out (bar +
+      Arena are wider than the board). Now the bar stays centered in a
+      `position: relative` `.bottomRow` and the Arena sits in an absolute
+      `.arenaSlot` to its right, top-aligned, hanging below Player 2's
+      column. Measured: board and side columns identical hidden, empty and
+      full; Arena ends at 775px of 800, no scroll. No reserved height.
+- [x] M13. Spec open item: the gold label and dashed border read as
       neutral and not as a gold-pile control next to `GoldPilesBar`.
       Decide in the browser; adjust on the canvas and in the spec if not.
-- [ ] M14. Spec open item: `ArenaPanel` copies `RespawnAreaStrip`'s
+      **Kept:** the label and dashed box read as a separate drop zone.
+- [x] M14. Spec open item: `ArenaPanel` copies `RespawnAreaStrip`'s
       ~20 lines of drag-depth handling. Leave it copied unless
-      `/simplify` flags it; note the outcome in the spec.
+      `/simplify` flags it; note the outcome in the spec. **Copied;**
+      `/simplify` wasn't run on this PR.
 
 ### Tests & verification
 
-- [ ] M15. Unit tests:
+- [x] M15. Unit tests:
       - reducer: `SET_HERO_POSITION` to `"arena"` and back out to a space
         and to `null`; same-value no-op; it doesn't refuse Felix's ally
         (no rule in the reducer); `createInitialBattleState` writes 11
@@ -179,17 +192,20 @@ frontend/e2e/
         not on their space; the panel stays while occupied with Felix
         set back to level 1; dropping Felix's ally or a second enemy
         changes nothing
-- [ ] M16. `e2e/arena.spec.ts` (new), using `battle-map.spec.ts`'s
+- [x] M16. `e2e/arena.spec.ts` (new), using `battle-map.spec.ts`'s
       `dragElementTo`: draft Felix; no Arena on the Map until he's level
       4 on the Board and deployed; drag Felix and one enemy in (both
       leave their spaces), a second enemy and one of Felix's allies are
       refused; the Arena survives a Board⇄Map switch and a reload; the
       enemy's HP to 0 sends them to their respawn area and the Arena
       stays for Felix; dragging Felix onto his Bit empties it; it hides
-      again once empty if Felix's level is set below 4.
-- [ ] M17. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green
+      again once empty if Felix's level is set below 4. **Diverged:** it
+      drags Felix out onto the board's center space, not his Bit (the
+      Bit's side depends on the coin flip), and uses its own small
+      `dragTo` helper, since `battle-map.spec.ts`'s isn't exported.
+- [x] M17. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green
       (`battle-map.spec.ts` too, since positions widened underneath).
-- [ ] M18. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M18. Manual QA at 1280x800 (`/qa-screens`):
       - Arena hidden without Felix, and with him below level 4 or
         defeated; shown at level 4
       - drag in, drag out to a space and to the respawn area; refused
@@ -199,7 +215,17 @@ frontend/e2e/
       - an existing schema-10 battle upgrades in place with every
         position kept and the Arena empty
       - New Draft empties the Arena
-- [ ] M19. `npm version minor --no-git-tag-version` (→ 0.14.0). In
+
+      **Done in the browser** with one-off Playwright scripts at 1280x800
+      and 2560x1440: hidden with Felix at level 4 still in his respawn
+      area, shown empty once deployed, Felix and an enemy dragged in
+      (screenshots `arena-{hidden,empty,duel}-*.png`); fit and layout
+      shift (M12); gold (M13); a schema-10 save rewritten by hand upgraded
+      to 11 with gold, level and Felix's space kept and nobody in the
+      Arena; New Draft cleared the saved battle. Refused drops, dragging
+      out and the defeated case are covered by the e2e and unit tests
+      rather than separately by eye. The Board has no code change.
+- [x] M19. `npm version minor --no-git-tag-version` (→ 0.14.0). In
       `BACKLOG.md`, mark the Arena done in Felix's entry and the
       hero-specific table, linking intent 14 and v0.14.0. Mark spec 14
       **BUILT**.
