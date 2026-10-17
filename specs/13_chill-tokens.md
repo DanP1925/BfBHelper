@@ -43,8 +43,10 @@
     `HeroCard`'s row and picker, `BattleTeamPanel`'s per-hero controls,
     `BattleBoardScreen`'s visibility gating and the Map's token line;
   - one `HERO_SPECIFIC_TOKENS` rule (`lib/battle/heroSpecificTokens.ts`);
-  - its stored field and migration;
-  - one line in `page.tsx`'s `setHeroToken` map.
+  - its stored field and migration.
+
+  `page.tsx` needs no line either: `setHeroToken` passes
+  `battle.setHeroCountedToken` once, as `counted` (State Management).
 
   None of `HeroCard`, `BattleTeamPanel`, `BattleBoardScreen` or
   `MapTeamStatusPanel` needs a code change, as with Stone.
@@ -68,14 +70,16 @@
   A plain `useCallback` dispatching `SET_HERO_COUNTED_TOKEN`, the same
   shape as the setters it replaces. It takes the new count. Clamping
   happens in the reducer. There's no `setHeroChillTokens`.
-- **`page.tsx`'s `setHeroToken` map** keeps its shape (`BoardTokenSetters`,
-  one setter per field), so the components don't change. Its counted
-  entries bind the field:
+- **`page.tsx`'s `setHeroToken` map** passes the one counted setter
+  once, beside the three on/off setters (changed by the build's
+  `/simplify` pass, 2026-10-17):
   ```ts
-  attackTokens: (side, heroId, value) =>
-    battle.setHeroCountedToken(side, heroId, "attackTokens", value),
-  // shieldTokens, stoneTokens, chillTokens: the same
+  counted: battle.setHeroCountedToken,
+  confused: battle.setHeroConfused, // immobilized, deathMarked: the same
   ```
+  `BoardTokenSetters` is `{ counted }` plus one setter per on/off field,
+  and `BattleBoardScreen`'s `teamTokenSetters` binds each `BATTLE_TOKENS`
+  counted row's `field`, so the next counted token touches neither file.
 - **What doesn't touch the count.** Per intent's Scope ("Manual only"),
   Out of Scope and Session Lifecycle:
   - Nothing clears Chill at the end of a hero's action. The app has no
@@ -261,14 +265,14 @@
     Icon: ChillTokenIcon,
     label: "+1 Chill",
     accent: "var(--color-chill)",
-    max: HERO_COUNTED_TOKEN_CEILINGS.chillTokens,
     heroSpecific: "chill",
   },
   ```
-  - Every counted row's `max` reads from `HERO_COUNTED_TOKEN_CEILINGS`.
+  - Counted rows carry no `max`: `HeroCard` reads
+    `HERO_COUNTED_TOKEN_CEILINGS[field]` (changed by `/simplify`).
   - `CountedTokenField` gains `chillTokens` (now in `types.ts`).
-    `HeroCardTokens`, `TeamTokenSetters` and `BoardTokenSetters` are
-    mapped over the field types, so they gain `chillTokens` with no edit.
+    `HeroCardTokens` and `TeamTokenSetters` are mapped over the field
+    types, so they gain `chillTokens` with no edit.
   - The `BATTLE_TOKENS` doc comment's order list adds Chill after Stone,
     and its last sentence says counted tokens share one action and setter
     while the stored fields stay plain.
@@ -299,8 +303,8 @@
   `chillTokens` on Dazeem's own side. `HeroCard`'s loop makes a
   `countedEntry`, so the chip shows while `count > 0 || expanded`, and
   the option is always listed on Dazeem's enemies, disabled at 5.
-- **`page.tsx`**: `setHeroToken`'s four counted entries bind their field
-  to `battle.setHeroCountedToken` (State Management).
+- **`page.tsx`**: `setHeroToken` passes `battle.setHeroCountedToken` once,
+  as `counted` (State Management).
 - **Width at 1280x800.** Spec 09 sized the row for at most 8 tokens on one
   hero. Chill is the fourth counted chip (about 36px with its "×N"):
   - The new heaviest case is a hero who's an ally of Cyrus and an enemy of

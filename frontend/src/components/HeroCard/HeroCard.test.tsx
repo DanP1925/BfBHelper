@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { getHeroById } from "../../data/heroes";
-import type { CountedTokenField } from "../battleTokens";
+import type { CountedTokenField } from "../../lib/battle/types";
 import { HeroCard } from "./HeroCard";
 
 const boreas = getHeroById("boreas");
@@ -33,6 +33,20 @@ function renderRow(
     stone: vi.fn(),
     chill: vi.fn(),
   };
+  // A counted token's props, or undefined when it isn't passed. +1 Attack
+  // is always passed, at 0 by default.
+  const counts: RowState = { attackTokens: 0, ...state };
+  const counted = (field: CountedTokenField, onChange: () => void) => {
+    const count = counts[field];
+    return count === undefined
+      ? undefined
+      : {
+          count,
+          onChange,
+          expanded: openChip === field,
+          onExpandedChange: vi.fn(),
+        };
+  };
   render(
     <HeroCard
       hero={boreas}
@@ -41,45 +55,16 @@ function renderRow(
       level={1}
       tokenPicker={{ expanded: open, onExpandedChange: vi.fn() }}
       tokens={{
-        attackTokens: {
-          count: state.attackTokens ?? 0,
-          onChange: handlers.attack,
-          expanded: openChip === "attackTokens",
-          onExpandedChange: vi.fn(),
-        },
+        attackTokens: counted("attackTokens", handlers.attack)!,
         confused: { on: state.confused ?? false, onChange: handlers.confused },
         immobilized: { on: state.immobilized ?? false, onChange: handlers.immobilized },
         deathMarked:
           state.deathMarked === undefined
             ? undefined
             : { on: state.deathMarked, onChange: handlers.deathMarked },
-        shieldTokens:
-          state.shieldTokens === undefined
-            ? undefined
-            : {
-                count: state.shieldTokens,
-                onChange: handlers.shield,
-                expanded: openChip === "shieldTokens",
-                onExpandedChange: vi.fn(),
-              },
-        stoneTokens:
-          state.stoneTokens === undefined
-            ? undefined
-            : {
-                count: state.stoneTokens,
-                onChange: handlers.stone,
-                expanded: openChip === "stoneTokens",
-                onExpandedChange: vi.fn(),
-              },
-        chillTokens:
-          state.chillTokens === undefined
-            ? undefined
-            : {
-                count: state.chillTokens,
-                onChange: handlers.chill,
-                expanded: openChip === "chillTokens",
-                onExpandedChange: vi.fn(),
-              },
+        shieldTokens: counted("shieldTokens", handlers.shield),
+        stoneTokens: counted("stoneTokens", handlers.stone),
+        chillTokens: counted("chillTokens", handlers.chill),
       }}
     />,
   );

@@ -7,6 +7,8 @@ import { createInitialBattleState } from "./battle/reducer";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../data/mapSpaces";
 import { GOLD_PILE_STARTING_COUNT } from "./map/constants";
 import { heroIdSetsMatch, useBattle } from "./useBattle";
+import { COUNTED_TOKENS } from "../test/countedTokens";
+import { NO_TOKENS } from "../test/heroState";
 
 const HERO_A: Hero = {
   id: "baldwin",
@@ -105,13 +107,7 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
       hp: HERO_A.baseHp + 1,
       level: 1,
-      attackTokens: 0,
-      confused: false,
-      immobilized: false,
-      deathMarked: false,
-      shieldTokens: 0,
-      stoneTokens: 0,
-      chillTokens: 0,
+      ...NO_TOKENS,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
@@ -155,13 +151,7 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id]).toEqual({
       hp: HERO_A.baseHp + 1,
       level: 1,
-      attackTokens: 0,
-      confused: false,
-      immobilized: false,
-      deathMarked: false,
-      shieldTokens: 0,
-      stoneTokens: 0,
-      chillTokens: 0,
+      ...NO_TOKENS,
     });
   });
 
@@ -197,24 +187,29 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(15);
   });
 
-  it("setHeroCountedToken (attackTokens) persists the clamped result, which survives a reload", () => {
-    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+  it.each(COUNTED_TOKENS)(
+    "setHeroCountedToken ($field) persists the clamped count, which survives a reload and steps back down",
+    ({ field, ceiling }) => {
+      const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
-    act(() => {
-      result.current.setHeroCountedToken("p2", HERO_B.id, "attackTokens", 3);
-    });
-    expect(result.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(3);
-    expect(readRawState().p2.heroes[HERO_B.id].attackTokens).toBe(3);
+      act(() => {
+        result.current.setHeroCountedToken("p2", HERO_B.id, field, 99);
+      });
+      expect(result.current.state?.p2.heroes[HERO_B.id][field]).toBe(ceiling);
+      expect(result.current.state?.p1.heroes[HERO_A.id][field]).toBe(0);
+      expect(readRawState().p2.heroes[HERO_B.id][field]).toBe(ceiling);
+      unmount();
 
-    act(() => {
-      result.current.setHeroCountedToken("p2", HERO_B.id, "attackTokens", 99);
-    });
-    expect(result.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(9);
-    unmount();
+      const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      expect(reloaded.current.state?.p2.heroes[HERO_B.id][field]).toBe(ceiling);
 
-    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-    expect(reloaded.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(9);
-  });
+      act(() => {
+        reloaded.current.setHeroCountedToken("p2", HERO_B.id, field, ceiling - 1);
+      });
+      expect(reloaded.current.state?.p2.heroes[HERO_B.id][field]).toBe(ceiling - 1);
+      expect(readRawState().p2.heroes[HERO_B.id][field]).toBe(ceiling - 1);
+    },
+  );
 
   it("setHeroHp to 0 keeps the hero's attack tokens", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
@@ -336,28 +331,6 @@ describe("useBattle", () => {
     expect(result.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
   });
 
-  it("setHeroCountedToken (shieldTokens) persists the count, which survives a reload and steps back down", () => {
-    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-
-    act(() => {
-      result.current.setHeroCountedToken("p1", HERO_A.id, "shieldTokens", 3);
-    });
-    expect(result.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(3);
-    expect(result.current.state?.p1.heroes[HERO_A.id].attackTokens).toBe(0);
-    expect(result.current.state?.p2.heroes[HERO_B.id].shieldTokens).toBe(0);
-    expect(readRawState().p1.heroes[HERO_A.id].shieldTokens).toBe(3);
-    unmount();
-
-    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-    expect(reloaded.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(3);
-
-    act(() => {
-      reloaded.current.setHeroCountedToken("p1", HERO_A.id, "shieldTokens", 2);
-    });
-    expect(reloaded.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(2);
-    expect(readRawState().p1.heroes[HERO_A.id].shieldTokens).toBe(2);
-  });
-
   it("setHeroHp to 0 (with its move to respawn) and passInitiative keep the shields", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
@@ -371,28 +344,6 @@ describe("useBattle", () => {
     });
     expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
     expect(result.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(2);
-  });
-
-  it("setHeroCountedToken (stoneTokens) persists the count, which survives a reload and steps back down", () => {
-    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-
-    act(() => {
-      result.current.setHeroCountedToken("p2", HERO_B.id, "stoneTokens", 3);
-    });
-    expect(result.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(3);
-    expect(result.current.state?.p2.heroes[HERO_B.id].shieldTokens).toBe(0);
-    expect(result.current.state?.p1.heroes[HERO_A.id].stoneTokens).toBe(0);
-    expect(readRawState().p2.heroes[HERO_B.id].stoneTokens).toBe(3);
-    unmount();
-
-    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-    expect(reloaded.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(3);
-
-    act(() => {
-      reloaded.current.setHeroCountedToken("p2", HERO_B.id, "stoneTokens", 2);
-    });
-    expect(reloaded.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(2);
-    expect(readRawState().p2.heroes[HERO_B.id].stoneTokens).toBe(2);
   });
 
   it("reaching 3 Stone doesn't defeat the hero; setHeroHp to 0 and passInitiative keep the Stone", () => {

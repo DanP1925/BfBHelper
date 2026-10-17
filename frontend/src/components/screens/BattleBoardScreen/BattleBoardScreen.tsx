@@ -3,8 +3,8 @@
 import { useState } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { heroSpecificTokenSide } from "../../../lib/battle/heroSpecificTokens";
-import type { BattleState, HeroBattleState, StructuresState } from "../../../lib/battle/types";
-import { BATTLE_TOKENS, type BattleTokenField } from "../../battleTokens";
+import type { BattleState, CountedTokenField, StructuresState } from "../../../lib/battle/types";
+import { BATTLE_TOKENS, type OnOffTokenField } from "../../battleTokens";
 import { BattleTeamPanel, type TeamTokenSetters } from "../../BattleTeamPanel/BattleTeamPanel";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
@@ -31,9 +31,12 @@ type BattleBoardScreenProps = {
   onPassInitiative: () => void;
 };
 
-/** One setter per token field, given that field's stored value type. */
+/** useBattle's one setter for every counted token, named by its field, plus
+ * one setter per on/off token field. */
 export type BoardTokenSetters = {
-  [F in BattleTokenField]: (side: PlayerId, heroId: HeroId, value: HeroBattleState[F]) => void;
+  counted: (side: PlayerId, heroId: HeroId, field: CountedTokenField, value: number) => void;
+} & {
+  [F in OnOffTokenField]: (side: PlayerId, heroId: HeroId, value: boolean) => void;
 };
 
 /** The token setters one side's panel gets: every token, minus each
@@ -50,10 +53,9 @@ function teamTokenSetters(
     if (token.heroSpecific && heroSpecificTokenSide(token.heroSpecific, rosters) !== side) {
       continue;
     }
-    // Split by kind so each branch's setter has one value type.
     if (token.kind === "counted") {
-      const set = setters[token.field];
-      team[token.field] = (heroId, value) => set(side, heroId, value);
+      const { field } = token;
+      team[field] = (heroId, value) => setters.counted(side, heroId, field, value);
     } else {
       const set = setters[token.field];
       team[token.field] = (heroId, value) => set(side, heroId, value);

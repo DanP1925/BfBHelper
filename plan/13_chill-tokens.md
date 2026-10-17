@@ -46,8 +46,8 @@ both.
 ```
 frontend/src/
   app/globals.css               # += --color-chill: #5ccfe6
-  app/page.tsx                  # setHeroToken's counted entries bind their field to
-                                #   battle.setHeroCountedToken; += chillTokens
+  app/page.tsx                  # setHeroToken passes battle.setHeroCountedToken once
+                                #   as `counted` (/simplify)
   lib/
     battle/types.ts             # += CountedTokenField (moved from battleTokens.ts);
                                 #   HeroBattleState += chillTokens: number; schemaVersion 10
@@ -63,7 +63,7 @@ frontend/src/
                                 #   += upgradeV9ToV10 = addHeroFieldsStep(10, { chillTokens: 0 })
     useBattle.ts                # setHero{Attack,Shield,Stone}Tokens → setHeroCountedToken
   components/
-    battleTokens.ts             # CountedTokenField imported from lib; rows' max from the table;
+    battleTokens.ts             # CountedTokenField imported from lib; rows drop max (/simplify);
                                 #   BATTLE_TOKENS += +1 Chill row after +1 Stone
     TokenChip/ChillTokenIcon.tsx  # new: snowflake, 16px stroke SVG
     HeroCard/, BattleTeamPanel/,  # no code change: table-driven since v0.11.1
@@ -96,12 +96,15 @@ frontend/e2e/
 - [x] M5. `lib/useBattle.ts`: replace `setHeroAttackTokens`,
       `setHeroShieldTokens` and `setHeroStoneTokens` with
       `setHeroCountedToken(side, heroId, field, value)`. `app/page.tsx`:
-      `setHeroToken`'s counted entries bind their field to it.
+      `setHeroToken`'s counted entries bind their field to it. **Changed
+      by `/simplify`:** `setHeroToken` passes it once as `counted`, and
+      `BattleBoardScreen`'s `teamTokenSetters` binds each row's field.
 - [x] M6. `lib/persistence/storage.ts`: `hasValidBattleTeamShape`
       replaces its three counted-token checks with one loop over
       `HERO_COUNTED_TOKEN_CEILINGS`; its doc comment says so.
       `components/battleTokens.ts`: each counted row's `max` reads from
-      the table.
+      the table. **Changed by `/simplify`:** rows carry no `max`;
+      `HeroCard` reads the table by `field`.
 - [x] M7. Tests follow the renames, with no behavior change:
       `bounds.test.ts` (one `describe.each` over the table for
       `clampHeroCountedToken`), `reducer.test.ts` (the counted-token
@@ -174,11 +177,13 @@ frontend/e2e/
       `var(--color-chill)`, `HERO_COUNTED_TOKEN_CEILINGS.chillTokens`,
       `heroSpecific: "chill"`). The table's doc comment adds Chill to the
       order list and says counted tokens share one action and setter.
-      `app/page.tsx`: `setHeroToken` += `chillTokens`. Check that
+      `app/page.tsx`: `setHeroToken` += `chillTokens` (dropped by
+      `/simplify`: no `page.tsx` line per counted token). Check that
       `HeroCard`, `BattleTeamPanel`, `BattleBoardScreen` and
       `MapTeamStatusPanel` need no edit (the spec's claim); note any that
       did. **None did:** `battleTokens.ts` is the only component source
-      change.
+      change. (`/simplify` later edited `BattleBoardScreen` and `HeroCard`
+      to drop the per-field counted setters and `max`.)
 - [x] M18. Spec open item: does `--color-chill` `#5ccfe6` read apart from
       Immobilize's ice blue on the same card, and from P2's teal, at
       1280x800? Decide in the browser; adjust on the canvas and in the

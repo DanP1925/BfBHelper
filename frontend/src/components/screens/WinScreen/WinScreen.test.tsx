@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { BattleState } from "../../../lib/battle/types";
 import type { Hero } from "../../../lib/draft/types";
+import { NO_TOKENS } from "../../../test/heroState";
 import { WinScreen } from "./WinScreen";
 
 function makeHero(id: Hero["id"], name: string): Hero {
@@ -28,24 +29,12 @@ function makeBattleState(): BattleState {
         boreas: {
           hp: 10,
           level: 2,
-          attackTokens: 0,
-          confused: false,
-          immobilized: false,
-          deathMarked: false,
-          shieldTokens: 0,
-          stoneTokens: 0,
-          chillTokens: 0,
+          ...NO_TOKENS,
         },
         caligar: {
           hp: 0,
           level: 1,
-          attackTokens: 0,
-          confused: false,
-          immobilized: false,
-          deathMarked: false,
-          shieldTokens: 0,
-          stoneTokens: 0,
-          chillTokens: 0,
+          ...NO_TOKENS,
         },
       },
       structures: { top: 11, middle: 11, bottom: 11, bit: 16 },
@@ -57,24 +46,12 @@ function makeBattleState(): BattleState {
         sterling: {
           hp: 7,
           level: 3,
-          attackTokens: 0,
-          confused: false,
-          immobilized: false,
-          deathMarked: false,
-          shieldTokens: 0,
-          stoneTokens: 0,
-          chillTokens: 0,
+          ...NO_TOKENS,
         },
         felix: {
           hp: 9,
           level: 1,
-          attackTokens: 0,
-          confused: false,
-          immobilized: false,
-          deathMarked: false,
-          shieldTokens: 0,
-          stoneTokens: 0,
-          chillTokens: 0,
+          ...NO_TOKENS,
         },
       },
       structures: { top: 11, middle: 0, bottom: 11, bit: 0 },
