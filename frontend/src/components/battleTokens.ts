@@ -40,11 +40,18 @@ export type OnOffToken = TokenLook & {
   chipLabel: string;
   /** The Map icon's accessible name, e.g. "Confused". */
   mapLabel: string;
-  /** At most one hero holds it (intent/15): while one does, no other hero
-   * gets a control for it, so its picker option is gone everywhere until
-   * the holder taps it off. */
-  oneHolder?: true;
-};
+} & (
+    | { oneHolder?: undefined }
+    | {
+        /** At most one hero holds it (intent/15): while one does, no other
+         * hero gets a control for it, so its picker option is gone
+         * everywhere until the holder taps it off. Only for a hero-specific
+         * token, since the Board checks it per side and a hero-specific
+         * token's control only exists on one side. */
+        oneHolder: true;
+        heroSpecific: HeroSpecificTokenId;
+      }
+  );
 
 /** How one token looks, shared by the Board's token row and picker
  * (HeroCard) and the Map's read-only token line (MapTeamStatusPanel). */

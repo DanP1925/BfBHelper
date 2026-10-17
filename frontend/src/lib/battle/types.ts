@@ -1,6 +1,7 @@
 import type { HeroId, PlayerId } from "../draft/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 import type { ARENA_POSITION } from "../map/constants";
+import type { ON_OFF_TOKEN_FIELDS } from "./constants";
 
 /** Where a hero is (intents 04 and 14): a board space, the Arena
  * (intent/14, off the board's spaces), or `null` for its team's respawn
@@ -71,13 +72,10 @@ export type CountedTokenField = keyof Pick<
   "attackTokens" | "shieldTokens" | "stoneTokens" | "chillTokens"
 >;
 
-/** A per-hero on/off token's stored field (intents 07-09, 15). Each one is
- * listed in ON_OFF_TOKEN_FIELDS, and they share one reducer action
- * (SET_HERO_ON_OFF_TOKEN) and one useBattle setter. */
-export type OnOffTokenField = keyof Pick<
-  HeroBattleState,
-  "confused" | "immobilized" | "deathMarked" | "favoredEnemy"
->;
+/** A per-hero on/off token's stored field (intents 07-09, 15), read from
+ * ON_OFF_TOKEN_FIELDS so the list can't miss one. They share one reducer
+ * action (SET_HERO_ON_OFF_TOKEN) and one useBattle setter. */
+export type OnOffTokenField = (typeof ON_OFF_TOKEN_FIELDS)[number];
 
 export type BattleTeamState = {
   gold: number;

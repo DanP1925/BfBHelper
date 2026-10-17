@@ -1,4 +1,4 @@
-import type { CountedTokenField, OnOffTokenField } from "./types";
+import type { CountedTokenField, HeroBattleState } from "./types";
 
 /** Starting battle-state constants for the Battle Board (intent/02) — all
  * static, since no damage/leveling/gold tracking exists until intent 03. */
@@ -35,11 +35,16 @@ export const HERO_COUNTED_TOKEN_CEILINGS = {
   chillTokens: 5,
 } as const satisfies Record<CountedTokenField, number>;
 
-/** Every per-hero on/off token's stored field (intents 07-09, 15), for the
- * loops that need them all (storage validation). */
+/** Every per-hero on/off token's stored field (intents 07-09, 15).
+ * OnOffTokenField is read from this list, and storage validation loops
+ * over it. */
 export const ON_OFF_TOKEN_FIELDS = [
   "confused",
   "immobilized",
   "deathMarked",
   "favoredEnemy",
-] as const satisfies readonly OnOffTokenField[];
+] as const satisfies readonly BooleanHeroField[];
+
+type BooleanHeroField = {
+  [F in keyof HeroBattleState]: HeroBattleState[F] extends boolean ? F : never;
+}[keyof HeroBattleState];

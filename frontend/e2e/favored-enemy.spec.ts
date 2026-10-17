@@ -44,22 +44,32 @@ test("Favored Enemy is offered only on Boreas's enemies, on one at a time, and s
   expect(enemies).not.toContain("Boreas");
 
   const [enemy, otherEnemy] = enemies;
-  const chip = page.getByRole("button", { name: `Favored Enemy token on ${enemy}` });
+  const chipOn = (name: string) =>
+    page.getByRole("button", { name: `Favored Enemy token on ${name}` });
+  const chip = chipOn(enemy);
 
-  await page.getByRole("button", { name: `Add a token to ${enemy}` }).click();
-  await page
-    .getByRole("group", { name: `Add a token to ${enemy}` })
-    .getByRole("button", { name: "Add Favored Enemy" })
-    .click();
-  await page.keyboard.press("Escape");
-  await expect(chip).toHaveAttribute("aria-pressed", "true");
+  async function addFavoredEnemy(name: string) {
+    await page.getByRole("button", { name: `Add a token to ${name}` }).click();
+    await page
+      .getByRole("group", { name: `Add a token to ${name}` })
+      .getByRole("button", { name: "Add Favored Enemy" })
+      .click();
+    await page.keyboard.press("Escape");
+    await expect(chipOn(name)).toHaveAttribute("aria-pressed", "true");
+  }
+
+  async function goToMap() {
+    await page.getByRole("button", { name: "Map" }).click();
+    await expect(page.getByRole("button", { name: "Map" })).toHaveAttribute("aria-pressed", "true");
+  }
+
+  await addFavoredEnemy(enemy);
 
   // Held by one enemy, so no picker offers it any more.
   expect(await heroesOffered()).toEqual([]);
 
   // The Map shows it read-only in the team status panel.
-  await page.getByRole("button", { name: "Map" }).click();
-  await expect(page.getByRole("button", { name: "Map" })).toHaveAttribute("aria-pressed", "true");
+  await goToMap();
   await expect(page.getByLabel("Favored Enemy", { exact: true })).toHaveCount(1);
 
   await page.getByRole("button", { name: "Board" }).click();
@@ -82,18 +92,9 @@ test("Favored Enemy is offered only on Boreas's enemies, on one at a time, and s
   await chip.click();
   await expect(chip).toHaveCount(0);
   expect(await heroesOffered()).toEqual(enemies);
-  await page.getByRole("button", { name: "Map" }).click();
-  await expect(page.getByRole("button", { name: "Map" })).toHaveAttribute("aria-pressed", "true");
+  await goToMap();
   await expect(page.getByLabel("Favored Enemy", { exact: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Board" }).click();
-  await page.getByRole("button", { name: `Add a token to ${otherEnemy}` }).click();
-  await page
-    .getByRole("group", { name: `Add a token to ${otherEnemy}` })
-    .getByRole("button", { name: "Add Favored Enemy" })
-    .click();
-  await page.keyboard.press("Escape");
-  await expect(
-    page.getByRole("button", { name: `Favored Enemy token on ${otherEnemy}` }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await addFavoredEnemy(otherEnemy);
 });
