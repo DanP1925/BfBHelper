@@ -8,13 +8,9 @@ import {
   clampHeroLevel,
   clampStructureHp,
 } from "./bounds";
-import {
-  HERO_COUNTED_TOKEN_CEILINGS,
-  HERO_HP_CEILING,
-  HERO_MAX_LEVEL,
-  HERO_STARTING_LEVEL,
-} from "./constants";
+import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "./constants";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
+import { COUNTED_TOKENS } from "../../test/countedTokens";
 
 describe("clamp", () => {
   it.each([
@@ -72,11 +68,7 @@ describe("clampHeroLevel", () => {
   });
 });
 
-describe.each(
-  (Object.keys(HERO_COUNTED_TOKEN_CEILINGS) as (keyof typeof HERO_COUNTED_TOKEN_CEILINGS)[]).map(
-    (field) => ({ field, ceiling: HERO_COUNTED_TOKEN_CEILINGS[field] }),
-  ),
-)("clampHeroCountedToken($field)", ({ field, ceiling }) => {
+describe.each(COUNTED_TOKENS)("clampHeroCountedToken($field)", ({ field, ceiling }) => {
   it.each([
     [-1, 0],
     [0, 0],

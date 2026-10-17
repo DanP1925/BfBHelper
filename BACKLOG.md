@@ -236,6 +236,8 @@ apply any rule automatically (expiry, defeat, damage absorption).
 - [x] **Drive the token wiring from `BATTLE_TOKENS`.** Do this before Chill.
   Done (v0.11.1): a new token is now its `BATTLE_TOKENS` row, its stored
   field and setter, and one line in `page.tsx`'s `setHeroToken` map.
+  Since v0.13.0 (intent 13), a counted token needs no setter or `page.tsx`
+  line: just its row, stored field and ceiling.
   Added 2026-10-16 from intent 11's `/simplify` review.
   Each hero-specific token still costs about 25 lines across four files:
   a setter prop on `BattleBoardScreen`, a gated callback prop on

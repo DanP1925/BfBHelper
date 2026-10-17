@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { DraftState, HeroId } from "../draft/types";
 import { createInitialBattleState } from "../battle/reducer";
-import {
-  BIT_STARTING_HP,
-  HERO_COUNTED_TOKEN_CEILINGS,
-  TOWER_STARTING_HP,
-} from "../battle/constants";
+import { BIT_STARTING_HP, TOWER_STARTING_HP } from "../battle/constants";
+import { COUNTED_TOKENS } from "../../test/countedTokens";
+import { NO_TOKENS } from "../../test/heroState";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
 import type { BattleState, HeroBattleState } from "../battle/types";
@@ -312,13 +310,7 @@ describe("saveBattleState / loadBattleState", () => {
           "not-a-real-hero": {
             hp: 5,
             level: 1,
-            attackTokens: 0,
-            confused: false,
-            immobilized: false,
-            deathMarked: false,
-            shieldTokens: 0,
-            stoneTokens: 0,
-            chillTokens: 0,
+            ...NO_TOKENS,
           },
         } as unknown as BattleState["p1"]["heroes"],
       },
@@ -419,26 +411,14 @@ describe("saveBattleState / loadBattleState", () => {
         "agatha-trunch": {
           hp: 10,
           level: 1,
-          attackTokens: 0,
-          confused: false,
-          immobilized: false,
-          deathMarked: false,
-          shieldTokens: 0,
-          stoneTokens: 0,
-          chillTokens: 0,
+          ...NO_TOKENS,
         },
       });
       expect(loaded?.p2.heroes).toEqual({
         baldwin: {
           hp: 9,
           level: 1,
-          attackTokens: 0,
-          confused: false,
-          immobilized: false,
-          deathMarked: false,
-          shieldTokens: 0,
-          stoneTokens: 0,
-          chillTokens: 0,
+          ...NO_TOKENS,
         },
       });
       expect(loaded?.p1.heroPositions).toEqual({ "agatha-trunch": null });
@@ -589,13 +569,7 @@ describe("saveBattleState / loadBattleState", () => {
             [heroId]: {
               hp: 3,
               level: 2,
-              attackTokens: 0,
-              confused: false,
-              immobilized: false,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
+              ...NO_TOKENS,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [heroId]: MAP_SPACE_IDS[0] },
@@ -680,13 +654,8 @@ describe("saveBattleState / loadBattleState", () => {
             [p1HeroId]: {
               hp: 0,
               level: 2,
+              ...NO_TOKENS,
               attackTokens: 3,
-              confused: false,
-              immobilized: false,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -698,13 +667,8 @@ describe("saveBattleState / loadBattleState", () => {
             [p2HeroId]: {
               hp: 9,
               level: 1,
+              ...NO_TOKENS,
               attackTokens: 1,
-              confused: false,
-              immobilized: false,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
         },
@@ -779,13 +743,9 @@ describe("saveBattleState / loadBattleState", () => {
             [p1HeroId]: {
               hp: 0,
               level: 2,
+              ...NO_TOKENS,
               attackTokens: 3,
               confused: true,
-              immobilized: false,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -797,13 +757,8 @@ describe("saveBattleState / loadBattleState", () => {
             [p2HeroId]: {
               hp: 9,
               level: 1,
+              ...NO_TOKENS,
               attackTokens: 1,
-              confused: false,
-              immobilized: false,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
         },
@@ -876,13 +831,10 @@ describe("saveBattleState / loadBattleState", () => {
             [p1HeroId]: {
               hp: 0,
               level: 2,
+              ...NO_TOKENS,
               attackTokens: 3,
               confused: true,
               immobilized: true,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -894,13 +846,9 @@ describe("saveBattleState / loadBattleState", () => {
             [p2HeroId]: {
               hp: 9,
               level: 1,
+              ...NO_TOKENS,
               attackTokens: 1,
-              confused: false,
               immobilized: true,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
         },
@@ -961,13 +909,11 @@ describe("saveBattleState / loadBattleState", () => {
             [p1HeroId]: {
               hp: 0,
               level: 2,
+              ...NO_TOKENS,
               attackTokens: 3,
               confused: true,
               immobilized: true,
               deathMarked: true,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -979,13 +925,9 @@ describe("saveBattleState / loadBattleState", () => {
             [p2HeroId]: {
               hp: 9,
               level: 1,
+              ...NO_TOKENS,
               attackTokens: 1,
-              confused: false,
               immobilized: true,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
         },
@@ -1046,13 +988,12 @@ describe("saveBattleState / loadBattleState", () => {
             [p1HeroId]: {
               hp: 0,
               level: 2,
+              ...NO_TOKENS,
               attackTokens: 3,
               confused: true,
               immobilized: true,
               deathMarked: true,
               shieldTokens: 9,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -1064,13 +1005,10 @@ describe("saveBattleState / loadBattleState", () => {
             [p2HeroId]: {
               hp: 9,
               level: 1,
+              ...NO_TOKENS,
               attackTokens: 1,
-              confused: false,
               immobilized: true,
-              deathMarked: false,
               shieldTokens: 2,
-              stoneTokens: 0,
-              chillTokens: 0,
             },
           },
         },
@@ -1131,13 +1069,13 @@ describe("saveBattleState / loadBattleState", () => {
             [p1HeroId]: {
               hp: 0,
               level: 2,
+              ...NO_TOKENS,
               attackTokens: 3,
               confused: true,
               immobilized: true,
               deathMarked: true,
               shieldTokens: 9,
               stoneTokens: 3,
-              chillTokens: 0,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: MAP_SPACE_IDS[0] },
@@ -1149,13 +1087,11 @@ describe("saveBattleState / loadBattleState", () => {
             [p2HeroId]: {
               hp: 9,
               level: 1,
+              ...NO_TOKENS,
               attackTokens: 1,
-              confused: false,
               immobilized: true,
-              deathMarked: false,
               shieldTokens: 2,
               stoneTokens: 1,
-              chillTokens: 0,
             },
           },
         },
@@ -1173,13 +1109,9 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  // The hero-specific counted tokens: Shield (intent/11), Stone (intent/12),
-  // Chill (intent/13).
-  describe.each([
-    { field: "shieldTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.shieldTokens },
-    { field: "stoneTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.stoneTokens },
-    { field: "chillTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.chillTokens },
-  ] as const)("$field validation", ({ field, ceiling }) => {
+  // Every counted token: +1 Attack (intent/06), Shield (intent/11), Stone
+  // (intent/12), Chill (intent/13).
+  describe.each(COUNTED_TOKENS)("$field validation", ({ field, ceiling }) => {
     it.each([
       ["missing", undefined],
       ["negative", -1],
@@ -1249,13 +1181,8 @@ describe("saveBattleState / loadBattleState", () => {
               [heroId]: {
                 hp: 5,
                 level: 1,
-                attackTokens: 0,
-                confused: false,
-                immobilized: false,
+                ...NO_TOKENS,
                 deathMarked,
-                shieldTokens: 0,
-                stoneTokens: 0,
-                chillTokens: 0,
               },
             },
           },
@@ -1311,13 +1238,8 @@ describe("saveBattleState / loadBattleState", () => {
               [heroId]: {
                 hp: 5,
                 level: 1,
-                attackTokens: 0,
-                confused: false,
+                ...NO_TOKENS,
                 immobilized,
-                deathMarked: false,
-                shieldTokens: 0,
-                stoneTokens: 0,
-                chillTokens: 0,
               },
             },
           },
@@ -1365,13 +1287,8 @@ describe("saveBattleState / loadBattleState", () => {
               [heroId]: {
                 hp: 5,
                 level: 1,
-                attackTokens: 0,
+                ...NO_TOKENS,
                 confused,
-                immobilized: false,
-                deathMarked: false,
-                shieldTokens: 0,
-                stoneTokens: 0,
-                chillTokens: 0,
               },
             },
           },
@@ -1398,73 +1315,6 @@ describe("saveBattleState / loadBattleState", () => {
       saveBattleState(confused);
 
       expect(loadBattleState()).toEqual(confused);
-    });
-  });
-
-  describe("attackTokens validation (intent/06)", () => {
-    it.each([
-      ["missing", undefined],
-      ["negative", -1],
-      ["above 9", 10],
-      ["non-numeric", "2"],
-    ])(
-      "returns null and clears the key when a hero's attackTokens is %s",
-      (_label, attackTokens) => {
-        const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
-        window.localStorage.setItem(
-          BATTLE_STATE_STORAGE_KEY,
-          JSON.stringify({
-            ...sampleBattleState,
-            p1: {
-              ...sampleBattleState.p1,
-              heroes: {
-                [heroId]: {
-                  hp: 5,
-                  level: 1,
-                  attackTokens,
-                  confused: false,
-                  immobilized: false,
-                  deathMarked: false,
-                  shieldTokens: 0,
-                  stoneTokens: 0,
-                  chillTokens: 0,
-                },
-              },
-            },
-            updatedAt: new Date().toISOString(),
-          }),
-        );
-
-        expect(loadBattleState()).toBeNull();
-        expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
-      },
-    );
-
-    it("round-trips a non-zero count", () => {
-      const heroId = Object.keys(sampleBattleState.p2.heroes)[0];
-      const withTokens: BattleState = {
-        ...sampleBattleState,
-        p2: {
-          ...sampleBattleState.p2,
-          heroes: {
-            ...sampleBattleState.p2.heroes,
-            [heroId]: {
-              hp: 9,
-              level: 1,
-              attackTokens: 9,
-              confused: false,
-              immobilized: false,
-              deathMarked: false,
-              shieldTokens: 0,
-              stoneTokens: 0,
-              chillTokens: 0,
-            },
-          },
-        },
-      };
-      saveBattleState(withTokens);
-
-      expect(loadBattleState()).toEqual(withTokens);
     });
   });
 

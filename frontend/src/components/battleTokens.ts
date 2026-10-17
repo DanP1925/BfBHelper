@@ -1,5 +1,4 @@
 import type { ComponentType } from "react";
-import { HERO_COUNTED_TOKEN_CEILINGS } from "../lib/battle/constants";
 import type { HeroSpecificTokenId } from "../lib/battle/heroSpecificTokens";
 import type { CountedTokenField, HeroBattleState } from "../lib/battle/types";
 import { AttackTokenIcon } from "./TokenChip/AttackTokenIcon";
@@ -9,10 +8,6 @@ import { ChillTokenIcon } from "./TokenChip/ChillTokenIcon";
 import { ConfuseTokenIcon } from "./TokenToggle/ConfuseTokenIcon";
 import { DeathMarkIcon } from "./TokenToggle/DeathMarkIcon";
 import { ImmobilizeIcon } from "./TokenToggle/ImmobilizeIcon";
-
-/** Re-exported for the components: it lives in lib/battle/types.ts so
- * the bounds, reducer and storage can share it. */
-export type { CountedTokenField };
 
 /** A per-hero on/off token's stored field (intents 07-09). */
 export type OnOffTokenField = keyof Pick<
@@ -38,7 +33,6 @@ export type CountedToken = TokenLook & {
   /** The token's name everywhere: the chip, its picker row, the Map's
    * tooltip and tokenCountLabel, e.g. "+1 Attack", "+1 Shield". */
   label: string;
-  max: number;
 };
 
 /** An on/off token: a lit TokenToggle that a tap removes. */
@@ -60,11 +54,12 @@ export type BattleToken = CountedToken | OnOffToken;
 /** Every token in the fixed order (intents 09, 11-13): +1 Attack,
  * Confuse, Immobilize, then the hero-specific ones (Death Mark, Shield,
  * Stone, Chill). HeroCard's row and picker, the Board's wiring and the
- * Map's token line all loop over this, so a new token is one row here plus
- * its stored field and setter. Which heroes may carry a hero-specific token
- * comes from the rule its `heroSpecific` id names. The stored fields and
- * migrations stay one plain field per token; the counted tokens share one
- * action and setter (SET_HERO_COUNTED_TOKEN). */
+ * Map's token line all loop over this, so a new counted token is one row
+ * here plus its stored field and its HERO_COUNTED_TOKEN_CEILINGS entry (the
+ * counted tokens share one action and setter, SET_HERO_COUNTED_TOKEN). A new
+ * on/off token also needs its setter. Which heroes may carry a
+ * hero-specific token comes from the rule its `heroSpecific` id names. The
+ * stored fields and migrations stay one plain field per token. */
 export const BATTLE_TOKENS: readonly BattleToken[] = [
   {
     kind: "counted",
@@ -72,7 +67,6 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     Icon: AttackTokenIcon,
     label: "+1 Attack",
     accent: "var(--color-gold)",
-    max: HERO_COUNTED_TOKEN_CEILINGS.attackTokens,
   },
   {
     kind: "onOff",
@@ -109,7 +103,6 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     Icon: ShieldTokenIcon,
     label: "+1 Shield",
     accent: "var(--color-shield)",
-    max: HERO_COUNTED_TOKEN_CEILINGS.shieldTokens,
     heroSpecific: "shield",
   },
   // Named "+1 Stone" to match the other counted tokens (intent/12).
@@ -119,7 +112,6 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     Icon: StoneTokenIcon,
     label: "+1 Stone",
     accent: "var(--color-stone)",
-    max: HERO_COUNTED_TOKEN_CEILINGS.stoneTokens,
     heroSpecific: "stone",
   },
   // Named "+1 Chill" to match the other counted tokens (intent/13).
@@ -129,7 +121,6 @@ export const BATTLE_TOKENS: readonly BattleToken[] = [
     Icon: ChillTokenIcon,
     label: "+1 Chill",
     accent: "var(--color-chill)",
-    max: HERO_COUNTED_TOKEN_CEILINGS.chillTokens,
     heroSpecific: "chill",
   },
 ];

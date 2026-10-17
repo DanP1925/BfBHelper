@@ -314,6 +314,13 @@ function offersToken(heroId: HeroId, option: string): boolean {
   return offered !== null;
 }
 
+/** This hero's held "+1 `token`" chip (e.g. "Shield"), or null. */
+function countedChip(heroName: string, token: string): HTMLElement | null {
+  return screen.queryByRole("button", {
+    name: new RegExp(`^${heroName}: \\d+ \\+1 ${token} token`),
+  });
+}
+
 describe("Home: Death Mark (intent/09)", () => {
   const offersDeathMark = (heroId: HeroId) => offersToken(heroId, "Add Death Mark");
 
@@ -386,8 +393,7 @@ describe("Home: Death Mark (intent/09)", () => {
 
 describe("Home: +1 Shield (intent/11)", () => {
   const offersShield = (heroId: HeroId) => offersToken(heroId, "Add +1 Shield");
-  const shieldChip = (name: string) =>
-    screen.queryByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Shield token`) });
+  const shieldChip = (name: string) => countedChip(name, "Shield");
 
   it("offers it only on Cyrus's team, Cyrus included, when he's on Player 1", () => {
     seedDraft(["cyrus", "baldwin", "boreas", "caligar"], ["ceralin", "cynthia", "dazeem", "felix"]);
@@ -473,8 +479,7 @@ describe("Home: +1 Shield (intent/11)", () => {
 
 describe("Home: +1 Stone (intent/12)", () => {
   const offersStone = (heroId: HeroId) => offersToken(heroId, "Add +1 Stone");
-  const stoneChip = (name: string) =>
-    screen.queryByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Stone token`) });
+  const stoneChip = (name: string) => countedChip(name, "Stone");
 
   it("offers it only on Sedusa's enemies when she's on Player 1, never on her own team", () => {
     seedDraft(
@@ -550,8 +555,7 @@ describe("Home: +1 Stone (intent/12)", () => {
 
 describe("Home: +1 Chill (intent/13)", () => {
   const offersChill = (heroId: HeroId) => offersToken(heroId, "Add +1 Chill");
-  const chillChip = (name: string) =>
-    screen.queryByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Chill token`) });
+  const chillChip = (name: string) => countedChip(name, "Chill");
 
   it("offers it only on Dazeem's enemies when he's on Player 1, never on his own team", () => {
     seedDraft(

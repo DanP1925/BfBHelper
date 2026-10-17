@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Hero } from "../draft/types";
-import {
-  BIT_STARTING_HP,
-  HERO_COUNTED_TOKEN_CEILINGS,
-  HERO_HP_CEILING,
-  TOWER_STARTING_HP,
-} from "./constants";
+import { BIT_STARTING_HP, HERO_HP_CEILING, TOWER_STARTING_HP } from "./constants";
+import { COUNTED_TOKENS } from "../../test/countedTokens";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import {
@@ -181,87 +177,6 @@ describe("battleReducer", () => {
       value: 3,
     });
     expect(next).toBe(state);
-  });
-
-  describe("SET_HERO_COUNTED_TOKEN (attackTokens)", () => {
-    it("clamps and replaces", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_COUNTED_TOKEN",
-        field: "attackTokens",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 3,
-      });
-      expect(next.p1.heroes[HERO_A.id].attackTokens).toBe(3);
-      expect(next).not.toBe(state);
-
-      const capped = battleReducer(state, {
-        type: "SET_HERO_COUNTED_TOKEN",
-        field: "attackTokens",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 99,
-      });
-      expect(capped.p1.heroes[HERO_A.id].attackTokens).toBe(
-        HERO_COUNTED_TOKEN_CEILINGS.attackTokens,
-      );
-    });
-
-    it("is a no-op for an unknown heroId", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_COUNTED_TOKEN",
-        field: "attackTokens",
-        side: "p1",
-        heroId: "sterling",
-        value: 2,
-      });
-      expect(next).toBe(state);
-    });
-
-    it("is a no-op (same reference) when the clamped value is unchanged", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_COUNTED_TOKEN",
-        field: "attackTokens",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: -1,
-      });
-      expect(next).toBe(state);
-    });
-
-    it("changes nothing but that hero's count", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_COUNTED_TOKEN",
-        field: "attackTokens",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 2,
-      });
-      expect(next.p1.heroes[HERO_A.id]).toEqual({ ...state.p1.heroes[HERO_A.id], attackTokens: 2 });
-      expect(next.p1.heroPositions).toBe(state.p1.heroPositions);
-      expect(next.p2).toBe(state.p2);
-    });
-
-    it("SET_HERO_HP to 0 keeps the hero's tokens", () => {
-      const withTokens = battleReducer(baseState(), {
-        type: "SET_HERO_COUNTED_TOKEN",
-        field: "attackTokens",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 2,
-      });
-      const defeated = battleReducer(withTokens, {
-        type: "SET_HERO_HP",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 0,
-      });
-      expect(defeated.p1.heroes[HERO_A.id].attackTokens).toBe(2);
-    });
   });
 
   describe("SET_HERO_CONFUSED", () => {
@@ -497,14 +412,10 @@ describe("battleReducer", () => {
     });
   });
 
-  // The hero-specific counted tokens (intents 11-13) go through the same
+  // Every counted token (intents 06, 11-13) goes through the same
   // SET_HERO_COUNTED_TOKEN: clamp-and-replace, manual only, no visibility
   // check.
-  describe.each([
-    { field: "shieldTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.shieldTokens },
-    { field: "stoneTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.stoneTokens },
-    { field: "chillTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.chillTokens },
-  ] as const)("SET_HERO_COUNTED_TOKEN ($field)", ({ field, ceiling }) => {
+  describe.each(COUNTED_TOKENS)("SET_HERO_COUNTED_TOKEN ($field)", ({ field, ceiling }) => {
     function set(state: BattleState, side: "p1" | "p2", value: number): BattleState {
       return battleReducer(state, {
         type: "SET_HERO_COUNTED_TOKEN",

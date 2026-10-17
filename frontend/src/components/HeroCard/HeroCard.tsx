@@ -1,10 +1,15 @@
 import { Fragment, type ReactNode } from "react";
 import type { Hero } from "../../lib/draft/types";
-import { HERO_HP_CEILING, HERO_MAX_LEVEL, HERO_STARTING_LEVEL } from "../../lib/battle/constants";
+import {
+  HERO_COUNTED_TOKEN_CEILINGS,
+  HERO_HP_CEILING,
+  HERO_MAX_LEVEL,
+  HERO_STARTING_LEVEL,
+} from "../../lib/battle/constants";
+import type { CountedTokenField } from "../../lib/battle/types";
 import {
   BATTLE_TOKENS,
   type CountedToken,
-  type CountedTokenField,
   type OnOffToken,
   type OnOffTokenField,
 } from "../battleTokens";
@@ -87,11 +92,12 @@ type TokenEntry = { key: string; chip: ReactNode; option: TokenPickerOption | nu
 /** A counted token's entry: its chip while held or open, and an option that
  * adds 1 per tap up to its ceiling. */
 function countedEntry(
-  { field, Icon, label, accent, max }: CountedToken,
+  { field, Icon, label, accent }: CountedToken,
   token: HeroCardTokenProps,
   heroName: string,
 ): TokenEntry {
   const { count, onChange } = token;
+  const max = HERO_COUNTED_TOKEN_CEILINGS[field];
   return {
     key: field,
     // Stays while its stepper is open at 0, gone once it closes there.
