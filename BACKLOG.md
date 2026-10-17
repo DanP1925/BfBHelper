@@ -100,6 +100,11 @@ when the hero who uses them is in the battle, on either team.
   discarded if Boreas is defeated, per the rulebook). In the app: a Bear Trap
   marker that can be placed on a map space and removed. Needs a Favored Enemy
   marker and a Bear Trap (hero-specific), plus Immobilize.
+  **Favored Enemy done:** scoped in `intent/15_favored-enemy.md`, built in
+  v0.15.0. An emerald crosshair on/off chip, added through the "+" picker on
+  Boreas's enemies only and on one of them at a time (hidden from every
+  picker while held), and a crosshair icon in the Map's status panel. A tap
+  removes it; it's never cleared automatically. Bear Trap is still open.
 - **Cyrus (Paladin):** *Holy Aura* gives Shield 1 to another friendly hero in
   Cyrus's space after a Paladin power; power cards give more Shield. Shield
   tokens are hero-specific (only shown when Cyrus is in the battle), counted
@@ -193,7 +198,7 @@ Hero-specific (only when that hero is in the battle):
 
 | Feature | Kind | Hero |
 |---|---|---|
-| Favored Enemy | one permanent marker on an enemy | Boreas |
+| Favored Enemy (done, v0.15.0) | one permanent marker on an enemy | Boreas |
 | Bear Trap | single marker on a map space | Boreas |
 | Shield (done, v0.11.0) | count per hero | Cyrus |
 | Chill (done, v0.13.0) | count per hero | Dazeem |
@@ -224,7 +229,9 @@ apply any rule automatically (expiry, defeat, damage absorption).
     Intent 13's QA found the seven-token case (+1 Attack, Confuse,
     Immobilize, Death Mark, Shield, Stone, Chill) fits its chips on two
     lines, but the "+" wraps alone to a third. Accepted for now since the
-    Board still fits at 1280x800.
+    Board still fits at 1280x800. Intent 15's eight-token case (adding
+    Favored Enemy) puts Favored Enemy and the "+" on that third line; the
+    Board still fits.
   - **Colors and icons** of every token side by side.
   - **The Map**, read-only for now: does the status panel still read well,
     and is editing there worth adding?

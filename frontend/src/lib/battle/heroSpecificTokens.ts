@@ -14,6 +14,7 @@ export const HERO_SPECIFIC_TOKENS = {
   shield: { owner: "cyrus", targets: "allies" },
   stone: { owner: "sedusa", targets: "enemies" },
   chill: { owner: "dazeem", targets: "enemies" },
+  favoredEnemy: { owner: "boreas", targets: "enemies" },
 } as const satisfies Record<string, HeroSpecificTokenRule>;
 
 export type HeroSpecificTokenId = keyof typeof HERO_SPECIFIC_TOKENS;

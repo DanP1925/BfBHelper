@@ -449,6 +449,41 @@ describe("BattleMapScreen", () => {
     ).toBeTruthy();
   });
 
+  it("shows Favored Enemy in the status panel only while held, after Chill", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: {
+              ...base.p1.heroes,
+              caligar: { ...base.p1.heroes.caligar, chillTokens: 2, favoredEnemy: true },
+            },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    // Only Caligar (0 HP, still shown) holds it.
+    const favored = screen.getByLabelText("Favored Enemy");
+    expect(screen.getAllByLabelText("Favored Enemy")).toHaveLength(1);
+    expect(favored).toHaveAttribute("title", "Favored Enemy token");
+    expect(favored.style.getPropertyValue("--token-accent")).toBe("var(--color-favored-enemy)");
+    const chill = screen.getByLabelText("2 +1 Chill tokens");
+    expect(chill.compareDocumentPosition(favored) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('shows "End Battle" in the menu only once a winner exists', () => {
     const { rerender } = render(
       <BattleMapScreen
@@ -572,7 +607,7 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 11,
+      schemaVersion: 12,
       initiative: "p1",
       p1: {
         gold: 0,

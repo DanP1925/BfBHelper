@@ -84,30 +84,30 @@ frontend/e2e/
 
 ### Shared on/off-token path (refactor, no behavior change)
 
-- [ ] M1. `lib/battle/types.ts`: += `OnOffTokenField` (`"confused" |
+- [x] M1. `lib/battle/types.ts`: += `OnOffTokenField` (`"confused" |
       "immobilized" | "deathMarked"` for now), moved from
       `components/battleTokens.ts`, which imports it from here.
-- [ ] M2. `lib/battle/constants.ts`: += `ON_OFF_TOKEN_FIELDS` (`as const
+- [x] M2. `lib/battle/constants.ts`: += `ON_OFF_TOKEN_FIELDS` (`as const
       satisfies readonly OnOffTokenField[]`), next to
       `HERO_COUNTED_TOKEN_CEILINGS`. A type test (`expectTypeOf`) checks
       that its element type equals `OnOffTokenField`, so a field can't be
       left out of validation (spec Open Item).
-- [ ] M3. `lib/battle/reducer.ts`: replace `SET_HERO_CONFUSED`,
+- [x] M3. `lib/battle/reducer.ts`: replace `SET_HERO_CONFUSED`,
       `SET_HERO_IMMOBILIZED` and `SET_HERO_DEATH_MARKED` with
       `SET_HERO_ON_OFF_TOKEN { side, heroId, field, value }`, one
       `setHeroField(..., field, value)` call. One manual-only comment
       keeps each token's specifics (Immobilize never blocks a move).
-- [ ] M4. `lib/useBattle.ts`: replace `setHeroConfused`,
+- [x] M4. `lib/useBattle.ts`: replace `setHeroConfused`,
       `setHeroImmobilized` and `setHeroDeathMarked` with
       `setHeroOnOffToken(side, heroId, field, value)`. `app/page.tsx`:
       `setHeroToken` becomes `{ counted, onOff }`.
       `screens/BattleBoardScreen`: `BoardTokenSetters` is
       `{ counted, onOff }`, and `teamTokenSetters` binds each on/off row's
       `field` to `setters.onOff`, like the counted rows.
-- [ ] M5. `lib/persistence/storage.ts`: `hasValidBattleTeamShape`
+- [x] M5. `lib/persistence/storage.ts`: `hasValidBattleTeamShape`
       replaces its three boolean checks with one loop over
       `ON_OFF_TOKEN_FIELDS`; its doc comment says so.
-- [ ] M6. Tests follow the renames, with no behavior change:
+- [x] M6. Tests follow the renames, with no behavior change:
       `reducer.test.ts` (one `describe.each` over the on/off fields
       dispatching `SET_HERO_ON_OFF_TOKEN`), `useBattle.test.tsx`
       (`setHeroOnOffToken`), `page.test.tsx` and any Board test that
@@ -116,17 +116,17 @@ frontend/e2e/
 
 ### Favored Enemy data & state layer
 
-- [ ] M7. `lib/battle/types.ts`: `HeroBattleState` += `favoredEnemy:
+- [x] M7. `lib/battle/types.ts`: `HeroBattleState` += `favoredEnemy:
       boolean` (with the spec's doc comment), `OnOffTokenField` +=
       `"favoredEnemy"`, `BattleState.schemaVersion: 12`.
-- [ ] M8. `lib/battle/constants.ts`: `ON_OFF_TOKEN_FIELDS` +=
+- [x] M8. `lib/battle/constants.ts`: `ON_OFF_TOKEN_FIELDS` +=
       `"favoredEnemy"`. No new action or setter: M3-M4 cover it.
-- [ ] M9. `lib/battle/reducer.ts`: `createInitialHeroState` returns
+- [x] M9. `lib/battle/reducer.ts`: `createInitialHeroState` returns
       `favoredEnemy: false` (doc comment adds "no Favored Enemy"),
       `createInitialBattleState` writes `schemaVersion: 12`. The shared
       comment adds "Favored Enemy is never moved to another hero", and
       that neither visibility nor the one-holder rule is checked here.
-- [ ] M10. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
+- [x] M10. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
       12`. += `LegacyHeroBattleStateV11 = Omit<HeroBattleState,
       "favoredEnemy">`, and `LegacyHeroBattleStateV9` derives from it. +=
       `LegacyBattleTeamStateV11` (heroes: `LegacyHeroBattleStateV11`);
@@ -134,15 +134,15 @@ frontend/e2e/
       `BattleTeamState`. `PersistedBattleStateV11.p1/p2` use
       `LegacyBattleTeamStateV11`, doc comment says it's only the source
       for `battleMigrations[11]`. += `PersistedBattleStateV12`.
-- [ ] M11. `lib/persistence/storage.ts`: += `upgradeV11ToV12 =
+- [x] M11. `lib/persistence/storage.ts`: += `upgradeV11ToV12 =
       addHeroFieldsStep<PersistedBattleStateV12>(12, { favoredEnemy:
       false })`; `battleMigrations` += `11: upgradeV11ToV12`.
       `saveBattleState`, `isValidPersistedBattleState` and the import use
       `PersistedBattleStateV12`. M5's loop validates `favoredEnemy` with
       no extra line, and checks neither who holds it nor how many do.
-- [ ] M12. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
+- [x] M12. `lib/battle/heroSpecificTokens.ts`: `HERO_SPECIFIC_TOKENS` +=
       `favoredEnemy: { owner: "boreas", targets: "enemies" }`.
-- [ ] M13. Fixtures and tests:
+- [x] M13. Fixtures and tests:
       - `src/test/heroState.ts`'s `NO_TOKENS` gains `favoredEnemy: false`;
         every other hand-written `HeroBattleState` too (`tsc` finds
         them); `storage.test.ts`'s older-schema `withoutHeroFields` calls
@@ -165,16 +165,16 @@ frontend/e2e/
 
 ### Favored Enemy UI
 
-- [ ] M14. `app/globals.css`: += `--color-favored-enemy: #3fcf86`, with a
+- [x] M14. `app/globals.css`: += `--color-favored-enemy: #3fcf86`, with a
       comment like `--color-chill`'s (the rulebook token's green, as an
       emerald bluer than `--color-shield` and greener than
       `--color-chill`).
-- [ ] M15. `components/TokenToggle/FavoredEnemyIcon.tsx` (new): the
+- [x] M15. `components/TokenToggle/FavoredEnemyIcon.tsx` (new): the
       canvas's crosshair (ring r=4.5, four ticks crossing it, a 0.75
       center dot), 16px viewBox stroke SVG in `currentColor`,
       `aria-hidden`, `size` prop (12px on the Board, 14px in the picker,
       13px on the Map).
-- [ ] M16. `components/battleTokens.ts`: `OnOffToken` += `oneHolder?:
+- [x] M16. `components/battleTokens.ts`: `OnOffToken` += `oneHolder?:
       true` with the spec's doc comment. `BATTLE_TOKENS` += the Favored
       Enemy row after Chill (`kind: "onOff"`, `field: "favoredEnemy"`,
       `FavoredEnemyIcon`, `chipLabel` "Favored Enemy token", `optionLabel`
@@ -182,29 +182,33 @@ frontend/e2e/
       `heroSpecific: "favoredEnemy"`, `oneHolder: true`). The table's doc
       comment adds Favored Enemy to the order list and says on/off tokens
       share one action and setter too.
-- [ ] M17. `components/BattleTeamPanel/BattleTeamPanel.tsx`: `heroTokens`
+- [x] M17. `components/BattleTeamPanel/BattleTeamPanel.tsx`: `heroTokens`
       takes the side's `team.heroes` and skips a `oneHolder` token for a
       hero who doesn't hold it while another hero on the side does (the
       spec's snippet). Check that `HeroCard` and `MapTeamStatusPanel` need
-      no edit (the spec's claim); note any that did.
-- [ ] M18. Spec Open Item: does `--color-favored-enemy` `#3fcf86` read
+      no edit (the spec's claim); note any that did. **Neither needed a
+      code change for Favored Enemy.** `HeroCard` only changed its import
+      of `OnOffTokenField` (now from `lib/battle/types.ts`, M1).
+- [x] M18. Spec Open Item: does `--color-favored-enemy` `#3fcf86` read
       apart from Shield's yellow-green, Chill's cyan and P2's teal at
       1280x800? Decide in the browser; adjust on the canvas and in the
-      spec if not.
-- [ ] M19. Spec Open Item: is `FavoredEnemyIcon` legible at 12px on the
+      spec if not. **Kept:** it reads apart from all three.
+- [x] M19. Spec Open Item: is `FavoredEnemyIcon` legible at 12px on the
       Board and 13px on the Map? If the center dot muddies at 12px, drop
-      it. Update the spec.
-- [ ] M20. Spec Open Item: Board at 1280x800 with the eight-token case (an
+      it. Update the spec. **Kept as drawn,** center dot included.
+- [x] M20. Spec Open Item: Board at 1280x800 with the eight-token case (an
       ally of Cyrus who's an enemy of Kunoichi, Sedusa, Dazeem and Boreas)
       holding +1 Attack ×9, Confuse, Immobilize, Death Mark, Shield ×9,
       Stone ×3, Chill ×5 and Favored Enemy: the card wraps to three lines
       at most, and the Board doesn't scroll, with any stepper open. Also
       the Map's token line for that hero in the 170px panel. Decide in
-      the browser, and update the spec.
+      the browser, and update the spec. **Three lines:** Favored Enemy and
+      the "+" share the third. The Board fits with no scroll, stepper open
+      or closed, and the Map line wraps to two and fits.
 
 ### Tests & verification
 
-- [ ] M21. Tests:
+- [x] M21. Tests:
       - `HeroCard`: "Favored Enemy" option only when `tokens.favoredEnemy`
         is passed and off, after "+1 Chill"; the lit chip while on, and a
         tap calls `onChange(false)`
@@ -225,10 +229,10 @@ frontend/e2e/
         does; Boreas's team's pickers have no "Favored Enemy"; tapping the
         chip removes it on both screens, and then a different enemy can
         take it
-- [ ] M22. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green
+- [x] M22. `tsc --noEmit`, ESLint, full Vitest and Playwright suites green
       (the existing confuse, immobilize, death-mark and token-row e2e
       specs too, since their setters changed underneath).
-- [ ] M23. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M23. Manual QA at 1280x800 (`/qa-screens`):
       - "Favored Enemy" offered only on Boreas's enemies, never on his own
         team, and only while no enemy holds it; the emerald chip reads
         apart from Shield, Chill and P2's teal (M18); focus outline in
@@ -243,7 +247,7 @@ frontend/e2e/
         holding Favored Enemy and its other tokens and Arena positions
         kept
       - New Draft clears it
-- [ ] M24. `npm version minor --no-git-tag-version` (→ 0.15.0). In
+- [x] M24. `npm version minor --no-git-tag-version` (→ 0.15.0). In
       `BACKLOG.md`, mark Favored Enemy done in Boreas's entry and the
       hero-specific table, linking intent 15 and v0.15.0, as intent 13
       did for Chill (Bear Trap stays open). Mark spec 15 **BUILT**.

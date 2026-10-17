@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
-import type { BattleState, CountedTokenField, HeroPosition, StructuresState } from "./battle/types";
+import type {
+  BattleState,
+  CountedTokenField,
+  HeroPosition,
+  OnOffTokenField,
+  StructuresState,
+} from "./battle/types";
 import type { Hero, HeroId, PlayerId } from "./draft/types";
 import type { GoldPileSpaceId } from "../data/mapSpaces";
 import { loadBattleState, saveBattleState } from "./persistence/storage";
@@ -22,9 +28,14 @@ export type UseBattleResult = {
     field: CountedTokenField,
     value: number,
   ) => void;
-  setHeroConfused: (side: PlayerId, heroId: HeroId, value: boolean) => void;
-  setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
-  setHeroDeathMarked: (side: PlayerId, heroId: HeroId, value: boolean) => void;
+  /** Every on/off token (Confuse, Immobilize, Death Mark) goes through this
+   * one setter, named by its stored field. */
+  setHeroOnOffToken: (
+    side: PlayerId,
+    heroId: HeroId,
+    field: OnOffTokenField,
+    value: boolean,
+  ) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   /** Also moves a hero into or out of the Arena (intent/14): its position
    * is just another `HeroPosition`. */
@@ -142,29 +153,16 @@ export function useBattle(
     [],
   );
 
-  const setHeroConfused = useCallback((side: PlayerId, heroId: HeroId, value: boolean) => {
-    setState((prev) =>
-      prev === null
-        ? prev
-        : battleReducer(prev, { type: "SET_HERO_CONFUSED", side, heroId, value }),
-    );
-  }, []);
-
-  const setHeroImmobilized = useCallback((side: PlayerId, heroId: HeroId, value: boolean) => {
-    setState((prev) =>
-      prev === null
-        ? prev
-        : battleReducer(prev, { type: "SET_HERO_IMMOBILIZED", side, heroId, value }),
-    );
-  }, []);
-
-  const setHeroDeathMarked = useCallback((side: PlayerId, heroId: HeroId, value: boolean) => {
-    setState((prev) =>
-      prev === null
-        ? prev
-        : battleReducer(prev, { type: "SET_HERO_DEATH_MARKED", side, heroId, value }),
-    );
-  }, []);
+  const setHeroOnOffToken = useCallback(
+    (side: PlayerId, heroId: HeroId, field: OnOffTokenField, value: boolean) => {
+      setState((prev) =>
+        prev === null
+          ? prev
+          : battleReducer(prev, { type: "SET_HERO_ON_OFF_TOKEN", side, heroId, field, value }),
+      );
+    },
+    [],
+  );
 
   const setStructureHp = useCallback(
     (side: PlayerId, slot: keyof StructuresState, value: number) => {
@@ -200,9 +198,7 @@ export function useBattle(
     setHeroHp,
     setHeroLevel,
     setHeroCountedToken,
-    setHeroConfused,
-    setHeroImmobilized,
-    setHeroDeathMarked,
+    setHeroOnOffToken,
     setStructureHp,
     setHeroPosition,
     setGoldPile,

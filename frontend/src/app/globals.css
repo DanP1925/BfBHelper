@@ -33,6 +33,10 @@
    * brighter and greener than --color-immobilize (often on the same hero)
    * and lighter than --color-p2. */
   --color-chill: #5ccfe6;
+  /* Boreas's Favored Enemy (intent/15): the rulebook token's green as an
+   * emerald, bluer than --color-shield and greener than --color-chill, both
+   * often on the same hero. */
+  --color-favored-enemy: #3fcf86;
 
   --background: var(--color-bg);
   --foreground: var(--color-text);

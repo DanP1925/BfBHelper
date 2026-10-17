@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Hero } from "../draft/types";
-import { BIT_STARTING_HP, HERO_HP_CEILING, TOWER_STARTING_HP } from "./constants";
+import {
+  BIT_STARTING_HP,
+  HERO_HP_CEILING,
+  ON_OFF_TOKEN_FIELDS,
+  TOWER_STARTING_HP,
+} from "./constants";
 import { COUNTED_TOKENS } from "../../test/countedTokens";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
@@ -46,6 +51,7 @@ describe("createInitialHeroState", () => {
       shieldTokens: 0,
       stoneTokens: 0,
       chillTokens: 0,
+      favoredEnemy: false,
     });
     expect(createInitialHeroState({ ...HERO_A, baseHp: HERO_HP_CEILING })).toEqual({
       hp: HERO_HP_CEILING,
@@ -57,6 +63,7 @@ describe("createInitialHeroState", () => {
       shieldTokens: 0,
       stoneTokens: 0,
       chillTokens: 0,
+      favoredEnemy: false,
     });
   });
 });
@@ -74,6 +81,7 @@ describe("createInitialBattleState", () => {
       shieldTokens: 0,
       stoneTokens: 0,
       chillTokens: 0,
+      favoredEnemy: false,
     });
   });
 
@@ -99,9 +107,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 11", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 12", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(11);
+    expect(state.schemaVersion).toBe(12);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -179,237 +187,118 @@ describe("battleReducer", () => {
     expect(next).toBe(state);
   });
 
-  describe("SET_HERO_CONFUSED", () => {
-    function confuse(state: BattleState, value: boolean): BattleState {
-      return battleReducer(state, {
-        type: "SET_HERO_CONFUSED",
-        side: "p1",
-        heroId: HERO_A.id,
-        value,
+  // Every on/off token (intents 07-09) goes through the same
+  // SET_HERO_ON_OFF_TOKEN: replace, manual only, no visibility check.
+  describe.each(ON_OFF_TOKEN_FIELDS.map((field) => ({ field })))(
+    "SET_HERO_ON_OFF_TOKEN ($field)",
+    ({ field }) => {
+      function set(state: BattleState, side: "p1" | "p2", value: boolean): BattleState {
+        return battleReducer(state, {
+          type: "SET_HERO_ON_OFF_TOKEN",
+          field,
+          side,
+          heroId: side === "p1" ? HERO_A.id : HERO_B.id,
+          value,
+        });
+      }
+
+      it("turns the flag on and off, changing nothing but that hero's flag", () => {
+        const state = baseState();
+        const on = set(state, "p1", true);
+        expect(on.p1.heroes[HERO_A.id]).toEqual({ ...state.p1.heroes[HERO_A.id], [field]: true });
+        expect(on.p1.heroPositions).toBe(state.p1.heroPositions);
+        expect(on.p2).toBe(state.p2);
+
+        const off = set(on, "p1", false);
+        expect(off.p1.heroes[HERO_A.id][field]).toBe(false);
+        expect(off).not.toBe(on);
       });
-    }
 
-    it("turns the flag on and off, changing nothing but that hero's flag", () => {
-      const state = baseState();
-      const on = confuse(state, true);
-      expect(on.p1.heroes[HERO_A.id]).toEqual({ ...state.p1.heroes[HERO_A.id], confused: true });
-      expect(on.p1.heroPositions).toBe(state.p1.heroPositions);
-      expect(on.p2).toBe(state.p2);
-
-      const off = confuse(on, false);
-      expect(off.p1.heroes[HERO_A.id].confused).toBe(false);
-      expect(off).not.toBe(on);
-    });
-
-    it("is a no-op for an unknown heroId", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_CONFUSED",
-        side: "p1",
-        heroId: "sterling",
-        value: true,
+      it("doesn't check visibility: either side can hold it", () => {
+        // Neither roster has a token's owner; the UI alone decides who gets
+        // a control.
+        const state = set(set(baseState(), "p1", true), "p2", true);
+        expect(state.p1.heroes[HERO_A.id][field]).toBe(true);
+        expect(state.p2.heroes[HERO_B.id][field]).toBe(true);
       });
-      expect(next).toBe(state);
-    });
 
-    it("is a no-op (same reference) when the value is unchanged", () => {
-      const state = baseState();
-      expect(confuse(state, false)).toBe(state);
-      const on = confuse(state, true);
-      expect(confuse(on, true)).toBe(on);
-    });
+      it("is a no-op for an unknown heroId", () => {
+        const state = baseState();
+        expect(
+          battleReducer(state, {
+            type: "SET_HERO_ON_OFF_TOKEN",
+            field,
+            side: "p1",
+            heroId: "sterling",
+            value: true,
+          }),
+        ).toBe(state);
+      });
 
-    it("survives SET_HERO_HP to 0, SET_HERO_POSITION and PASS_INITIATIVE", () => {
-      let state = confuse(baseState(), true);
-      state = battleReducer(state, {
-        type: "SET_HERO_HP",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 0,
+      it("is a no-op (same reference) when the value is unchanged", () => {
+        const state = baseState();
+        expect(set(state, "p1", false)).toBe(state);
+        const on = set(state, "p1", true);
+        expect(set(on, "p1", true)).toBe(on);
       });
-      state = battleReducer(state, {
-        type: "SET_HERO_POSITION",
-        side: "p1",
-        heroId: HERO_A.id,
-        spaceId: null,
+
+      it("survives SET_HERO_HP to 0, moves, the other tokens and PASS_INITIATIVE", () => {
+        const hero = { side: "p1", heroId: HERO_A.id } as const;
+        const others: BattleAction[] = [
+          { type: "SET_HERO_HP", ...hero, value: 0 },
+          { type: "SET_HERO_POSITION", ...hero, spaceId: null },
+          { type: "SET_HERO_POSITION", ...hero, spaceId: MAP_SPACE_IDS[0] },
+          { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "attackTokens", value: 2 },
+          ...ON_OFF_TOKEN_FIELDS.filter((other) => other !== field).map((other): BattleAction => ({
+            type: "SET_HERO_ON_OFF_TOKEN",
+            ...hero,
+            field: other,
+            value: true,
+          })),
+          { type: "PASS_INITIATIVE" },
+        ];
+        const state = others.reduce(battleReducer, set(baseState(), "p1", true));
+        expect(state.p1.heroes[HERO_A.id]).toMatchObject({
+          hp: 0,
+          attackTokens: 2,
+          ...Object.fromEntries(ON_OFF_TOKEN_FIELDS.map((f) => [f, true])),
+        });
+        expect(state.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
       });
-      state = battleReducer(state, { type: "PASS_INITIATIVE" });
-      expect(state.p1.heroes[HERO_A.id].confused).toBe(true);
+    },
+  );
+
+  it("never blocks a move: SET_HERO_POSITION moves an immobilized hero and keeps the flag", () => {
+    const immobilized = battleReducer(baseState(), {
+      type: "SET_HERO_ON_OFF_TOKEN",
+      field: "immobilized",
+      side: "p1",
+      heroId: HERO_A.id,
+      value: true,
     });
+    const moved = battleReducer(immobilized, {
+      type: "SET_HERO_POSITION",
+      side: "p1",
+      heroId: HERO_A.id,
+      spaceId: MAP_SPACE_IDS[0],
+    });
+    expect(moved.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
+    expect(moved.p1.heroes[HERO_A.id].immobilized).toBe(true);
   });
 
-  describe("SET_HERO_IMMOBILIZED", () => {
-    function immobilize(state: BattleState, value: boolean): BattleState {
-      return battleReducer(state, {
-        type: "SET_HERO_IMMOBILIZED",
+  it("never moves Favored Enemy: setting it on a second hero leaves the first one's alone (intent/15)", () => {
+    const twoHeroes = createInitialBattleState([HERO_A, HERO_B], [], "p1");
+    const favor = (state: BattleState, heroId: Hero["id"]): BattleState =>
+      battleReducer(state, {
+        type: "SET_HERO_ON_OFF_TOKEN",
+        field: "favoredEnemy",
         side: "p1",
-        heroId: HERO_A.id,
-        value,
-      });
-    }
-
-    it("turns the flag on and off, changing nothing but that hero's flag", () => {
-      const state = baseState();
-      const on = immobilize(state, true);
-      expect(on.p1.heroes[HERO_A.id]).toEqual({
-        ...state.p1.heroes[HERO_A.id],
-        immobilized: true,
-      });
-      expect(on.p1.heroPositions).toBe(state.p1.heroPositions);
-      expect(on.p2).toBe(state.p2);
-
-      const off = immobilize(on, false);
-      expect(off.p1.heroes[HERO_A.id].immobilized).toBe(false);
-      expect(off).not.toBe(on);
-    });
-
-    it("is a no-op for an unknown heroId", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_IMMOBILIZED",
-        side: "p1",
-        heroId: "sterling",
+        heroId,
         value: true,
       });
-      expect(next).toBe(state);
-    });
-
-    it("is a no-op (same reference) when the value is unchanged", () => {
-      const state = baseState();
-      expect(immobilize(state, false)).toBe(state);
-      const on = immobilize(state, true);
-      expect(immobilize(on, true)).toBe(on);
-    });
-
-    it("never blocks a move: SET_HERO_POSITION moves an immobilized hero and keeps the flag", () => {
-      const moved = battleReducer(immobilize(baseState(), true), {
-        type: "SET_HERO_POSITION",
-        side: "p1",
-        heroId: HERO_A.id,
-        spaceId: MAP_SPACE_IDS[0],
-      });
-      expect(moved.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
-      expect(moved.p1.heroes[HERO_A.id].immobilized).toBe(true);
-    });
-
-    it("survives SET_HERO_HP to 0, a move to respawn, SET_HERO_CONFUSED and PASS_INITIATIVE", () => {
-      let state = immobilize(baseState(), true);
-      state = battleReducer(state, {
-        type: "SET_HERO_HP",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 0,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_POSITION",
-        side: "p1",
-        heroId: HERO_A.id,
-        spaceId: null,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_CONFUSED",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: true,
-      });
-      state = battleReducer(state, { type: "PASS_INITIATIVE" });
-      expect(state.p1.heroes[HERO_A.id].immobilized).toBe(true);
-      expect(state.p1.heroes[HERO_A.id].confused).toBe(true);
-    });
-  });
-
-  describe("SET_HERO_DEATH_MARKED", () => {
-    function mark(state: BattleState, side: "p1" | "p2", value: boolean): BattleState {
-      return battleReducer(state, {
-        type: "SET_HERO_DEATH_MARKED",
-        side,
-        heroId: side === "p1" ? HERO_A.id : HERO_B.id,
-        value,
-      });
-    }
-
-    it("turns the flag on and off, changing nothing but that hero's flag", () => {
-      const state = baseState();
-      const on = mark(state, "p1", true);
-      expect(on.p1.heroes[HERO_A.id]).toEqual({
-        ...state.p1.heroes[HERO_A.id],
-        deathMarked: true,
-      });
-      expect(on.p1.heroPositions).toBe(state.p1.heroPositions);
-      expect(on.p2).toBe(state.p2);
-
-      const off = mark(on, "p1", false);
-      expect(off.p1.heroes[HERO_A.id].deathMarked).toBe(false);
-      expect(off).not.toBe(on);
-    });
-
-    it("doesn't check visibility: any hero on either side can be marked", () => {
-      // Neither roster has Kunoichi; the UI alone decides who gets a control.
-      const state = mark(mark(baseState(), "p1", true), "p2", true);
-      expect(state.p1.heroes[HERO_A.id].deathMarked).toBe(true);
-      expect(state.p2.heroes[HERO_B.id].deathMarked).toBe(true);
-    });
-
-    it("is a no-op for an unknown heroId", () => {
-      const state = baseState();
-      const next = battleReducer(state, {
-        type: "SET_HERO_DEATH_MARKED",
-        side: "p1",
-        heroId: "sterling",
-        value: true,
-      });
-      expect(next).toBe(state);
-    });
-
-    it("is a no-op (same reference) when the value is unchanged", () => {
-      const state = baseState();
-      expect(mark(state, "p1", false)).toBe(state);
-      const on = mark(state, "p1", true);
-      expect(mark(on, "p1", true)).toBe(on);
-    });
-
-    it("survives SET_HERO_HP to 0, a move, the other tokens and PASS_INITIATIVE", () => {
-      let state = mark(baseState(), "p1", true);
-      state = battleReducer(state, {
-        type: "SET_HERO_HP",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 0,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_POSITION",
-        side: "p1",
-        heroId: HERO_A.id,
-        spaceId: MAP_SPACE_IDS[0],
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_COUNTED_TOKEN",
-        field: "attackTokens",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: 2,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_CONFUSED",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: true,
-      });
-      state = battleReducer(state, {
-        type: "SET_HERO_IMMOBILIZED",
-        side: "p1",
-        heroId: HERO_A.id,
-        value: true,
-      });
-      state = battleReducer(state, { type: "PASS_INITIATIVE" });
-      expect(state.p1.heroes[HERO_A.id]).toMatchObject({
-        hp: 0,
-        attackTokens: 2,
-        confused: true,
-        immobilized: true,
-        deathMarked: true,
-      });
-    });
+    const both = favor(favor(twoHeroes, HERO_A.id), HERO_B.id);
+    expect(both.p1.heroes[HERO_A.id].favoredEnemy).toBe(true);
+    expect(both.p1.heroes[HERO_B.id].favoredEnemy).toBe(true);
   });
 
   // Every counted token (intents 06, 11-13) goes through the same
@@ -483,9 +372,12 @@ describe("battleReducer", () => {
         { type: "SET_HERO_HP", ...hero, value: 0 },
         { type: "SET_HERO_POSITION", ...hero, spaceId: MAP_SPACE_IDS[0] },
         { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "attackTokens", value: 2 },
-        { type: "SET_HERO_CONFUSED", ...hero, value: true },
-        { type: "SET_HERO_IMMOBILIZED", ...hero, value: true },
-        { type: "SET_HERO_DEATH_MARKED", ...hero, value: true },
+        ...ON_OFF_TOKEN_FIELDS.map((field): BattleAction => ({
+          type: "SET_HERO_ON_OFF_TOKEN",
+          ...hero,
+          field,
+          value: true,
+        })),
         { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "shieldTokens", value: 1 },
         { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "stoneTokens", value: 1 },
         { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "chillTokens", value: 1 },
@@ -497,9 +389,7 @@ describe("battleReducer", () => {
       expect(state.p1.heroes[HERO_A.id]).toMatchObject({
         hp: 0,
         attackTokens: 2,
-        confused: true,
-        immobilized: true,
-        deathMarked: true,
+        ...Object.fromEntries(ON_OFF_TOKEN_FIELDS.map((f) => [f, true])),
         [field]: 3,
       });
     });

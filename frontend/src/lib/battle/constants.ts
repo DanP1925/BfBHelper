@@ -1,4 +1,4 @@
-import type { CountedTokenField } from "./types";
+import type { CountedTokenField, OnOffTokenField } from "./types";
 
 /** Starting battle-state constants for the Battle Board (intent/02) — all
  * static, since no damage/leveling/gold tracking exists until intent 03. */
@@ -34,3 +34,12 @@ export const HERO_COUNTED_TOKEN_CEILINGS = {
    * No rule caps it, but a hero can't physically hold more. */
   chillTokens: 5,
 } as const satisfies Record<CountedTokenField, number>;
+
+/** Every per-hero on/off token's stored field (intents 07-09, 15), for the
+ * loops that need them all (storage validation). */
+export const ON_OFF_TOKEN_FIELDS = [
+  "confused",
+  "immobilized",
+  "deathMarked",
+  "favoredEnemy",
+] as const satisfies readonly OnOffTokenField[];

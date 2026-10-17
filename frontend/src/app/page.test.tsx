@@ -537,7 +537,14 @@ describe("Home: +1 Stone (intent/12)", () => {
       within(picker(cynthia)!)
         .getAllByRole("button")
         .map((row) => row.getAttribute("aria-label")),
-    ).toEqual(["Add +1 Attack", "Add Confuse", "Add Immobilize", "Add +1 Shield", "Add +1 Stone"]);
+    ).toEqual([
+      "Add +1 Attack",
+      "Add Confuse",
+      "Add Immobilize",
+      "Add +1 Shield",
+      "Add +1 Stone",
+      "Add Favored Enemy",
+    ]);
     for (let i = 0; i < 3; i++) fireEvent.click(option(cynthia, "Add +1 Stone"));
     expect(option(cynthia, "Add +1 Stone")).toBeDisabled();
     fireEvent.click(option(cynthia, "Add +1 Shield"));
@@ -620,6 +627,7 @@ describe("Home: +1 Chill (intent/13)", () => {
       "Add +1 Shield",
       "Add +1 Stone",
       "Add +1 Chill",
+      "Add Favored Enemy",
     ]);
     for (let i = 0; i < 5; i++) fireEvent.click(option(cynthia, "Add +1 Chill"));
     expect(option(cynthia, "Add +1 Chill")).toBeDisabled();
@@ -636,6 +644,96 @@ describe("Home: +1 Chill (intent/13)", () => {
     expect(
       stone.compareDocumentPosition(chillChip(cynthia)!) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+});
+
+describe("Home: Favored Enemy (intent/15)", () => {
+  const offersFavoredEnemy = (heroId: HeroId) => offersToken(heroId, "Add Favored Enemy");
+  const favoredChip = (name: string) =>
+    screen.queryByRole("button", { name: `Favored Enemy token on ${name}` });
+
+  it("offers it only on Boreas's enemies when he's on Player 1, never on his own team", () => {
+    seedDraft(
+      ["boreas", "baldwin", "caligar", "ceralin"],
+      ["cynthia", "felix", "kerrick", "motley"],
+    );
+    render(<Home />);
+
+    for (const id of ["cynthia", "felix", "kerrick", "motley"] as const) {
+      expect(offersFavoredEnemy(id)).toBe(true);
+    }
+    for (const id of ["boreas", "baldwin", "caligar", "ceralin"] as const) {
+      expect(offersFavoredEnemy(id)).toBe(false);
+    }
+  });
+
+  it("offers it only on Player 1 when Boreas is on Player 2", () => {
+    seedDraft(
+      ["baldwin", "caligar", "ceralin", "cynthia"],
+      ["boreas", "felix", "kerrick", "motley"],
+    );
+    render(<Home />);
+
+    expect(offersFavoredEnemy("baldwin")).toBe(true);
+    expect(offersFavoredEnemy("felix")).toBe(false);
+    expect(offersFavoredEnemy("boreas")).toBe(false);
+  });
+
+  it("offers it to nobody without Boreas", () => {
+    seedDraft(
+      ["baldwin", "caligar", "ceralin", "cynthia"],
+      ["dolgolae", "felix", "kerrick", "motley"],
+    );
+    render(<Home />);
+
+    for (const id of ["baldwin", "caligar", "ceralin", "cynthia", "dolgolae", "felix"] as const) {
+      expect(offersFavoredEnemy(id)).toBe(false);
+    }
+  });
+
+  it("goes on one enemy at a time: hidden from the others until tapped off, with Boreas at 0 HP", () => {
+    seedDraft(
+      ["boreas", "baldwin", "caligar", "ceralin"],
+      ["cynthia", "felix", "kerrick", "motley"],
+    );
+    render(<Home />);
+    const boreas = getHeroById("boreas").name;
+    const cynthia = getHeroById("cynthia").name;
+    const felix = getHeroById("felix").name;
+
+    // Boreas at 0 HP still counts as in the battle.
+    const decreaseHp = screen.getByRole("button", { name: `Decrease ${boreas} HP` });
+    while (!decreaseHp.hasAttribute("disabled")) fireEvent.click(decreaseHp);
+
+    fireEvent.click(addButton(cynthia));
+    // Last in the picker, after the general tokens.
+    expect(
+      within(picker(cynthia)!)
+        .getAllByRole("button")
+        .map((row) => row.getAttribute("aria-label")),
+    ).toEqual(["Add +1 Attack", "Add Confuse", "Add Immobilize", "Add Favored Enemy"]);
+    fireEvent.click(option(cynthia, "Add Favored Enemy"));
+    fireEvent.click(option(cynthia, "Add Confuse"));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(favoredChip(cynthia)).toHaveAttribute("aria-pressed", "true");
+
+    // Held by Cynthia, so no other enemy's picker offers it.
+    for (const id of ["felix", "kerrick", "motley"] as const) {
+      expect(offersFavoredEnemy(id)).toBe(false);
+    }
+
+    // Tapped off, it's offered to every enemy again, Cynthia included.
+    fireEvent.click(favoredChip(cynthia)!);
+    expect(favoredChip(cynthia)).toBeNull();
+    expect(screen.getByRole("button", { name: `Confuse token on ${cynthia}` })).toBeInTheDocument();
+    for (const id of ["cynthia", "felix", "kerrick", "motley"] as const) {
+      expect(offersFavoredEnemy(id)).toBe(true);
+    }
+
+    fireEvent.click(addButton(felix));
+    fireEvent.click(option(felix, "Add Favored Enemy"));
+    expect(favoredChip(felix)).toHaveAttribute("aria-pressed", "true");
+    expect(offersFavoredEnemy("cynthia")).toBe(false);
   });
 });
 

@@ -1,7 +1,7 @@
 # Spec 15: Favored Enemy
 
-> **DRAFT.** Architecture for intent 15's scope. Build-out has not started
-> yet. See [../intent/15_favored-enemy.md](../intent/15_favored-enemy.md)
+> **BUILT.** Architecture for intent 15's scope, all built in one PR
+> (plan 15). See [../intent/15_favored-enemy.md](../intent/15_favored-enemy.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -371,6 +371,9 @@ infra.
   rulebook token's green). Check at 1280x800 that a held Favored Enemy
   chip reads apart from Shield's yellow-green, Chill's cyan and P2's
   teal.
+  **Decided (2026-10-17):** kept. In the browser the emerald chip reads
+  apart from Shield's yellow-green and Chill's cyan on the same card, and
+  from P2's teal.
 - The canvas draws `FavoredEnemyIcon` as a crosshair (16px viewBox,
   stroke 1.5):
   ```svg
@@ -380,14 +383,23 @@ infra.
   ```
   Check it at 12px on the Board and 13px on the Map. If the center dot
   muddies at 12px, drop it.
+  **Decided (2026-10-17):** kept as drawn, center dot included. It reads
+  as a crosshair at 12px on the Board and 13px on the Map.
 - Check the Board at 1280x800 with the eight-token case (an ally of Cyrus
   who's an enemy of Kunoichi, Sedusa, Dazeem and Boreas, holding every
   token): the card wraps to three lines at most, and the Board doesn't
   scroll, with any stepper open. Also check that hero's Map token line in
   the 170px panel.
-- Keep `ON_OFF_TOKEN_FIELDS` and `OnOffTokenField` in step: a type test
+  **Decided (2026-10-17):** three lines, as predicted: Favored Enemy and
+  the "+" share the third (Chill joins them while a stepper is open). The
+  Board fits at 1280x800 with no scroll, open or closed. The Map's token
+  line wraps to two lines (Chill and Favored Enemy on the second) and fits
+  the panel.
+- ~~Keep `ON_OFF_TOKEN_FIELDS` and `OnOffTokenField` in step: a type test
   (e.g. `expectTypeOf`) that the list's element type equals the field
-  union, so adding a field without listing it fails `tsc`.
+  union, so adding a field without listing it fails `tsc`.~~
+  **Decided:** done in `lib/battle/constants.test.ts`, which checks
+  `HERO_COUNTED_TOKEN_CEILINGS` against `CountedTokenField` too.
 - ~~Schema number: if intent 14's build lands first and takes 11, this
   becomes 11 → 12, with `PersistedBattleStateV12` and
   `upgradeV11ToV12`.~~

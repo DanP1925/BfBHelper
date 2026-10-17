@@ -11,4 +11,5 @@ export const NO_TOKENS: Omit<HeroBattleState, "hp" | "level"> = {
   shieldTokens: 0,
   stoneTokens: 0,
   chillTokens: 0,
+  favoredEnemy: false,
 };

@@ -4,6 +4,7 @@ import type { Hero } from "./draft/types";
 import { BATTLE_STATE_STORAGE_KEY } from "./persistence/schema";
 import { saveBattleState } from "./persistence/storage";
 import { createInitialBattleState } from "./battle/reducer";
+import { ON_OFF_TOKEN_FIELDS } from "./battle/constants";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../data/mapSpaces";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "./map/constants";
 import { heroIdSetsMatch, useBattle } from "./useBattle";
@@ -124,6 +125,7 @@ describe("useBattle", () => {
       shieldTokens: 5,
       stoneTokens: 2,
       chillTokens: 4,
+      favoredEnemy: true,
     };
     saveBattleState(persisted);
 
@@ -139,6 +141,7 @@ describe("useBattle", () => {
       shieldTokens: 5,
       stoneTokens: 2,
       chillTokens: 4,
+      favoredEnemy: true,
     });
   });
 
@@ -222,114 +225,47 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id].attackTokens).toBe(2);
   });
 
-  it("setHeroConfused persists the flag, which survives a reload and can be turned off", () => {
-    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+  describe.each(ON_OFF_TOKEN_FIELDS.map((field) => ({ field })))(
+    "setHeroOnOffToken ($field)",
+    ({ field }) => {
+      it("persists the flag, which survives a reload and can be turned off", () => {
+        const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
-    act(() => {
-      result.current.setHeroConfused("p2", HERO_B.id, true);
-    });
-    expect(result.current.state?.p2.heroes[HERO_B.id].confused).toBe(true);
-    expect(result.current.state?.p1.heroes[HERO_A.id].confused).toBe(false);
-    expect(readRawState().p2.heroes[HERO_B.id].confused).toBe(true);
-    unmount();
+        act(() => {
+          result.current.setHeroOnOffToken("p2", HERO_B.id, field, true);
+        });
+        expect(result.current.state?.p2.heroes[HERO_B.id][field]).toBe(true);
+        expect(result.current.state?.p1.heroes[HERO_A.id][field]).toBe(false);
+        expect(readRawState().p2.heroes[HERO_B.id][field]).toBe(true);
+        unmount();
 
-    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-    expect(reloaded.current.state?.p2.heroes[HERO_B.id].confused).toBe(true);
+        const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+        expect(reloaded.current.state?.p2.heroes[HERO_B.id][field]).toBe(true);
 
-    act(() => {
-      reloaded.current.setHeroConfused("p2", HERO_B.id, false);
-    });
-    expect(reloaded.current.state?.p2.heroes[HERO_B.id].confused).toBe(false);
-    expect(readRawState().p2.heroes[HERO_B.id].confused).toBe(false);
-  });
+        act(() => {
+          reloaded.current.setHeroOnOffToken("p2", HERO_B.id, field, false);
+        });
+        expect(reloaded.current.state?.p2.heroes[HERO_B.id][field]).toBe(false);
+        expect(readRawState().p2.heroes[HERO_B.id][field]).toBe(false);
+      });
 
-  it("setHeroHp to 0 and passInitiative keep the hero confused", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      it("setHeroPosition, setHeroHp to 0 (with its move to respawn) and passInitiative keep it", () => {
+        const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
-    act(() => {
-      result.current.setHeroConfused("p1", HERO_A.id, true);
-      result.current.setHeroHp("p1", HERO_A.id, 0);
-      result.current.passInitiative();
-    });
-
-    expect(result.current.state?.p1.heroes[HERO_A.id].confused).toBe(true);
-  });
-
-  it("setHeroImmobilized persists the flag, which survives a reload and can be turned off", () => {
-    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-
-    act(() => {
-      result.current.setHeroImmobilized("p1", HERO_A.id, true);
-    });
-    expect(result.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
-    expect(result.current.state?.p1.heroes[HERO_A.id].confused).toBe(false);
-    expect(result.current.state?.p2.heroes[HERO_B.id].immobilized).toBe(false);
-    expect(readRawState().p1.heroes[HERO_A.id].immobilized).toBe(true);
-    unmount();
-
-    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-    expect(reloaded.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
-
-    act(() => {
-      reloaded.current.setHeroImmobilized("p1", HERO_A.id, false);
-    });
-    expect(reloaded.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(false);
-    expect(readRawState().p1.heroes[HERO_A.id].immobilized).toBe(false);
-  });
-
-  it("setHeroPosition, setHeroHp to 0 and passInitiative keep the hero immobilized", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-
-    act(() => {
-      result.current.setHeroImmobilized("p1", HERO_A.id, true);
-      result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
-    });
-    expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
-    expect(result.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
-
-    act(() => {
-      result.current.setHeroHp("p1", HERO_A.id, 0);
-      result.current.passInitiative();
-    });
-    expect(result.current.state?.p1.heroes[HERO_A.id].immobilized).toBe(true);
-  });
-
-  it("setHeroDeathMarked persists the flag, which survives a reload and can be turned off", () => {
-    const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-
-    act(() => {
-      result.current.setHeroDeathMarked("p2", HERO_B.id, true);
-    });
-    expect(result.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
-    expect(result.current.state?.p2.heroes[HERO_B.id].immobilized).toBe(false);
-    expect(result.current.state?.p1.heroes[HERO_A.id].deathMarked).toBe(false);
-    expect(readRawState().p2.heroes[HERO_B.id].deathMarked).toBe(true);
-    unmount();
-
-    const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-    expect(reloaded.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
-
-    act(() => {
-      reloaded.current.setHeroDeathMarked("p2", HERO_B.id, false);
-    });
-    expect(reloaded.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(false);
-    expect(readRawState().p2.heroes[HERO_B.id].deathMarked).toBe(false);
-  });
-
-  it("setHeroHp to 0 (with its move to respawn) and passInitiative keep the mark", () => {
-    const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
-
-    act(() => {
-      result.current.setHeroDeathMarked("p2", HERO_B.id, true);
-      result.current.setHeroPosition("p2", HERO_B.id, MAP_SPACE_IDS[0]);
-    });
-    act(() => {
-      result.current.setHeroHp("p2", HERO_B.id, 0);
-      result.current.passInitiative();
-    });
-    expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBeNull();
-    expect(result.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
-  });
+        act(() => {
+          result.current.setHeroOnOffToken("p2", HERO_B.id, field, true);
+          result.current.setHeroPosition("p2", HERO_B.id, MAP_SPACE_IDS[0]);
+        });
+        expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBe(MAP_SPACE_IDS[0]);
+        act(() => {
+          result.current.setHeroHp("p2", HERO_B.id, 0);
+          result.current.passInitiative();
+        });
+        expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBeNull();
+        expect(result.current.state?.p2.heroes[HERO_B.id][field]).toBe(true);
+      });
+    },
+  );
 
   it("setHeroHp to 0 (with its move to respawn) and passInitiative keep the shields", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));

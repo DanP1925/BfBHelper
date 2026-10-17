@@ -93,6 +93,7 @@ describe("WinScreen", () => {
                 shieldTokens: 3,
                 stoneTokens: 2,
                 chillTokens: 4,
+                favoredEnemy: true,
               },
             },
           },
@@ -109,6 +110,10 @@ describe("WinScreen", () => {
     expect(screen.queryByRole("button", { name: /\+1 Shield token/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /\+1 Stone token/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /\+1 Chill token/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Favored Enemy token on / }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Favored Enemy")).not.toBeInTheDocument();
   });
 
   it("renders a 'Player 2 Wins!' heading when p2 wins", () => {

@@ -55,6 +55,19 @@ describe("heroSpecificTokenSide", () => {
   it("offers Chill to nobody when Dazeem wasn't drafted", () => {
     expect(heroSpecificTokenSide("chill", { p1: [boreas], p2: [sedusa] })).toBeNull();
   });
+
+  it("offers Favored Enemy to Boreas's enemies, whichever side he's on", () => {
+    expect(heroSpecificTokenSide("favoredEnemy", { p1: [boreas, cyrus], p2: [sterling] })).toBe(
+      "p2",
+    );
+    expect(heroSpecificTokenSide("favoredEnemy", { p1: [cyrus], p2: [boreas, sterling] })).toBe(
+      "p1",
+    );
+  });
+
+  it("offers Favored Enemy to nobody when Boreas wasn't drafted", () => {
+    expect(heroSpecificTokenSide("favoredEnemy", { p1: [cyrus], p2: [sedusa] })).toBeNull();
+  });
 });
 
 describe("targetSideForRule", () => {

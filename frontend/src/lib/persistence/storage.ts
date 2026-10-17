@@ -14,6 +14,7 @@ import {
   HERO_HP_CEILING,
   HERO_MAX_LEVEL,
   HERO_STARTING_LEVEL,
+  ON_OFF_TOKEN_FIELDS,
   TOWER_STARTING_HP,
 } from "../battle/constants";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
@@ -36,6 +37,7 @@ import {
   type PersistedBattleStateV9,
   type PersistedBattleStateV10,
   type PersistedBattleStateV11,
+  type PersistedBattleStateV12,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -195,6 +197,10 @@ function upgradeV10ToV11(data: unknown): PersistedBattleStateV11 | null {
   };
 }
 
+/** Schema 11 → 12: every hero gets `favoredEnemy: false` (intent/15:
+ * "upgrades in place", with no hero holding it). */
+const upgradeV11ToV12 = addHeroFieldsStep<PersistedBattleStateV12>(12, { favoredEnemy: false });
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -211,6 +217,7 @@ const battleMigrations: MigrationSteps = {
   8: upgradeV8ToV9,
   9: upgradeV9ToV10,
   10: upgradeV10ToV11,
+  11: upgradeV11ToV12,
 };
 
 function isBrowser(): boolean {
@@ -363,7 +370,7 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * compare against): gold is non-negative, each structure is within its
  * own floor/ceiling, every `heroes` entry has a real hero id with hp/level
  * within bounds, each counted token within `HERO_COUNTED_TOKEN_CEILINGS`,
- * and a boolean `confused`, `immobilized` and `deathMarked` (shape only: it doesn't check
+ * and each on/off token in `ON_OFF_TOKEN_FIELDS` a boolean (shape only: it doesn't check
  * hero-specific visibility, `HERO_SPECIFIC_TOKENS`), and every one of those
  * hero ids also has a `heroPositions` entry that's either `null`, `"arena"`
  * or a real map-space id (shape only: it doesn't check who may be in the
@@ -384,9 +391,9 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
     for (const [field, ceiling] of Object.entries(HERO_COUNTED_TOKEN_CEILINGS)) {
       if (!isNumberInRange(hv[field], 0, ceiling)) return false;
     }
-    if (typeof hv.confused !== "boolean") return false;
-    if (typeof hv.immobilized !== "boolean") return false;
-    if (typeof hv.deathMarked !== "boolean") return false;
+    for (const field of ON_OFF_TOKEN_FIELDS) {
+      if (typeof hv[field] !== "boolean") return false;
+    }
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
     if (position !== null && position !== ARENA_POSITION && !isMapSpaceIdLike(position)) {
@@ -397,7 +404,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
   return true;
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV11 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV12 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -575,7 +582,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV11 = {
+  const payload: PersistedBattleStateV12 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -604,7 +611,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 11,
+    schemaVersion: 12,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,

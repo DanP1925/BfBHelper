@@ -6,13 +6,8 @@ import {
   HERO_MAX_LEVEL,
   HERO_STARTING_LEVEL,
 } from "../../lib/battle/constants";
-import type { CountedTokenField } from "../../lib/battle/types";
-import {
-  BATTLE_TOKENS,
-  type CountedToken,
-  type OnOffToken,
-  type OnOffTokenField,
-} from "../battleTokens";
+import type { CountedTokenField, OnOffTokenField } from "../../lib/battle/types";
+import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { TokenChip } from "../TokenChip/TokenChip";
 import { TokenPicker, type TokenPickerOption } from "../TokenPicker/TokenPicker";
