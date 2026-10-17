@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { DraftState, HeroId } from "../draft/types";
 import { createInitialBattleState } from "../battle/reducer";
-import { BIT_STARTING_HP, TOWER_STARTING_HP } from "../battle/constants";
+import { BIT_STARTING_HP, ON_OFF_TOKEN_FIELDS, TOWER_STARTING_HP } from "../battle/constants";
 import { COUNTED_TOKENS } from "../../test/countedTokens";
 import { NO_TOKENS } from "../../test/heroState";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
@@ -1287,72 +1287,17 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("deathMarked validation (intent/09)", () => {
-    it.each([
-      ["missing", undefined],
-      ["0", 0],
-      ['"true"', "true"],
-      ["null", null],
-    ])("returns null and clears the key when a hero's deathMarked is %s", (_label, deathMarked) => {
-      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
-      window.localStorage.setItem(
-        BATTLE_STATE_STORAGE_KEY,
-        JSON.stringify({
-          ...sampleBattleState,
-          p1: {
-            ...sampleBattleState.p1,
-            heroes: {
-              [heroId]: {
-                hp: 5,
-                level: 1,
-                ...NO_TOKENS,
-                deathMarked,
-              },
-            },
-          },
-          updatedAt: new Date().toISOString(),
-        }),
-      );
-
-      expect(loadBattleState()).toBeNull();
-      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
-    });
-
-    it("round-trips a marked hero on either side (shape only, no Kunoichi check)", () => {
-      const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
-      const p2HeroId = Object.keys(sampleBattleState.p2.heroes)[0] as HeroId;
-      const marked: BattleState = {
-        ...sampleBattleState,
-        p1: {
-          ...sampleBattleState.p1,
-          heroes: {
-            ...sampleBattleState.p1.heroes,
-            [p1HeroId]: { ...sampleBattleState.p1.heroes[p1HeroId], deathMarked: true },
-          },
-        },
-        p2: {
-          ...sampleBattleState.p2,
-          heroes: {
-            ...sampleBattleState.p2.heroes,
-            [p2HeroId]: { ...sampleBattleState.p2.heroes[p2HeroId], deathMarked: true },
-          },
-        },
-      };
-      saveBattleState(marked);
-
-      expect(loadBattleState()).toEqual(marked);
-    });
-  });
-
-  describe("favoredEnemy validation (intent/15)", () => {
-    it.each([
-      ["missing", undefined],
-      ["0", 0],
-      ['"true"', "true"],
-      ["null", null],
-    ])(
-      "returns null and clears the key when a hero's favoredEnemy is %s",
-      (_label, favoredEnemy) => {
+  // Every on/off token: Confuse (intent/07), Immobilize (intent/08), Death
+  // Mark (intent/09), Favored Enemy (intent/15).
+  describe.each(ON_OFF_TOKEN_FIELDS.map((field) => ({ field })))(
+    "$field validation",
+    ({ field }) => {
+      it.each([
+        ["missing", undefined],
+        ["0", 0],
+        ['"true"', "true"],
+        ["null", null],
+      ])(`returns null and clears the key when a hero's ${field} is %s`, (_label, value) => {
         const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
         window.localStorage.setItem(
           BATTLE_STATE_STORAGE_KEY,
@@ -1360,7 +1305,7 @@ describe("saveBattleState / loadBattleState", () => {
             ...sampleBattleState,
             p1: {
               ...sampleBattleState.p1,
-              heroes: { [heroId]: { hp: 5, level: 1, ...NO_TOKENS, favoredEnemy } },
+              heroes: { [heroId]: { hp: 5, level: 1, ...NO_TOKENS, [field]: value } },
             },
             updatedAt: new Date().toISOString(),
           }),
@@ -1368,132 +1313,35 @@ describe("saveBattleState / loadBattleState", () => {
 
         expect(loadBattleState()).toBeNull();
         expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
-      },
-    );
+      });
 
-    it("round-trips it on a hero of each side at once (shape only: no Boreas or one-holder check)", () => {
-      const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
-      const p2HeroId = Object.keys(sampleBattleState.p2.heroes)[0] as HeroId;
-      const favored: BattleState = {
-        ...sampleBattleState,
-        p1: {
-          ...sampleBattleState.p1,
-          heroes: {
-            ...sampleBattleState.p1.heroes,
-            [p1HeroId]: { ...sampleBattleState.p1.heroes[p1HeroId], favoredEnemy: true },
-          },
-        },
-        p2: {
-          ...sampleBattleState.p2,
-          heroes: {
-            ...sampleBattleState.p2.heroes,
-            [p2HeroId]: { ...sampleBattleState.p2.heroes[p2HeroId], favoredEnemy: true },
-          },
-        },
-      };
-      saveBattleState(favored);
-
-      expect(loadBattleState()).toEqual(favored);
-    });
-  });
-
-  describe("immobilized validation (intent/08)", () => {
-    it.each([
-      ["missing", undefined],
-      ["0", 0],
-      ['"true"', "true"],
-      ["null", null],
-    ])("returns null and clears the key when a hero's immobilized is %s", (_label, immobilized) => {
-      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
-      window.localStorage.setItem(
-        BATTLE_STATE_STORAGE_KEY,
-        JSON.stringify({
+      // Shape only: no owner check, and no one-holder check for Favored Enemy.
+      it("round-trips a holder on each side at once", () => {
+        const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
+        const p2HeroId = Object.keys(sampleBattleState.p2.heroes)[0] as HeroId;
+        const held: BattleState = {
           ...sampleBattleState,
           p1: {
             ...sampleBattleState.p1,
             heroes: {
-              [heroId]: {
-                hp: 5,
-                level: 1,
-                ...NO_TOKENS,
-                immobilized,
-              },
+              ...sampleBattleState.p1.heroes,
+              [p1HeroId]: { ...sampleBattleState.p1.heroes[p1HeroId], [field]: true },
             },
           },
-          updatedAt: new Date().toISOString(),
-        }),
-      );
-
-      expect(loadBattleState()).toBeNull();
-      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
-    });
-
-    it("round-trips an immobilized hero", () => {
-      const heroId = Object.keys(sampleBattleState.p2.heroes)[0] as HeroId;
-      const immobilized: BattleState = {
-        ...sampleBattleState,
-        p2: {
-          ...sampleBattleState.p2,
-          heroes: {
-            ...sampleBattleState.p2.heroes,
-            [heroId]: { ...sampleBattleState.p2.heroes[heroId], immobilized: true },
-          },
-        },
-      };
-      saveBattleState(immobilized);
-
-      expect(loadBattleState()).toEqual(immobilized);
-    });
-  });
-
-  describe("confused validation (intent/07)", () => {
-    it.each([
-      ["missing", undefined],
-      ["0", 0],
-      ['"true"', "true"],
-      ["null", null],
-    ])("returns null and clears the key when a hero's confused is %s", (_label, confused) => {
-      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
-      window.localStorage.setItem(
-        BATTLE_STATE_STORAGE_KEY,
-        JSON.stringify({
-          ...sampleBattleState,
-          p1: {
-            ...sampleBattleState.p1,
+          p2: {
+            ...sampleBattleState.p2,
             heroes: {
-              [heroId]: {
-                hp: 5,
-                level: 1,
-                ...NO_TOKENS,
-                confused,
-              },
+              ...sampleBattleState.p2.heroes,
+              [p2HeroId]: { ...sampleBattleState.p2.heroes[p2HeroId], [field]: true },
             },
           },
-          updatedAt: new Date().toISOString(),
-        }),
-      );
+        };
+        saveBattleState(held);
 
-      expect(loadBattleState()).toBeNull();
-      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
-    });
-
-    it("round-trips a confused hero", () => {
-      const heroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
-      const confused: BattleState = {
-        ...sampleBattleState,
-        p1: {
-          ...sampleBattleState.p1,
-          heroes: {
-            ...sampleBattleState.p1.heroes,
-            [heroId]: { ...sampleBattleState.p1.heroes[heroId], confused: true },
-          },
-        },
-      };
-      saveBattleState(confused);
-
-      expect(loadBattleState()).toEqual(confused);
-    });
-  });
+        expect(loadBattleState()).toEqual(held);
+      });
+    },
+  );
 
   describe("initiative validation (intent/05)", () => {
     it.each([["p3"], [null], [undefined]])(

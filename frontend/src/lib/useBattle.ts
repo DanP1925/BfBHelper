@@ -28,8 +28,8 @@ export type UseBattleResult = {
     field: CountedTokenField,
     value: number,
   ) => void;
-  /** Every on/off token (Confuse, Immobilize, Death Mark) goes through this
-   * one setter, named by its stored field. */
+  /** Every on/off token (ON_OFF_TOKEN_FIELDS) goes through this one setter,
+   * named by its stored field. */
   setHeroOnOffToken: (
     side: PlayerId,
     heroId: HeroId,

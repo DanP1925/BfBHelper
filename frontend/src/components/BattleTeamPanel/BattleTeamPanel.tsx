@@ -64,20 +64,14 @@ function heroTokens(
         onExpandedChange: (open) => onOpenTokenKeyChange(open ? key : null),
       };
     } else {
-      const set = setters[token.field];
-      if (!set) continue;
       const { field } = token;
-      if (
-        token.oneHolder &&
-        !heroState[field] &&
-        Object.values(teamHeroes).some((other) => other[field])
-      ) {
+      const set = setters[field];
+      if (!set) continue;
+      const on = heroState[field];
+      if (token.oneHolder && !on && Object.values(teamHeroes).some((other) => other[field])) {
         continue;
       }
-      tokens[token.field] = {
-        on: heroState[token.field],
-        onChange: (value) => set(hero.id, value),
-      };
+      tokens[field] = { on, onChange: (value) => set(hero.id, value) };
     }
   }
   return tokens;

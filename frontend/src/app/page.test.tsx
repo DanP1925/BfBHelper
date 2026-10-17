@@ -321,6 +321,11 @@ function countedChip(heroName: string, token: string): HTMLElement | null {
   });
 }
 
+/** This hero's held on/off "`token` token" chip (e.g. "Death Mark"), or null. */
+function onOffChip(heroName: string, token: string): HTMLElement | null {
+  return screen.queryByRole("button", { name: `${token} token on ${heroName}` });
+}
+
 describe("Home: Death Mark (intent/09)", () => {
   const offersDeathMark = (heroId: HeroId) => offersToken(heroId, "Add Death Mark");
 
@@ -369,8 +374,7 @@ describe("Home: Death Mark (intent/09)", () => {
     render(<Home />);
     const kunoichi = getHeroById("kunoichi").name;
     const ceralin = getHeroById("ceralin").name;
-    const mark = (name: string) =>
-      screen.queryByRole("button", { name: `Death Mark token on ${name}` });
+    const mark = (name: string) => onOffChip(name, "Death Mark");
 
     // Kunoichi at 0 HP still counts as in the battle.
     const decreaseHp = screen.getByRole("button", { name: `Decrease ${kunoichi} HP` });
@@ -649,8 +653,7 @@ describe("Home: +1 Chill (intent/13)", () => {
 
 describe("Home: Favored Enemy (intent/15)", () => {
   const offersFavoredEnemy = (heroId: HeroId) => offersToken(heroId, "Add Favored Enemy");
-  const favoredChip = (name: string) =>
-    screen.queryByRole("button", { name: `Favored Enemy token on ${name}` });
+  const favoredChip = (name: string) => onOffChip(name, "Favored Enemy");
 
   it("offers it only on Boreas's enemies when he's on Player 1, never on his own team", () => {
     seedDraft(

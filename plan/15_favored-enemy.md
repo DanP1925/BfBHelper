@@ -91,7 +91,9 @@ frontend/e2e/
       satisfies readonly OnOffTokenField[]`), next to
       `HERO_COUNTED_TOKEN_CEILINGS`. A type test (`expectTypeOf`) checks
       that its element type equals `OnOffTokenField`, so a field can't be
-      left out of validation (spec Open Item).
+      left out of validation (spec Open Item). **Changed by `/simplify`:**
+      `OnOffTokenField` is now derived from the list, so the type test
+      was dropped.
 - [x] M3. `lib/battle/reducer.ts`: replace `SET_HERO_CONFUSED`,
       `SET_HERO_IMMOBILIZED` and `SET_HERO_DEATH_MARKED` with
       `SET_HERO_ON_OFF_TOKEN { side, heroId, field, value }`, one

@@ -7,6 +7,7 @@ import {
   TOWER_STARTING_HP,
 } from "./constants";
 import { COUNTED_TOKENS } from "../../test/countedTokens";
+import { NO_TOKENS } from "../../test/heroState";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
 import {
@@ -39,31 +40,20 @@ function baseState(): BattleState {
   return createInitialBattleState([HERO_A], [HERO_B], "p1");
 }
 
+/** Every on/off token held, to check that writes to one leave the rest. */
+const ALL_ON_OFF_TOKENS_ON = Object.fromEntries(ON_OFF_TOKEN_FIELDS.map((f) => [f, true]));
+
 describe("createInitialHeroState", () => {
   it("starts at baseHp + starting level, clamped to the HP ceiling, with no tokens", () => {
     expect(createInitialHeroState({ ...HERO_A, baseHp: 10 })).toEqual({
       hp: 11,
       level: 1,
-      attackTokens: 0,
-      confused: false,
-      immobilized: false,
-      deathMarked: false,
-      shieldTokens: 0,
-      stoneTokens: 0,
-      chillTokens: 0,
-      favoredEnemy: false,
+      ...NO_TOKENS,
     });
     expect(createInitialHeroState({ ...HERO_A, baseHp: HERO_HP_CEILING })).toEqual({
       hp: HERO_HP_CEILING,
       level: 1,
-      attackTokens: 0,
-      confused: false,
-      immobilized: false,
-      deathMarked: false,
-      shieldTokens: 0,
-      stoneTokens: 0,
-      chillTokens: 0,
-      favoredEnemy: false,
+      ...NO_TOKENS,
     });
   });
 });
@@ -74,14 +64,7 @@ describe("createInitialBattleState", () => {
     expect(state.p1.heroes[HERO_A.id]).toEqual({
       hp: HERO_A.baseHp + 1,
       level: 1,
-      attackTokens: 0,
-      confused: false,
-      immobilized: false,
-      deathMarked: false,
-      shieldTokens: 0,
-      stoneTokens: 0,
-      chillTokens: 0,
-      favoredEnemy: false,
+      ...NO_TOKENS,
     });
   });
 
@@ -187,7 +170,7 @@ describe("battleReducer", () => {
     expect(next).toBe(state);
   });
 
-  // Every on/off token (intents 07-09) goes through the same
+  // Every on/off token (ON_OFF_TOKEN_FIELDS) goes through the same
   // SET_HERO_ON_OFF_TOKEN: replace, manual only, no visibility check.
   describe.each(ON_OFF_TOKEN_FIELDS.map((field) => ({ field })))(
     "SET_HERO_ON_OFF_TOKEN ($field)",
@@ -242,6 +225,7 @@ describe("battleReducer", () => {
         expect(set(on, "p1", true)).toBe(on);
       });
 
+      // The final move also shows Immobilize never blocks one (intent/08).
       it("survives SET_HERO_HP to 0, moves, the other tokens and PASS_INITIATIVE", () => {
         const hero = { side: "p1", heroId: HERO_A.id } as const;
         const others: BattleAction[] = [
@@ -261,30 +245,12 @@ describe("battleReducer", () => {
         expect(state.p1.heroes[HERO_A.id]).toMatchObject({
           hp: 0,
           attackTokens: 2,
-          ...Object.fromEntries(ON_OFF_TOKEN_FIELDS.map((f) => [f, true])),
+          ...ALL_ON_OFF_TOKENS_ON,
         });
         expect(state.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
       });
     },
   );
-
-  it("never blocks a move: SET_HERO_POSITION moves an immobilized hero and keeps the flag", () => {
-    const immobilized = battleReducer(baseState(), {
-      type: "SET_HERO_ON_OFF_TOKEN",
-      field: "immobilized",
-      side: "p1",
-      heroId: HERO_A.id,
-      value: true,
-    });
-    const moved = battleReducer(immobilized, {
-      type: "SET_HERO_POSITION",
-      side: "p1",
-      heroId: HERO_A.id,
-      spaceId: MAP_SPACE_IDS[0],
-    });
-    expect(moved.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
-    expect(moved.p1.heroes[HERO_A.id].immobilized).toBe(true);
-  });
 
   it("never moves Favored Enemy: setting it on a second hero leaves the first one's alone (intent/15)", () => {
     const twoHeroes = createInitialBattleState([HERO_A, HERO_B], [], "p1");
@@ -389,7 +355,7 @@ describe("battleReducer", () => {
       expect(state.p1.heroes[HERO_A.id]).toMatchObject({
         hp: 0,
         attackTokens: 2,
-        ...Object.fromEntries(ON_OFF_TOKEN_FIELDS.map((f) => [f, true])),
+        ...ALL_ON_OFF_TOKENS_ON,
         [field]: 3,
       });
     });

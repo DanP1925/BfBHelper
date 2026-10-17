@@ -111,13 +111,10 @@
     favoredEnemy: boolean;
   };
 
-  /** A per-hero on/off token's stored field (intents 07-09, 15). They
-   * share one reducer action (SET_HERO_ON_OFF_TOKEN) and one useBattle
-   * setter. */
-  export type OnOffTokenField = keyof Pick<
-    HeroBattleState,
-    "confused" | "immobilized" | "deathMarked" | "favoredEnemy"
-  >;
+  /** A per-hero on/off token's stored field (intents 07-09, 15), read from
+   * ON_OFF_TOKEN_FIELDS so the list can't miss one. They share one reducer
+   * action (SET_HERO_ON_OFF_TOKEN) and one useBattle setter. */
+  export type OnOffTokenField = (typeof ON_OFF_TOKEN_FIELDS)[number];
 
   export type BattleState = {
     schemaVersion: 12;
@@ -139,11 +136,12 @@
     "immobilized",
     "deathMarked",
     "favoredEnemy",
-  ] as const satisfies readonly OnOffTokenField[];
+  ] as const satisfies readonly BooleanHeroField[];
   ```
-  The build checks that `satisfies` plus a type test keep it in step with
-  `OnOffTokenField`, so a field can't be left out of validation (Open
-  Items).
+  `BooleanHeroField` is the `HeroBattleState` keys whose value is a
+  boolean. `OnOffTokenField` is derived from this list (changed by
+  `/simplify`), so a field can't be left out of validation, and a new on/off
+  token is one list entry plus its stored field (Open Items).
 - `createInitialHeroState(hero)` (`reducer.ts`) returns
   `favoredEnemy: false`, and its doc comment adds "no Favored Enemy". Per
   intent's Constraints, new battles, upgraded saves and the
@@ -398,8 +396,9 @@ infra.
 - ~~Keep `ON_OFF_TOKEN_FIELDS` and `OnOffTokenField` in step: a type test
   (e.g. `expectTypeOf`) that the list's element type equals the field
   union, so adding a field without listing it fails `tsc`.~~
-  **Decided:** done in `lib/battle/constants.test.ts`, which checks
-  `HERO_COUNTED_TOKEN_CEILINGS` against `CountedTokenField` too.
+  **Decided:** first built as a type test, then replaced by `/simplify`:
+  `OnOffTokenField` is derived from `ON_OFF_TOKEN_FIELDS`, so they can't
+  drift and no test is needed.
 - ~~Schema number: if intent 14's build lands first and takes 11, this
   becomes 11 → 12, with `PersistedBattleStateV12` and
   `upgradeV11ToV12`.~~
