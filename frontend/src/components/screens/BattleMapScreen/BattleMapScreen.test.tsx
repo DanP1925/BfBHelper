@@ -5,6 +5,7 @@ import type { BattleState } from "../../../lib/battle/types";
 import type { Hero } from "../../../lib/draft/types";
 import { ARENA_POSITION } from "../../../lib/map/constants";
 import { createFreshGoldPiles, MAP_SPACE_IDS } from "../../../data/mapSpaces";
+import { dropHero } from "../../../test/heroDrag";
 import { NO_TOKENS } from "../../../test/heroState";
 import { BattleMapScreen, INITIAL_MAP_CAMERA } from "./BattleMapScreen";
 
@@ -667,12 +668,7 @@ describe("BattleMapScreen", () => {
     }
 
     function dropOnArena(side: "p1" | "p2", heroId: Hero["id"]) {
-      const raw = JSON.stringify({ side, heroId });
-      fireEvent.drop(screen.getByRole("region", { name: "The Arena" }), {
-        dataTransfer: {
-          getData: (type: string) => (type === "application/x-bfbhelper-hero" ? raw : ""),
-        },
-      });
+      dropHero(screen.getByRole("region", { name: "The Arena" }), { side, heroId });
     }
 
     it("isn't shown without Felix", () => {

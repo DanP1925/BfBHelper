@@ -1,24 +1,5 @@
 import { test, expect } from "@playwright/test";
-
-/** Native HTML5 drag-and-drop: Playwright's own `dragTo` targets a locator
- * and doesn't reliably dispatch the real browser dragstart/dragover/drop
- * sequence our `MapToken`/`MapSpace`/`RespawnAreaStrip` rely on — raw
- * mouse down/move/up (which a real browser *does* recognize as a native
- * drag once the pointer crosses the drag threshold) is what actually
- * exercises the same code path a real player's drag does. */
-async function dragElementTo(
-  page: import("@playwright/test").Page,
-  source: import("@playwright/test").Locator,
-  targetX: number,
-  targetY: number,
-) {
-  const box = await source.boundingBox();
-  if (box === null) throw new Error("drag source has no bounding box");
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(targetX, targetY, { steps: 10 });
-  await page.mouse.up();
-}
+import { dragElementTo } from "./helpers";
 
 test("dragging a hero from the respawn area onto the board persists across reload and a Board/Map switch", async ({
   page,

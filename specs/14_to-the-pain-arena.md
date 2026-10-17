@@ -220,10 +220,10 @@ export function canEnterArena(state: BattleState, hero: HeroDragPayload): boolea
   };
   ```
   - A `<section aria-label="The Arena">` with a small "The Arena" label on top
-    of a dashed box, the same drag-enter/leave depth counter and highlight as
-    `RespawnAreaStrip`. Its drop handler parses the payload
-    (`parseHeroDragPayload`) and calls `onDrop` only when `canDrop`
-    passes. Any other drop is silently ignored, like a respawn area
+    of a dashed box. Its drag handling is `useHeroDropTarget(onDrop,
+    canDrop)` (`lib/map/`), shared with `RespawnAreaStrip` and `MapSpace`:
+    it parses the payload (`parseHeroDragPayload`) and calls `onDrop` only
+    when `canDrop` passes. Any other drop is silently ignored, like a respawn area
     ignoring the other team (intent's Scope).
   - The drag-over highlight can't tell a valid drop from a refused one
     while hovering: native drag-and-drop hides the payload until `drop`,
@@ -338,4 +338,9 @@ infra.
 - Decide whether `ArenaPanel` shares a base with `RespawnAreaStrip` (the
   drag-depth counter and highlight), or copies the ~20 lines. Copy first;
   extract only if `/simplify` flags it.
-  **Decided (2026-10-17):** copied. `/simplify` wasn't run on this PR.
+  **Decided (2026-10-17):** extracted. `/simplify` flagged the third copy
+  (`MapSpace` had one too), so `useHeroDropTarget(onDrop, accept?)` in
+  `lib/map/` now holds the drag-depth counter, highlight and payload
+  parsing for all three, each passing its own accept rule. Its tests'
+  drops go through one `dropHero` helper in `src/test/heroDrag.ts`, and
+  the e2e drag helper moved to `e2e/helpers.ts`.

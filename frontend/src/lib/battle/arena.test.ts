@@ -22,20 +22,15 @@ function withHero(
   heroId: HeroId,
   changes: { level?: number; hp?: number; position?: HeroPosition },
 ): BattleState {
+  const { position, ...stats } = changes;
   const team = state[side];
-  const hero = team.heroes[heroId];
   return {
     ...state,
     [side]: {
       ...team,
-      heroes: {
-        ...team.heroes,
-        [heroId]: { ...hero, level: changes.level ?? hero.level, hp: changes.hp ?? hero.hp },
-      },
+      heroes: { ...team.heroes, [heroId]: { ...team.heroes[heroId], ...stats } },
       heroPositions:
-        changes.position === undefined
-          ? team.heroPositions
-          : { ...team.heroPositions, [heroId]: changes.position },
+        position === undefined ? team.heroPositions : { ...team.heroPositions, [heroId]: position },
     },
   };
 }
