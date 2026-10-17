@@ -1,3 +1,5 @@
+import type { CountedTokenField } from "./types";
+
 /** Starting battle-state constants for the Battle Board (intent/02) — all
  * static, since no damage/leveling/gold tracking exists until intent 03. */
 export const TOWER_STARTING_HP = 11;
@@ -14,17 +16,21 @@ export type TowerSlot = (typeof TOWER_SLOTS)[number];
  * doesn't recalculate off either. */
 export const HERO_HP_CEILING = 15;
 
-/** Per-hero +1 Attack token ceiling (intent/06's Value Bounds, decided
- * 2026-10-11) — keeps the count to a single digit on the hero card. */
-export const HERO_ATTACK_TOKEN_CEILING = 9;
-
-/** Per-hero Shield token ceiling (intent/11's Value Bounds, decided
- * 2026-10-16) — the same single digit as +1 Attack. The box's 15 tokens
- * aren't a per-hero limit. */
-export const HERO_SHIELD_TOKEN_CEILING = 9;
-
-/** Per-hero Stone token ceiling (intent/12's Value Bounds, decided
- * 2026-10-16) — a hero at 3 is defeated and their tokens are discarded,
- * so a higher count never matters. The box's 8 tokens aren't a per-hero
- * limit. */
-export const HERO_STONE_TOKEN_CEILING = 3;
+/** Per-hero ceiling for each counted token (intents 06, 11, 12, 13). The
+ * floor is always 0. */
+export const HERO_COUNTED_TOKEN_CEILINGS = {
+  /** +1 Attack (intent/06's Value Bounds, decided 2026-10-11) — keeps the
+   * count to a single digit on the hero card. */
+  attackTokens: 9,
+  /** Shield (intent/11's Value Bounds, decided 2026-10-16) — the same
+   * single digit as +1 Attack. The box's 15 tokens aren't a per-hero
+   * limit. */
+  shieldTokens: 9,
+  /** Stone (intent/12's Value Bounds, decided 2026-10-16) — a hero at 3 is
+   * defeated and their tokens are discarded, so a higher count never
+   * matters. The box's 8 tokens aren't a per-hero limit. */
+  stoneTokens: 3,
+  /** Chill (intent/13's Value Bounds, decided 2026-10-17) — the box's 5.
+   * No rule caps it, but a hero can't physically hold more. */
+  chillTokens: 5,
+} as const satisfies Record<CountedTokenField, number>;

@@ -3,11 +3,9 @@ import { otherPlayer } from "../draft/selectors";
 import {
   clampGold,
   clampGoldPile,
-  clampHeroAttackTokens,
+  clampHeroCountedToken,
   clampHeroHp,
   clampHeroLevel,
-  clampHeroShieldTokens,
-  clampHeroStoneTokens,
   clampStructureHp,
 } from "./bounds";
 import {
@@ -18,18 +16,28 @@ import {
 } from "./constants";
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
-import type { BattleState, BattleTeamState, HeroBattleState, StructuresState } from "./types";
+import type {
+  BattleState,
+  BattleTeamState,
+  CountedTokenField,
+  HeroBattleState,
+  StructuresState,
+} from "./types";
 
 export type BattleAction =
   | { type: "SET_GOLD"; side: PlayerId; value: number }
   | { type: "SET_HERO_HP"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_HERO_LEVEL"; side: PlayerId; heroId: HeroId; value: number }
-  | { type: "SET_HERO_ATTACK_TOKENS"; side: PlayerId; heroId: HeroId; value: number }
+  | {
+      type: "SET_HERO_COUNTED_TOKEN";
+      side: PlayerId;
+      heroId: HeroId;
+      field: CountedTokenField;
+      value: number;
+    }
   | { type: "SET_HERO_CONFUSED"; side: PlayerId; heroId: HeroId; value: boolean }
   | { type: "SET_HERO_IMMOBILIZED"; side: PlayerId; heroId: HeroId; value: boolean }
   | { type: "SET_HERO_DEATH_MARKED"; side: PlayerId; heroId: HeroId; value: boolean }
-  | { type: "SET_HERO_SHIELD_TOKENS"; side: PlayerId; heroId: HeroId; value: number }
-  | { type: "SET_HERO_STONE_TOKENS"; side: PlayerId; heroId: HeroId; value: number }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: MapSpaceId | null }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
@@ -81,15 +89,20 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
     case "SET_HERO_LEVEL":
       return setHeroField(state, action.side, action.heroId, "level", clampHeroLevel(action.value));
 
-    // Manual only (intent/06): nothing else in this reducer ever touches
-    // attackTokens — not HP to 0, not a position change, not a passed round.
-    case "SET_HERO_ATTACK_TOKENS":
+    // Manual only (intents 06, 11-13): nothing else in this reducer ever
+    // touches a counted token — not HP to 0 (either hero's defeat), not a
+    // position change, not a passed round. Shield is never spent on
+    // damage, reaching 3 Stone doesn't defeat the hero, Chill isn't
+    // cleared at the end of an action, and one field's write never
+    // changes another (Chill isn't netted against +1 Attack). No visibility
+    // check: only the UI limits the hero-specific ones to their targets.
+    case "SET_HERO_COUNTED_TOKEN":
       return setHeroField(
         state,
         action.side,
         action.heroId,
-        "attackTokens",
-        clampHeroAttackTokens(action.value),
+        action.field,
+        clampHeroCountedToken(action.field, action.value),
       );
 
     // Manual only (intent/07), like attackTokens: defeat, respawn and a
@@ -107,30 +120,6 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
     // Kunoichi's enemies.
     case "SET_HERO_DEATH_MARKED":
       return setHeroField(state, action.side, action.heroId, "deathMarked", action.value);
-
-    // Manual only (intent/11): never spent on damage, never cleared on
-    // defeat (either hero's), a respawn or a passed round. No visibility
-    // check: only the UI limits it to Cyrus's team.
-    case "SET_HERO_SHIELD_TOKENS":
-      return setHeroField(
-        state,
-        action.side,
-        action.heroId,
-        "shieldTokens",
-        clampHeroShieldTokens(action.value),
-      );
-
-    // Manual only (intent/12): reaching 3 doesn't defeat the hero, and
-    // neither hero's defeat, a respawn nor a passed round clears it. No
-    // visibility check: only the UI limits it to Sedusa's enemies.
-    case "SET_HERO_STONE_TOKENS":
-      return setHeroField(
-        state,
-        action.side,
-        action.heroId,
-        "stoneTokens",
-        clampHeroStoneTokens(action.value),
-      );
 
     case "SET_STRUCTURE_HP": {
       const team = state[action.side];
@@ -182,7 +171,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
  * loadBattleState's own validator would then reject as corrupt on the
  * very next reload. Every hero starts with no +1 Attack tokens,
  * unconfused, standing (not immobilized), unmarked, with no Shield
- * tokens and no Stone tokens. */
+ * tokens, no Stone tokens and no Chill tokens. */
 export function createInitialHeroState(hero: Hero): HeroBattleState {
   return {
     hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL),
@@ -193,6 +182,7 @@ export function createInitialHeroState(hero: Hero): HeroBattleState {
     deathMarked: false,
     shieldTokens: 0,
     stoneTokens: 0,
+    chillTokens: 0,
   };
 }
 
@@ -227,7 +217,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 9,
+    schemaVersion: 10,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

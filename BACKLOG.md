@@ -118,6 +118,11 @@ when the hero who uses them is in the battle, on either team.
   Immobilize (general), and place the Ice Wall token on a map space, handled
   like Boreas's Bear Trap (a marker placed on a space and removed). Needs Chill
   tokens and an Ice Wall marker (hero-specific), plus Immobilize.
+  **Chill done:** scoped in `intent/13_chill-tokens.md`, built in v0.13.0.
+  A frost-cyan "+1 Chill" counted chip (0-5), added through the "+" picker
+  on Dazeem's enemies only, and a snowflake icon with the count in the Map's
+  status panel. Never cleared or netted against +1 Attack automatically.
+  Ice Wall is still open.
 - **Dolgolae (Yomp):** *Square Meal* (+2 Attack vs enemies at full HP) is
   checked at the table: current HP and level are in the app, base HP is on the
   card. No "full HP" indicator for now. Power cards confuse and gain +1 Attack
@@ -186,7 +191,7 @@ Hero-specific (only when that hero is in the battle):
 | Favored Enemy | one permanent marker on an enemy | Boreas |
 | Bear Trap | single marker on a map space | Boreas |
 | Shield (done, v0.11.0) | count per hero | Cyrus |
-| Chill | count per hero | Dazeem |
+| Chill (done, v0.13.0) | count per hero | Dazeem |
 | Ice Wall | single marker on a map space | Dazeem |
 | "To the Pain" Arena | isolated space for Felix + one enemy | Felix |
 | Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
@@ -211,6 +216,10 @@ apply any rule automatically (expiry, defeat, damage absorption).
     "+" picker, sized for at most 8 tokens per hero. Does it still hold up
     with Shield, Chill, Stone and Favored Enemy in real games? How often do
     cards wrap?
+    Intent 13's QA found the seven-token case (+1 Attack, Confuse,
+    Immobilize, Death Mark, Shield, Stone, Chill) fits its chips on two
+    lines, but the "+" wraps alone to a third. Accepted for now since the
+    Board still fits at 1280x800.
   - **Colors and icons** of every token side by side.
   - **The Map**, read-only for now: does the status panel still read well,
     and is editing there worth adding?

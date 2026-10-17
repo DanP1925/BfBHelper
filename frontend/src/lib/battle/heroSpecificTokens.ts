@@ -13,6 +13,7 @@ export const HERO_SPECIFIC_TOKENS = {
   deathMark: { owner: "kunoichi", targets: "enemies" },
   shield: { owner: "cyrus", targets: "allies" },
   stone: { owner: "sedusa", targets: "enemies" },
+  chill: { owner: "dazeem", targets: "enemies" },
 } as const satisfies Record<string, HeroSpecificTokenRule>;
 
 export type HeroSpecificTokenId = keyof typeof HERO_SPECIFIC_TOKENS;

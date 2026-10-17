@@ -423,7 +423,11 @@ describe("Home: +1 Shield (intent/11)", () => {
   });
 
   it("adds one per tap after the other tokens, works with Cyrus at 0 HP, and shares the one-open rule", () => {
-    seedDraft(["cyrus", "baldwin", "boreas", "caligar"], ["ceralin", "cynthia", "dazeem", "felix"]);
+    // No Dazeem on p2, so Baldwin's picker lists no "+1 Chill".
+    seedDraft(
+      ["cyrus", "baldwin", "boreas", "caligar"],
+      ["ceralin", "cynthia", "dolgolae", "felix"],
+    );
     render(<Home />);
     const cyrus = getHeroById("cyrus").name;
     const baldwin = getHeroById("baldwin").name;
@@ -541,6 +545,93 @@ describe("Home: +1 Stone (intent/12)", () => {
     ).toBeTruthy();
     // Reaching 3 doesn't defeat the hero: HP is untouched.
     expect(screen.getByLabelText(`${cynthia} HP`, { exact: true })).not.toHaveValue(0);
+  });
+});
+
+describe("Home: +1 Chill (intent/13)", () => {
+  const offersChill = (heroId: HeroId) => offersToken(heroId, "Add +1 Chill");
+  const chillChip = (name: string) =>
+    screen.queryByRole("button", { name: new RegExp(`^${name}: \\d+ \\+1 Chill token`) });
+
+  it("offers it only on Dazeem's enemies when he's on Player 1, never on his own team", () => {
+    seedDraft(
+      ["dazeem", "baldwin", "boreas", "caligar"],
+      ["ceralin", "cynthia", "felix", "kerrick"],
+    );
+    render(<Home />);
+
+    for (const id of ["ceralin", "cynthia", "felix", "kerrick"] as const) {
+      expect(offersChill(id)).toBe(true);
+    }
+    for (const id of ["dazeem", "baldwin", "boreas", "caligar"] as const) {
+      expect(offersChill(id)).toBe(false);
+    }
+  });
+
+  it("offers it only on Player 1 when Dazeem is on Player 2", () => {
+    seedDraft(
+      ["baldwin", "boreas", "caligar", "ceralin"],
+      ["cynthia", "dazeem", "felix", "kerrick"],
+    );
+    render(<Home />);
+
+    expect(offersChill("baldwin")).toBe(true);
+    expect(offersChill("cynthia")).toBe(false);
+    expect(offersChill("dazeem")).toBe(false);
+  });
+
+  it("offers it to nobody without Dazeem", () => {
+    seedDraft(
+      ["baldwin", "boreas", "caligar", "ceralin"],
+      ["cynthia", "dolgolae", "felix", "kerrick"],
+    );
+    render(<Home />);
+
+    for (const id of ["baldwin", "boreas", "caligar", "ceralin", "cynthia", "dolgolae"] as const) {
+      expect(offersChill(id)).toBe(false);
+    }
+  });
+
+  it("adds one per tap up to 5, after Stone, kept apart from +1 Attack, with Dazeem at 0 HP", () => {
+    // Sedusa and Dazeem against Cyrus's team, so the picker shows all
+    // three counted hero-specific tokens.
+    seedDraft(["sedusa", "dazeem", "boreas", "caligar"], ["cyrus", "cynthia", "baldwin", "felix"]);
+    render(<Home />);
+    const dazeem = getHeroById("dazeem").name;
+    const cynthia = getHeroById("cynthia").name;
+
+    // Dazeem at 0 HP still counts as in the battle.
+    const decreaseHp = screen.getByRole("button", { name: `Decrease ${dazeem} HP` });
+    while (!decreaseHp.hasAttribute("disabled")) fireEvent.click(decreaseHp);
+
+    fireEvent.click(addButton(cynthia));
+    expect(
+      within(picker(cynthia)!)
+        .getAllByRole("button")
+        .map((row) => row.getAttribute("aria-label")),
+    ).toEqual([
+      "Add +1 Attack",
+      "Add Confuse",
+      "Add Immobilize",
+      "Add +1 Shield",
+      "Add +1 Stone",
+      "Add +1 Chill",
+    ]);
+    for (let i = 0; i < 5; i++) fireEvent.click(option(cynthia, "Add +1 Chill"));
+    expect(option(cynthia, "Add +1 Chill")).toBeDisabled();
+    fireEvent.click(option(cynthia, "Add +1 Stone"));
+    fireEvent.click(option(cynthia, "Add +1 Attack"));
+    expect(chillChip(cynthia)).toHaveAccessibleName(`${cynthia}: 5 +1 Chill tokens. Show controls`);
+    // +1 Attack is its own count: never netted against Chill.
+    expect(screen.getByRole("button", { name: attackChipName(cynthia) })).toHaveAccessibleName(
+      `${cynthia}: 1 +1 Attack token. Show controls`,
+    );
+
+    // Chill comes after Stone in the row, whatever order they were added.
+    const stone = screen.getByRole("button", { name: new RegExp(`^${cynthia}: 1 \\+1 Stone`) });
+    expect(
+      stone.compareDocumentPosition(chillChip(cynthia)!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
 

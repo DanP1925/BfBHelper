@@ -1,7 +1,7 @@
 # Spec 13: Chill Tokens
 
-> **DRAFT.** Architecture for intent 13's scope. Build-out has not started
-> yet. See [../intent/13_chill-tokens.md](../intent/13_chill-tokens.md)
+> **BUILT.** Architecture for intent 13's scope, all built in one PR
+> (plan 13). See [../intent/13_chill-tokens.md](../intent/13_chill-tokens.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -379,6 +379,9 @@ infra.
   rulebook token's blue). Check at 1280x800 that a held Chill chip reads
   apart from Immobilize's ice blue on the same card (Kunoichi) and from
   P2's teal.
+  **Decided (2026-10-17):** kept. In the browser the cyan chip reads
+  clearly apart from Immobilize's ice blue on the same card and from P2's
+  teal.
 - The canvas draws `ChillTokenIcon` as a six-armed snowflake (16px
   viewBox, stroke 1.5): three crossing strokes, each arm with a V near
   its tip:
@@ -387,10 +390,18 @@ infra.
   ```
   Check it at 12px on the Board and 13px on the Map. If the six V tips
   blur at 12px, drop them and keep the three strokes.
+  **Decided (2026-10-17):** kept as drawn. The V tips stay legible at
+  12px on the Board and 13px on the Map.
 - Check the Board at 1280x800 with the seven-token case (an ally of Cyrus
   who's an enemy of Kunoichi, Sedusa and Dazeem, with every counted token
   at its ceiling): the card wraps to
   two lines, not three, and the Board doesn't scroll, with any stepper
   open. Also check that hero's Map token line in the 170px panel.
+  **Decided (2026-10-17):** the chips fit on two lines, but the "+"
+  picker wraps alone to a third. Accepted: the Board still fits at
+  1280x800 with no scroll, open or closed, and the case needs Cyrus,
+  Kunoichi, Sedusa and Dazeem in one game. Tightening is left to
+  BACKLOG.md's token-display review. The Map's token line wraps to two
+  lines (Chill alone on the second) and fits the panel.
 - Validation doesn't reject a fractional count, for `chillTokens` as for
   the other counted tokens (spec 11). Left as is.

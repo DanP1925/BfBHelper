@@ -111,6 +111,7 @@ describe("useBattle", () => {
       deathMarked: false,
       shieldTokens: 0,
       stoneTokens: 0,
+      chillTokens: 0,
     });
     expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
   });
@@ -126,6 +127,7 @@ describe("useBattle", () => {
       deathMarked: true,
       shieldTokens: 5,
       stoneTokens: 2,
+      chillTokens: 4,
     };
     saveBattleState(persisted);
 
@@ -140,6 +142,7 @@ describe("useBattle", () => {
       deathMarked: true,
       shieldTokens: 5,
       stoneTokens: 2,
+      chillTokens: 4,
     });
   });
 
@@ -158,6 +161,7 @@ describe("useBattle", () => {
       deathMarked: false,
       shieldTokens: 0,
       stoneTokens: 0,
+      chillTokens: 0,
     });
   });
 
@@ -193,17 +197,17 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(15);
   });
 
-  it("setHeroAttackTokens persists the clamped result, which survives a reload", () => {
+  it("setHeroCountedToken (attackTokens) persists the clamped result, which survives a reload", () => {
     const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
-      result.current.setHeroAttackTokens("p2", HERO_B.id, 3);
+      result.current.setHeroCountedToken("p2", HERO_B.id, "attackTokens", 3);
     });
     expect(result.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(3);
     expect(readRawState().p2.heroes[HERO_B.id].attackTokens).toBe(3);
 
     act(() => {
-      result.current.setHeroAttackTokens("p2", HERO_B.id, 99);
+      result.current.setHeroCountedToken("p2", HERO_B.id, "attackTokens", 99);
     });
     expect(result.current.state?.p2.heroes[HERO_B.id].attackTokens).toBe(9);
     unmount();
@@ -216,7 +220,7 @@ describe("useBattle", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
-      result.current.setHeroAttackTokens("p1", HERO_A.id, 2);
+      result.current.setHeroCountedToken("p1", HERO_A.id, "attackTokens", 2);
       result.current.setHeroHp("p1", HERO_A.id, 0);
     });
 
@@ -332,11 +336,11 @@ describe("useBattle", () => {
     expect(result.current.state?.p2.heroes[HERO_B.id].deathMarked).toBe(true);
   });
 
-  it("setHeroShieldTokens persists the count, which survives a reload and steps back down", () => {
+  it("setHeroCountedToken (shieldTokens) persists the count, which survives a reload and steps back down", () => {
     const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
-      result.current.setHeroShieldTokens("p1", HERO_A.id, 3);
+      result.current.setHeroCountedToken("p1", HERO_A.id, "shieldTokens", 3);
     });
     expect(result.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(3);
     expect(result.current.state?.p1.heroes[HERO_A.id].attackTokens).toBe(0);
@@ -348,7 +352,7 @@ describe("useBattle", () => {
     expect(reloaded.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(3);
 
     act(() => {
-      reloaded.current.setHeroShieldTokens("p1", HERO_A.id, 2);
+      reloaded.current.setHeroCountedToken("p1", HERO_A.id, "shieldTokens", 2);
     });
     expect(reloaded.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(2);
     expect(readRawState().p1.heroes[HERO_A.id].shieldTokens).toBe(2);
@@ -358,7 +362,7 @@ describe("useBattle", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
-      result.current.setHeroShieldTokens("p1", HERO_A.id, 2);
+      result.current.setHeroCountedToken("p1", HERO_A.id, "shieldTokens", 2);
       result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
     });
     act(() => {
@@ -369,11 +373,11 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroes[HERO_A.id].shieldTokens).toBe(2);
   });
 
-  it("setHeroStoneTokens persists the count, which survives a reload and steps back down", () => {
+  it("setHeroCountedToken (stoneTokens) persists the count, which survives a reload and steps back down", () => {
     const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
 
     act(() => {
-      result.current.setHeroStoneTokens("p2", HERO_B.id, 3);
+      result.current.setHeroCountedToken("p2", HERO_B.id, "stoneTokens", 3);
     });
     expect(result.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(3);
     expect(result.current.state?.p2.heroes[HERO_B.id].shieldTokens).toBe(0);
@@ -385,7 +389,7 @@ describe("useBattle", () => {
     expect(reloaded.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(3);
 
     act(() => {
-      reloaded.current.setHeroStoneTokens("p2", HERO_B.id, 2);
+      reloaded.current.setHeroCountedToken("p2", HERO_B.id, "stoneTokens", 2);
     });
     expect(reloaded.current.state?.p2.heroes[HERO_B.id].stoneTokens).toBe(2);
     expect(readRawState().p2.heroes[HERO_B.id].stoneTokens).toBe(2);
@@ -396,7 +400,7 @@ describe("useBattle", () => {
 
     act(() => {
       result.current.setHeroPosition("p2", HERO_B.id, MAP_SPACE_IDS[0]);
-      result.current.setHeroStoneTokens("p2", HERO_B.id, 3);
+      result.current.setHeroCountedToken("p2", HERO_B.id, "stoneTokens", 3);
     });
     expect(result.current.state?.p2.heroes[HERO_B.id].hp).toBe(HERO_B.baseHp + 1);
     expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBe(MAP_SPACE_IDS[0]);

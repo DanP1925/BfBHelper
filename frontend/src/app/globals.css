@@ -29,6 +29,10 @@
   /* Sedusa's Stone (intent/12): the rulebook token's stone grey, cooler and
    * lighter than --color-muted and less saturated than --color-immobilize. */
   --color-stone: #a3adb8;
+  /* Dazeem's Chill (intent/13): the rulebook token's blue as a frost cyan,
+   * brighter and greener than --color-immobilize (often on the same hero)
+   * and lighter than --color-p2. */
+  --color-chill: #5ccfe6;
 
   --background: var(--color-bg);
   --foreground: var(--color-text);

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
-import type { BattleState, StructuresState } from "./battle/types";
+import type { BattleState, CountedTokenField, StructuresState } from "./battle/types";
 import type { Hero, HeroId, PlayerId } from "./draft/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../data/mapSpaces";
 import { loadBattleState, saveBattleState } from "./persistence/storage";
@@ -14,12 +14,17 @@ export type UseBattleResult = {
   setGold: (side: PlayerId, value: number) => void;
   setHeroHp: (side: PlayerId, heroId: HeroId, value: number) => void;
   setHeroLevel: (side: PlayerId, heroId: HeroId, value: number) => void;
-  setHeroAttackTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
+  /** Every counted token (+1 Attack, Shield, Stone, Chill) goes through this one
+   * setter, named by its stored field. Clamped in the reducer. */
+  setHeroCountedToken: (
+    side: PlayerId,
+    heroId: HeroId,
+    field: CountedTokenField,
+    value: number,
+  ) => void;
   setHeroConfused: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroImmobilized: (side: PlayerId, heroId: HeroId, value: boolean) => void;
   setHeroDeathMarked: (side: PlayerId, heroId: HeroId, value: boolean) => void;
-  setHeroShieldTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
-  setHeroStoneTokens: (side: PlayerId, heroId: HeroId, value: number) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: MapSpaceId | null) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
@@ -124,13 +129,16 @@ export function useBattle(
     );
   }, []);
 
-  const setHeroAttackTokens = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
-    setState((prev) =>
-      prev === null
-        ? prev
-        : battleReducer(prev, { type: "SET_HERO_ATTACK_TOKENS", side, heroId, value }),
-    );
-  }, []);
+  const setHeroCountedToken = useCallback(
+    (side: PlayerId, heroId: HeroId, field: CountedTokenField, value: number) => {
+      setState((prev) =>
+        prev === null
+          ? prev
+          : battleReducer(prev, { type: "SET_HERO_COUNTED_TOKEN", side, heroId, field, value }),
+      );
+    },
+    [],
+  );
 
   const setHeroConfused = useCallback((side: PlayerId, heroId: HeroId, value: boolean) => {
     setState((prev) =>
@@ -153,22 +161,6 @@ export function useBattle(
       prev === null
         ? prev
         : battleReducer(prev, { type: "SET_HERO_DEATH_MARKED", side, heroId, value }),
-    );
-  }, []);
-
-  const setHeroShieldTokens = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
-    setState((prev) =>
-      prev === null
-        ? prev
-        : battleReducer(prev, { type: "SET_HERO_SHIELD_TOKENS", side, heroId, value }),
-    );
-  }, []);
-
-  const setHeroStoneTokens = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
-    setState((prev) =>
-      prev === null
-        ? prev
-        : battleReducer(prev, { type: "SET_HERO_STONE_TOKENS", side, heroId, value }),
     );
   }, []);
 
@@ -208,12 +200,10 @@ export function useBattle(
     setGold,
     setHeroHp,
     setHeroLevel,
-    setHeroAttackTokens,
+    setHeroCountedToken,
     setHeroConfused,
     setHeroImmobilized,
     setHeroDeathMarked,
-    setHeroShieldTokens,
-    setHeroStoneTokens,
     setStructureHp,
     setHeroPosition,
     setGoldPile,

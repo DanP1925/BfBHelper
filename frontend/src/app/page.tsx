@@ -126,12 +126,17 @@ export default function Home() {
           setHeroHp={battle.setHeroHp}
           setHeroLevel={battle.setHeroLevel}
           setHeroToken={{
-            attackTokens: battle.setHeroAttackTokens,
+            attackTokens: (side, heroId, value) =>
+              battle.setHeroCountedToken(side, heroId, "attackTokens", value),
             confused: battle.setHeroConfused,
             immobilized: battle.setHeroImmobilized,
             deathMarked: battle.setHeroDeathMarked,
-            shieldTokens: battle.setHeroShieldTokens,
-            stoneTokens: battle.setHeroStoneTokens,
+            shieldTokens: (side, heroId, value) =>
+              battle.setHeroCountedToken(side, heroId, "shieldTokens", value),
+            stoneTokens: (side, heroId, value) =>
+              battle.setHeroCountedToken(side, heroId, "stoneTokens", value),
+            chillTokens: (side, heroId, value) =>
+              battle.setHeroCountedToken(side, heroId, "chillTokens", value),
           }}
           setStructureHp={battle.setStructureHp}
           onNewDraft={draft.returnToStart}

@@ -28,7 +28,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 9 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 10 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -103,7 +103,8 @@ export type LegacyBattleTeamStateV5 = Omit<BattleTeamState, "heroes"> & {
 
 /** Each schema's hero is the next one's minus the field that schema added,
  * so a new schema only touches the newest legacy type. */
-type LegacyHeroBattleStateV8 = Omit<HeroBattleState, "stoneTokens">;
+type LegacyHeroBattleStateV9 = Omit<HeroBattleState, "chillTokens">;
+type LegacyHeroBattleStateV8 = Omit<LegacyHeroBattleStateV9, "stoneTokens">;
 type LegacyHeroBattleStateV7 = Omit<LegacyHeroBattleStateV8, "shieldTokens">;
 type LegacyHeroBattleStateV6 = Omit<LegacyHeroBattleStateV7, "deathMarked">;
 type LegacyHeroBattleStateV5 = Omit<LegacyHeroBattleStateV6, "immobilized">;
@@ -162,10 +163,28 @@ export type PersistedBattleStateV8 = Omit<PersistedBattleStateV7, "schemaVersion
   p2: LegacyBattleTeamStateV8;
 };
 
+/** One side's battle-team state in schema 9: per-hero stoneTokens,
+ * but no chillTokens count yet (intent/13). */
+export type LegacyBattleTeamStateV9 = Omit<BattleTeamState, "heroes"> & {
+  heroes: Record<HeroId, LegacyHeroBattleStateV9>;
+};
+
 /** The on-disk (localStorage) shape of a persisted battle state, version 9
- * (intent/12: per-hero `stoneTokens`). */
+ * (intent/12: per-hero `stoneTokens`) — now only the migration source shape
+ * `battleMigrations[9]` upgrades from. */
 export type PersistedBattleStateV9 = Omit<PersistedBattleStateV8, "schemaVersion" | "p1" | "p2"> & {
   schemaVersion: 9;
+  p1: LegacyBattleTeamStateV9;
+  p2: LegacyBattleTeamStateV9;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 10
+ * (intent/13: per-hero `chillTokens`). */
+export type PersistedBattleStateV10 = Omit<
+  PersistedBattleStateV9,
+  "schemaVersion" | "p1" | "p2"
+> & {
+  schemaVersion: 10;
   p1: BattleTeamState;
   p2: BattleTeamState;
 };

@@ -8,6 +8,7 @@ const sterling = getHeroById("sterling");
 const caligar = getHeroById("caligar");
 const cyrus = getHeroById("cyrus");
 const sedusa = getHeroById("sedusa");
+const dazeem = getHeroById("dazeem");
 
 describe("heroSpecificTokenSide", () => {
   it("offers Death Mark to p2 when Kunoichi is on p1", () => {
@@ -44,6 +45,15 @@ describe("heroSpecificTokenSide", () => {
 
   it("offers Stone to nobody when Sedusa wasn't drafted", () => {
     expect(heroSpecificTokenSide("stone", { p1: [boreas], p2: [cyrus] })).toBeNull();
+  });
+
+  it("offers Chill to Dazeem's enemies, whichever side he's on", () => {
+    expect(heroSpecificTokenSide("chill", { p1: [boreas, dazeem], p2: [sterling] })).toBe("p2");
+    expect(heroSpecificTokenSide("chill", { p1: [boreas], p2: [dazeem, sterling] })).toBe("p1");
+  });
+
+  it("offers Chill to nobody when Dazeem wasn't drafted", () => {
+    expect(heroSpecificTokenSide("chill", { p1: [boreas], p2: [sedusa] })).toBeNull();
   });
 });
 

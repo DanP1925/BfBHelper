@@ -1,11 +1,10 @@
 import {
-  HERO_ATTACK_TOKEN_CEILING,
+  HERO_COUNTED_TOKEN_CEILINGS,
   HERO_HP_CEILING,
   HERO_MAX_LEVEL,
-  HERO_SHIELD_TOKEN_CEILING,
   HERO_STARTING_LEVEL,
-  HERO_STONE_TOKEN_CEILING,
 } from "./constants";
+import type { CountedTokenField } from "./types";
 import { GOLD_PILE_STARTING_COUNT } from "../map/constants";
 
 /**
@@ -36,19 +35,9 @@ export function clampHeroLevel(value: number): number {
   return clamp(value, HERO_STARTING_LEVEL, HERO_MAX_LEVEL);
 }
 
-/** +1 Attack tokens: floor 0, ceiling HERO_ATTACK_TOKEN_CEILING (9). */
-export function clampHeroAttackTokens(value: number): number {
-  return clamp(value, 0, HERO_ATTACK_TOKEN_CEILING);
-}
-
-/** Shield tokens: floor 0, ceiling HERO_SHIELD_TOKEN_CEILING (9). */
-export function clampHeroShieldTokens(value: number): number {
-  return clamp(value, 0, HERO_SHIELD_TOKEN_CEILING);
-}
-
-/** Stone tokens: floor 0, ceiling HERO_STONE_TOKEN_CEILING (3). */
-export function clampHeroStoneTokens(value: number): number {
-  return clamp(value, 0, HERO_STONE_TOKEN_CEILING);
+/** A counted token: floor 0, ceiling HERO_COUNTED_TOKEN_CEILINGS[field]. */
+export function clampHeroCountedToken(field: CountedTokenField, value: number): number {
+  return clamp(value, 0, HERO_COUNTED_TOKEN_CEILINGS[field]);
 }
 
 /** Structure HP: floor 0, ceiling is that structure's own starting HP

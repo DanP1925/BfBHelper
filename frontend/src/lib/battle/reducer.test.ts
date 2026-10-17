@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { Hero } from "../draft/types";
 import {
   BIT_STARTING_HP,
-  HERO_ATTACK_TOKEN_CEILING,
+  HERO_COUNTED_TOKEN_CEILINGS,
   HERO_HP_CEILING,
-  HERO_SHIELD_TOKEN_CEILING,
-  HERO_STONE_TOKEN_CEILING,
   TOWER_STARTING_HP,
 } from "./constants";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../../data/mapSpaces";
@@ -51,6 +49,7 @@ describe("createInitialHeroState", () => {
       deathMarked: false,
       shieldTokens: 0,
       stoneTokens: 0,
+      chillTokens: 0,
     });
     expect(createInitialHeroState({ ...HERO_A, baseHp: HERO_HP_CEILING })).toEqual({
       hp: HERO_HP_CEILING,
@@ -61,6 +60,7 @@ describe("createInitialHeroState", () => {
       deathMarked: false,
       shieldTokens: 0,
       stoneTokens: 0,
+      chillTokens: 0,
     });
   });
 });
@@ -77,6 +77,7 @@ describe("createInitialBattleState", () => {
       deathMarked: false,
       shieldTokens: 0,
       stoneTokens: 0,
+      chillTokens: 0,
     });
   });
 
@@ -102,9 +103,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 9", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 10", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(9);
+    expect(state.schemaVersion).toBe(10);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -182,11 +183,12 @@ describe("battleReducer", () => {
     expect(next).toBe(state);
   });
 
-  describe("SET_HERO_ATTACK_TOKENS", () => {
+  describe("SET_HERO_COUNTED_TOKEN (attackTokens)", () => {
     it("clamps and replaces", () => {
       const state = baseState();
       const next = battleReducer(state, {
-        type: "SET_HERO_ATTACK_TOKENS",
+        type: "SET_HERO_COUNTED_TOKEN",
+        field: "attackTokens",
         side: "p1",
         heroId: HERO_A.id,
         value: 3,
@@ -195,18 +197,22 @@ describe("battleReducer", () => {
       expect(next).not.toBe(state);
 
       const capped = battleReducer(state, {
-        type: "SET_HERO_ATTACK_TOKENS",
+        type: "SET_HERO_COUNTED_TOKEN",
+        field: "attackTokens",
         side: "p1",
         heroId: HERO_A.id,
         value: 99,
       });
-      expect(capped.p1.heroes[HERO_A.id].attackTokens).toBe(HERO_ATTACK_TOKEN_CEILING);
+      expect(capped.p1.heroes[HERO_A.id].attackTokens).toBe(
+        HERO_COUNTED_TOKEN_CEILINGS.attackTokens,
+      );
     });
 
     it("is a no-op for an unknown heroId", () => {
       const state = baseState();
       const next = battleReducer(state, {
-        type: "SET_HERO_ATTACK_TOKENS",
+        type: "SET_HERO_COUNTED_TOKEN",
+        field: "attackTokens",
         side: "p1",
         heroId: "sterling",
         value: 2,
@@ -217,7 +223,8 @@ describe("battleReducer", () => {
     it("is a no-op (same reference) when the clamped value is unchanged", () => {
       const state = baseState();
       const next = battleReducer(state, {
-        type: "SET_HERO_ATTACK_TOKENS",
+        type: "SET_HERO_COUNTED_TOKEN",
+        field: "attackTokens",
         side: "p1",
         heroId: HERO_A.id,
         value: -1,
@@ -228,7 +235,8 @@ describe("battleReducer", () => {
     it("changes nothing but that hero's count", () => {
       const state = baseState();
       const next = battleReducer(state, {
-        type: "SET_HERO_ATTACK_TOKENS",
+        type: "SET_HERO_COUNTED_TOKEN",
+        field: "attackTokens",
         side: "p1",
         heroId: HERO_A.id,
         value: 2,
@@ -240,7 +248,8 @@ describe("battleReducer", () => {
 
     it("SET_HERO_HP to 0 keeps the hero's tokens", () => {
       const withTokens = battleReducer(baseState(), {
-        type: "SET_HERO_ATTACK_TOKENS",
+        type: "SET_HERO_COUNTED_TOKEN",
+        field: "attackTokens",
         side: "p1",
         heroId: HERO_A.id,
         value: 2,
@@ -459,7 +468,8 @@ describe("battleReducer", () => {
         spaceId: MAP_SPACE_IDS[0],
       });
       state = battleReducer(state, {
-        type: "SET_HERO_ATTACK_TOKENS",
+        type: "SET_HERO_COUNTED_TOKEN",
+        field: "attackTokens",
         side: "p1",
         heroId: HERO_A.id,
         value: 2,
@@ -487,15 +497,18 @@ describe("battleReducer", () => {
     });
   });
 
-  // The hero-specific counted tokens (intents 11, 12) share one reducer
-  // shape: clamp-and-replace, manual only, no visibility check.
+  // The hero-specific counted tokens (intents 11-13) go through the same
+  // SET_HERO_COUNTED_TOKEN: clamp-and-replace, manual only, no visibility
+  // check.
   describe.each([
-    { type: "SET_HERO_SHIELD_TOKENS", field: "shieldTokens", ceiling: HERO_SHIELD_TOKEN_CEILING },
-    { type: "SET_HERO_STONE_TOKENS", field: "stoneTokens", ceiling: HERO_STONE_TOKEN_CEILING },
-  ] as const)("$type", ({ type, field, ceiling }) => {
+    { field: "shieldTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.shieldTokens },
+    { field: "stoneTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.stoneTokens },
+    { field: "chillTokens", ceiling: HERO_COUNTED_TOKEN_CEILINGS.chillTokens },
+  ] as const)("SET_HERO_COUNTED_TOKEN ($field)", ({ field, ceiling }) => {
     function set(state: BattleState, side: "p1" | "p2", value: number): BattleState {
       return battleReducer(state, {
-        type,
+        type: "SET_HERO_COUNTED_TOKEN",
+        field,
         side,
         heroId: side === "p1" ? HERO_A.id : HERO_B.id,
         value,
@@ -535,7 +548,15 @@ describe("battleReducer", () => {
 
     it("is a no-op for an unknown heroId", () => {
       const state = baseState();
-      expect(battleReducer(state, { type, side: "p1", heroId: "sterling", value: 2 })).toBe(state);
+      expect(
+        battleReducer(state, {
+          type: "SET_HERO_COUNTED_TOKEN",
+          field,
+          side: "p1",
+          heroId: "sterling",
+          value: 2,
+        }),
+      ).toBe(state);
     });
 
     it("is a no-op (same reference) when the clamped value is unchanged", () => {
@@ -550,16 +571,17 @@ describe("battleReducer", () => {
       const others: BattleAction[] = [
         { type: "SET_HERO_HP", ...hero, value: 0 },
         { type: "SET_HERO_POSITION", ...hero, spaceId: MAP_SPACE_IDS[0] },
-        { type: "SET_HERO_ATTACK_TOKENS", ...hero, value: 2 },
+        { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "attackTokens", value: 2 },
         { type: "SET_HERO_CONFUSED", ...hero, value: true },
         { type: "SET_HERO_IMMOBILIZED", ...hero, value: true },
         { type: "SET_HERO_DEATH_MARKED", ...hero, value: true },
-        { type: "SET_HERO_SHIELD_TOKENS", ...hero, value: 1 },
-        { type: "SET_HERO_STONE_TOKENS", ...hero, value: 1 },
+        { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "shieldTokens", value: 1 },
+        { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "stoneTokens", value: 1 },
+        { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "chillTokens", value: 1 },
         { type: "PASS_INITIATIVE" },
       ];
       const state = others
-        .filter((action) => action.type !== type)
+        .filter((action) => !("field" in action && action.field === field))
         .reduce(battleReducer, set(baseState(), "p1", 3));
       expect(state.p1.heroes[HERO_A.id]).toMatchObject({
         hp: 0,
@@ -570,6 +592,22 @@ describe("battleReducer", () => {
         [field]: 3,
       });
     });
+  });
+
+  it("never nets Chill against +1 Attack: each write leaves the other count alone (intent/13)", () => {
+    const set = (state: BattleState, field: "attackTokens" | "chillTokens", value: number) =>
+      battleReducer(state, {
+        type: "SET_HERO_COUNTED_TOKEN",
+        side: "p1",
+        heroId: HERO_A.id,
+        field,
+        value,
+      });
+    const chilled = set(baseState(), "chillTokens", 2);
+    const both = set(chilled, "attackTokens", 3);
+    expect(both.p1.heroes[HERO_A.id]).toMatchObject({ attackTokens: 3, chillTokens: 2 });
+    const lessChill = set(both, "chillTokens", 1);
+    expect(lessChill.p1.heroes[HERO_A.id]).toMatchObject({ attackTokens: 3, chillTokens: 1 });
   });
 
   it("SET_STRUCTURE_HP clamps and replaces, per-structure ceiling", () => {
