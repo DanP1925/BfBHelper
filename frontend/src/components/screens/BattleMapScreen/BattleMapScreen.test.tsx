@@ -25,7 +25,7 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 13,
+    schemaVersion: 14,
     initiative: "p1",
     iceWall: null,
     p1: {
@@ -488,22 +488,32 @@ describe("BattleMapScreen", () => {
   });
 
   describe("Runika's Artifacts (intent/17)", () => {
-    const withRunika = [...p2Heroes, makeHero("runika", "Runika")];
+    /** Any Artifact icon's accessible name ("Battle Fist: +1 Attack", …). */
+    const ANY_ARTIFACT = /^(Battle Fist|Auto Deflector|Shield Amulet):/;
 
-    function renderWithRunika(runika: Partial<HeroBattleState>) {
+    /** Renders the Map with Runika added to Player 2 holding `runika`, or
+     * without her when it's `null`. */
+    function renderWithRunika(runika: Partial<HeroBattleState> | null) {
       const base = makeBattleState();
       render(
         <BattleMapScreen
           p1Heroes={p1Heroes}
-          p2Heroes={withRunika}
-          battleState={{
-            ...base,
-            p2: {
-              ...base.p2,
-              heroes: { ...base.p2.heroes, runika: { hp: 9, level: 1, ...NO_TOKENS, ...runika } },
-              heroPositions: { ...base.p2.heroPositions, runika: null },
-            },
-          }}
+          p2Heroes={runika ? [...p2Heroes, makeHero("runika", "Runika")] : p2Heroes}
+          battleState={
+            runika
+              ? {
+                  ...base,
+                  p2: {
+                    ...base.p2,
+                    heroes: {
+                      ...base.p2.heroes,
+                      runika: { hp: 9, level: 1, ...NO_TOKENS, ...runika },
+                    },
+                    heroPositions: { ...base.p2.heroPositions, runika: null },
+                  },
+                }
+              : base
+          }
           winner={null}
           setHeroPosition={() => {}}
           setGoldPile={() => {}}
@@ -531,9 +541,7 @@ describe("BattleMapScreen", () => {
 
     it("gives her a token line for face-up Artifacts alone", () => {
       renderWithRunika({});
-      expect(screen.getAllByLabelText(/^(Battle Fist|Auto Deflector|Shield Amulet):/)).toHaveLength(
-        3,
-      );
+      expect(screen.getAllByLabelText(ANY_ARTIFACT)).toHaveLength(3);
     });
 
     it("drops the line when all three are face-down and she holds nothing", () => {
@@ -542,29 +550,12 @@ describe("BattleMapScreen", () => {
         autoDeflectorFaceUp: false,
         shieldAmuletFaceUp: false,
       });
-      expect(
-        screen.queryByLabelText(/^(Battle Fist|Auto Deflector|Shield Amulet):/),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(ANY_ARTIFACT)).not.toBeInTheDocument();
     });
 
     it("shows no Artifacts for other heroes, though their flags are face-up too", () => {
-      render(
-        <BattleMapScreen
-          p1Heroes={p1Heroes}
-          p2Heroes={p2Heroes}
-          battleState={makeBattleState()}
-          winner={null}
-          setHeroPosition={() => {}}
-          setGoldPile={() => {}}
-          onNewDraft={() => {}}
-          onEndBattle={() => {}}
-          onSwitchView={() => {}}
-          {...fixedProps}
-        />,
-      );
-      expect(
-        screen.queryByLabelText(/^(Battle Fist|Auto Deflector|Shield Amulet):/),
-      ).not.toBeInTheDocument();
+      renderWithRunika(null);
+      expect(screen.queryByLabelText(ANY_ARTIFACT)).not.toBeInTheDocument();
     });
   });
 

@@ -109,17 +109,20 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                       </span>
                     );
                   })}
-                  {faceUpArtifacts.map((artifact) => (
-                    <span
-                      key={artifact.field}
-                      className={styles.token}
-                      style={{ "--token-accent": "var(--color-artifact)" } as CSSProperties}
-                      aria-label={artifactSummary(artifact)}
-                      title={`${artifactSummary(artifact)} (face-up)`}
-                    >
-                      <artifact.Icon size={13} />
-                    </span>
-                  ))}
+                  {faceUpArtifacts.map((artifact) => {
+                    const summary = artifactSummary(artifact);
+                    return (
+                      <span
+                        key={artifact.field}
+                        className={styles.token}
+                        style={{ "--token-accent": "var(--color-artifact)" } as CSSProperties}
+                        aria-label={summary}
+                        title={`${summary} (face-up)`}
+                      >
+                        <artifact.Icon size={13} />
+                      </span>
+                    );
+                  })}
                 </span>
               )}
             </div>

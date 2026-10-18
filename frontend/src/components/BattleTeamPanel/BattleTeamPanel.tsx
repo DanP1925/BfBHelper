@@ -1,6 +1,5 @@
 import type { Hero, HeroId, PlayerId } from "../../lib/draft/types";
 import {
-  ARTIFACT_FIELDS,
   ARTIFACT_OWNER,
   BIT_STARTING_HP,
   TOWER_SLOTS,
@@ -15,7 +14,7 @@ import type {
   StructuresState,
 } from "../../lib/battle/types";
 import { BATTLE_TOKENS, type BattleTokenField } from "../battleTokens";
-import { HeroCard, type HeroCardArtifacts, type HeroCardTokens } from "../HeroCard/HeroCard";
+import { HeroCard, type HeroCardTokens } from "../HeroCard/HeroCard";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { StructureSlot } from "../StructureSlot/StructureSlot";
 import styles from "./BattleTeamPanel.module.css";
@@ -91,26 +90,6 @@ function heroTokens(
   return tokens;
 }
 
-/** Runika's Artifact controls (intent/17), built from her stored faces. Her
- * card is only rendered while she's drafted, so that's the whole
- * visibility rule; there's no HP or position gate (the card flips them all
- * face-up on respawn). */
-function heroArtifacts(
-  hero: Hero,
-  heroState: HeroBattleState,
-  onHeroArtifactChange: BattleTeamPanelProps["onHeroArtifactChange"],
-): HeroCardArtifacts {
-  return Object.fromEntries(
-    ARTIFACT_FIELDS.map((field) => [
-      field,
-      {
-        faceUp: heroState[field],
-        onChange: (faceUp: boolean) => onHeroArtifactChange(hero.id, field, faceUp),
-      },
-    ]),
-  ) as HeroCardArtifacts;
-}
-
 export function BattleTeamPanel({
   label,
   side,
@@ -173,9 +152,15 @@ export function BattleTeamPanel({
                 openTokenKey,
                 onOpenTokenKeyChange,
               )}
+              // Runika's Artifacts (intent/17): her card is only rendered
+              // while she's drafted, so the id check is the whole visibility
+              // rule. No HP or position gate: they flip face-up on respawn.
               artifacts={
                 hero.id === ARTIFACT_OWNER
-                  ? heroArtifacts(hero, heroState, onHeroArtifactChange)
+                  ? {
+                      faces: heroState,
+                      onChange: (field, faceUp) => onHeroArtifactChange(hero.id, field, faceUp),
+                    }
                   : undefined
               }
             />

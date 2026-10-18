@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import styles from "./ArtifactToggle.module.css";
 
 type ArtifactToggleProps = {
@@ -15,16 +15,17 @@ type ArtifactToggleProps = {
 
 /**
  * One of Runika's Artifacts on her Board card (intent/17): always rendered,
- * unlike TokenToggle, and a tap flips it. Face-up is the lit pill in
- * `--color-artifact`; face-down is greyed out with a dashed outline, so the
- * state doesn't rest on color alone. `aria-pressed` carries the state, so
- * the label stays fixed. No state of its own.
+ * unlike TokenToggle, and a tap flips it. Face-up is TokenToggle's lit
+ * pill in `--color-artifact`; face-down is greyed out with a dashed
+ * outline, so the state doesn't rest on color alone. `aria-pressed`
+ * carries the state, so the label stays fixed. No state of its own.
  */
 export function ArtifactToggle({ faceUp, onChange, icon, summary, heroName }: ArtifactToggleProps) {
   return (
     <button
       type="button"
-      className={faceUp ? `${styles.toggle} ${styles.faceUp}` : styles.toggle}
+      className={faceUp ? styles.toggle : `${styles.toggle} ${styles.faceDown}`}
+      style={{ "--token-accent": "var(--color-artifact)" } as CSSProperties}
       aria-pressed={faceUp}
       aria-label={`${summary}, on ${heroName}`}
       title={`${summary} (${faceUp ? "face-up" : "face-down"}, tap to flip)`}

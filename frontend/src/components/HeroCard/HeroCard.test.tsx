@@ -343,11 +343,7 @@ describe("HeroCard Artifacts (intent/17)", () => {
   const runika = getHeroById("runika");
 
   function renderRunika({ withArtifacts = true } = {}) {
-    const onChange = {
-      battleFistFaceUp: vi.fn(),
-      autoDeflectorFaceUp: vi.fn(),
-      shieldAmuletFaceUp: vi.fn(),
-    };
+    const onChange = vi.fn();
     render(
       <HeroCard
         hero={runika}
@@ -363,9 +359,12 @@ describe("HeroCard Artifacts (intent/17)", () => {
         artifacts={
           withArtifacts
             ? {
-                battleFistFaceUp: { faceUp: true, onChange: onChange.battleFistFaceUp },
-                autoDeflectorFaceUp: { faceUp: false, onChange: onChange.autoDeflectorFaceUp },
-                shieldAmuletFaceUp: { faceUp: true, onChange: onChange.shieldAmuletFaceUp },
+                faces: {
+                  battleFistFaceUp: true,
+                  autoDeflectorFaceUp: false,
+                  shieldAmuletFaceUp: true,
+                },
+                onChange,
               }
             : undefined
         }
@@ -403,8 +402,8 @@ describe("HeroCard Artifacts (intent/17)", () => {
         name: "Auto Deflector: +1 defense vs melee attacks, on Runika",
       }),
     );
-    expect(onChange.autoDeflectorFaceUp).toHaveBeenCalledWith(true);
-    expect(onChange.battleFistFaceUp).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith("autoDeflectorFaceUp", true);
   });
 
   it("keeps the Artifacts out of the token row and the picker", () => {
