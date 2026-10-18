@@ -886,14 +886,15 @@ describe("BattleMapScreen", () => {
     it.each([
       ["p1", "Player 1"],
       ["p2", "Player 2"],
-    ] as const)("puts the holder in Dazeem's column when he's on %s", (side, label) => {
+    ] as const)("puts the holder beside Dazeem's column when he's on %s", (side, label) => {
       const teams =
         side === "p1" ? { p1: dazeemTeam, p2: otherTeam } : { p1: otherTeam, p2: dazeemTeam };
       renderWall(teams);
       const column = respawnArea(label).parentElement!;
-      expect(within(column).getByRole("region", { name: "Ice Wall" })).toBeInTheDocument();
-      // The holder comes after the respawn area, so nothing above it moves.
-      expect(column.lastElementChild).toBe(holder());
+      // In the margin outside his column, hung from it, so nothing in it moves.
+      const zones = holder()!.parentElement!;
+      expect(zones.parentElement).toBe(column);
+      expect(zones.className).toContain(side === "p1" ? "outerZonesP1" : "outerZonesP2");
     });
 
     it("holds the wall while it's off the board", () => {
@@ -947,12 +948,9 @@ describe("BattleMapScreen", () => {
       expect(setIceWall).toHaveBeenCalledWith(null);
     });
 
-    it.each([
-      ["p2", true],
-      ["p1", false],
-    ] as const)(
-      "with Dazeem on %s, hangs the Arena left of the gold bar: %s",
-      (dazeemSide, left) => {
+    it.each(["p1", "p2"] as const)(
+      "with Felix on p1 and Dazeem on %s, puts the Arena beside Felix's column, above the holder",
+      (dazeemSide) => {
         const felix = makeHero("felix", "Felix");
         const dazeem = makeHero("dazeem", "Dazeem");
         const [p1, p2] =
@@ -972,8 +970,19 @@ describe("BattleMapScreen", () => {
             },
           }),
         });
-        const slot = screen.getByRole("region", { name: "The Arena" }).parentElement!;
-        expect(slot.className.includes("arenaSlotLeft")).toBe(left);
+        const arenaPanel = screen.getByRole("region", { name: "The Arena" });
+        const felixZones = arenaPanel.parentElement!;
+        expect(felixZones.className).toContain("outerZonesP1");
+        expect(within(felixZones.parentElement!).getByText("Player 1")).toBeInTheDocument();
+        if (dazeemSide === "p1") {
+          // Same margin: the Arena first, then the holder.
+          expect(holder()!.parentElement).toBe(felixZones);
+          expect(arenaPanel.compareDocumentPosition(holder()!)).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING,
+          );
+        } else {
+          expect(holder()!.parentElement!.className).toContain("outerZonesP2");
+        }
       },
     );
 

@@ -164,6 +164,9 @@ frontend/e2e/
       - **Added in QA:** with Dazeem on Player 2, the Arena's out-of-flow
         slot covered the holder, so `.arenaSlot` gains `.arenaSlotLeft`
         and hangs left of the gold bar instead (spec Layout updated).
+        **Later (v0.17.1):** the holder and the Arena both moved to the
+        margin outside their owner's team column, the Arena first, so
+        `.arenaSlotLeft` is gone (spec Layout).
 - [x] M13. Spec Open Item: the marker's size at every zoom step (100%,
       150%, 200%, 250%). With `1 / sqrt(zoom)` it should read as covering
       a path at 100% without hiding whole spaces at 250%. Switch to the

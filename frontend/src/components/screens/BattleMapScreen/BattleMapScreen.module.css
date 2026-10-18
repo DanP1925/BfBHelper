@@ -50,38 +50,37 @@
   gap: 16px;
 }
 
-/* The row under the board: the gold piles, and the Arena to their right
-   when it's shown (intent/14). The side columns are per team, and the
-   Arena is shared. */
-.bottomRow {
-  position: relative;
-}
-
-/* Out of flow, so the Arena appearing or filling up never moves the
-   board, the gold bar or the side columns: it's taller than the gold bar
-   and, with the bar, wider than the board. Top-aligned with the bar, it
-   hangs into the empty space below the right side column. */
-.arenaSlot {
-  position: absolute;
-  top: 0;
-  left: calc(100% + 28px);
-}
-
-/* When Dazeem's Ice Wall holder (intent/16) sits under Player 2's
-   column, the Arena would cover it, so it hangs to the left of the gold
-   bar instead, under Player 1's column. */
-.arenaSlotLeft {
-  left: auto;
-  right: calc(100% + 28px);
-}
-
 /* Status panel on top, respawn area below it (per the mockup) — one
    narrow column per side, so the board gets the width. */
 .sideGroup {
+  position: relative;
   width: 170px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Felix's Arena (intent/14) and Dazeem's Ice Wall holder (intent/16),
+   hung out of flow into the empty margin outside their team's column,
+   top-aligned with it. Nothing else lives there, so they never cover a
+   column however long it runs, and nothing moves when they appear. At
+   1280x800 that margin is 170px, so they're sized to the Arena's two
+   tokens. */
+.outerZones {
+  position: absolute;
+  top: 0;
+  width: 142px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.outerZonesP1 {
+  right: calc(100% + 16px);
+}
+
+.outerZonesP2 {
+  left: calc(100% + 16px);
 }
 
 .board {

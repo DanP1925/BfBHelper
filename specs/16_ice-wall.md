@@ -261,37 +261,32 @@ export function iceWallOwnerSide(state: BattleState): PlayerId | null;
     `.boardTransform`.
   - Computes `const iceWallSide = iceWallOwnerSide(battleState)`. When
     it isn't `null`, it renders `<IceWallHolder>` in that side's
-    `.sideGroup` and, when `battleState.iceWall !== null`, the on-board
-    `<IceWallMarker>`.
-- **Placement** (canvas, UI Design Reference): **in Dazeem's own team
-  column,** the `.sideGroup` holding his team's `MapTeamStatusPanel` and
-  `RespawnAreaStrip`, below the respawn area. The wall is Dazeem's, and
-  the side columns are already per team; the row under the board stays
-  for shared things (the gold piles and the Arena).
+    `.outerZones` box and, when `battleState.iceWall !== null`, the
+    on-board `<IceWallMarker>`.
+- **Placement** (decided 2026-10-18, replacing the in-column spot below):
+  **in the empty margin outside Dazeem's team column**, top-aligned with
+  it: left of Player 1's column or right of Player 2's. It's the same
+  out-of-flow `.outerZones` box as Felix's Arena (spec 14), hung from
+  the `.sideGroup` (`position: absolute; top: 0`, `right` or
+  `left: calc(100% + 16px)`, 142px wide). When both heroes are on one
+  team, the Arena comes first and the holder below it. The wall is
+  Dazeem's, so it stays on his team's side.
 - **The team doesn't move** (decided 2026-10-18). Player 1 stays on
-  the left and Player 2 on the right, whichever side Dazeem is on. In
-  his column, the status panel and respawn area stay exactly where they
-  are without the holder, and the holder only adds space below them.
-  `BattleMapScreen.module.css`'s `.row` already top-aligns
-  (`align-items: flex-start`), so the holder can sit in normal flow at
-  the end of the `.sideGroup`. If `.row` is ever centred, the holder has
-  to hang out of flow below the column instead, as the canvas draws it.
-- **The Arena flips left when the holder is on the right** (decided
-  2026-10-18, found in QA). The Arena's slot (spec 14) hangs out of flow
-  to the right of the gold bar, into the space under Player 2's column,
-  so with Dazeem on Player 2 it covered the holder. When
-  `iceWallSide === "p2"`, `.arenaSlot` also gets `.arenaSlotLeft`
-  (`right: calc(100% + 28px)`), so it hangs to the left of the gold bar,
-  under Player 1's column. Nothing changes when Dazeem is on Player 1 or
-  wasn't drafted. The canvas's "Battle Map — Arena" artboard has Dazeem
-  on Player 2 but still draws the Arena on the right; the build wins.
-- **Height at 1280x800.** The holder adds about 75px (label, gap and a
-  48px box) to one side column. The board is `min(70vh, 700px)`, about
-  560px there, and a column with a busy status panel and the respawn
-  area is already close to that, so this column could end up taller
-  than the board (Open Items). The holder appears only when Dazeem is
-  drafted, which holds for the whole battle, so unlike the Arena it never
-  toggles mid-game.
+  the left and Player 2 on the right, whichever side Dazeem is on. Out
+  of flow, the holder never moves his column's status panel or respawn
+  area.
+- **Superseded: in the column, with the Arena flipping left** (2026-10-18,
+  first build). The holder first sat in flow at the end of Dazeem's
+  `.sideGroup`, below the respawn area, and the Arena (then beside the
+  gold bar, under Player 2's column) flipped to the left side when the
+  holder was on the right. At 1280x800 that pushed the holder below the
+  fold in long games, and the Arena still covered a long column (BACKLOG
+  follow-up). Moving both to the outer margin fixed both.
+- **Height at 1280x800.** The holder no longer adds to a column's
+  height. In the margin it ends by about y=290 even below the Arena,
+  with no scroll. The holder appears only when Dazeem is drafted, which
+  holds for the whole battle, so unlike the Arena it never toggles
+  mid-game.
 - **Not shown** on the Battle Board, `ResultsScreen`, `WinScreen` or in
   `MapTeamStatusPanel` (intent's Scope: "Map only").
 
@@ -329,6 +324,10 @@ On the same canvas as intents 01-15 ("BfbHelper — App Flow", version
 - **It hangs below the column.** The canvas centres the side columns
   against the board, so the holder is drawn out of flow, and Player 2's
   panel and respawn area stay level with Player 1's.
+- **Superseded** (2026-10-18): the build hangs the holder in the margin
+  outside Dazeem's column instead, below the Arena when Felix is on the
+  same team (Layout). The look is unchanged; the artboard wasn't updated,
+  and the build wins.
 
 This is a prototype for visual direction only, the same caveat as
 earlier intents' references. It settles the marker's colour, icon and
