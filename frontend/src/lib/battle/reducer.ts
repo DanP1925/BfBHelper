@@ -18,6 +18,7 @@ import {
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
 import type { GoldPileSpaceId } from "../../data/mapSpaces";
 import type {
+  ArtifactField,
   BattleState,
   BattleTeamState,
   CountedTokenField,
@@ -45,6 +46,13 @@ export type BattleAction =
       heroId: HeroId;
       field: OnOffTokenField;
       value: boolean;
+    }
+  | {
+      type: "SET_HERO_ARTIFACT";
+      side: PlayerId;
+      heroId: HeroId;
+      field: ArtifactField;
+      faceUp: boolean;
     }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: HeroPosition }
@@ -123,6 +131,13 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
     case "SET_HERO_ON_OFF_TOKEN":
       return setHeroField(state, action.side, action.heroId, action.field, action.value);
 
+    // Manual only (intent/17): nothing else in this reducer ever flips an
+    // Artifact — not an enemy hit (HP down), Runika's defeat (HP to 0), a
+    // respawn (a position change) or a passed round. No Runika check: only
+    // the UI limits the controls to her (ARTIFACT_OWNER).
+    case "SET_HERO_ARTIFACT":
+      return setHeroField(state, action.side, action.heroId, action.field, action.faceUp);
+
     case "SET_STRUCTURE_HP": {
       const team = state[action.side];
       const nextHp = clampStructureHp(action.value, structureCeiling(action.slot));
@@ -190,7 +205,8 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
  * loadBattleState's own validator would then reject as corrupt on the
  * very next reload. Every hero starts with no +1 Attack tokens,
  * unconfused, standing (not immobilized), unmarked, with no Shield
- * tokens, no Stone tokens, no Chill tokens and no Favored Enemy. */
+ * tokens, no Stone tokens, no Chill tokens, no Favored Enemy, and
+ * Artifacts face-up (only Runika's are ever read, intent/17). */
 export function createInitialHeroState(hero: Hero): HeroBattleState {
   return {
     hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL),
@@ -203,6 +219,9 @@ export function createInitialHeroState(hero: Hero): HeroBattleState {
     stoneTokens: 0,
     chillTokens: 0,
     favoredEnemy: false,
+    battleFistFaceUp: true,
+    autoDeflectorFaceUp: true,
+    shieldAmuletFaceUp: true,
   };
 }
 
@@ -235,7 +254,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 13,
+    schemaVersion: 14,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

@@ -179,6 +179,14 @@ when the hero who uses them is in the battle, on either team.
   out), flipped by hand. Text or simple icons for now, since there's no
   Artifact art in the repo. No tokens on Runika's cards. Needs Artifact
   toggles (hero-specific).
+  **Done:** scoped in `intent/17_runika-artifacts.md`, built in v0.17.0.
+  Three always-shown icon pills on Runika's card, between the level row
+  and the token row (not in the "+" picker), in violet-blue. A tap flips
+  one, and face-down ones are greyed and dashed. The Map's status panel
+  shows her face-up ones. Each tooltip gives the Artifact's bonus (Battle
+  Fist +1 Attack, Auto Deflector +1 defense vs melee, Shield Amulet +1
+  defense vs magic), which is shown but never applied. Nothing flips
+  automatically.
 - **Sedusa (Gorgon):** *Stony Glare* gives a target enemy in Sedusa's space a
   Stone token at the end of each Action Phase; a hero with 3+ Stone is
   immediately defeated. Stone is hero-specific, counted per hero, one tap per
@@ -211,7 +219,7 @@ Hero-specific (only when that hero is in the battle):
 | Ice Wall (done, v0.16.0) | single marker on a path between spaces | Dazeem |
 | "To the Pain" Arena (done, v0.14.0) | isolated space for Felix + one enemy | Felix |
 | Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
-| Artifacts (x3) | named on/off toggles on Runika | Runika |
+| Artifacts (x3) (done, v0.17.0) | named on/off toggles on Runika | Runika |
 | Stone (done, v0.12.0) | count per hero | Sedusa |
 
 Need nothing hero-specific: Vladiator, Sterling, Ceralin, Motley, Ken Obi.
@@ -234,6 +242,11 @@ apply any rule automatically (expiry, defeat, damage absorption).
 - [ ] **Review every token's display again once all tokens exist.** Do this
   after the hero-specific tokens are built, Runika's Artifacts last. Added
   2026-10-11, updated 2026-10-15.
+  **Can start now** (2026-10-18): Artifacts shipped in v0.17.0, so every
+  hero-specific token exists. Bear Trap is a map marker, not a card token.
+  Intent 17's QA found Runika's heaviest card (all eight tokens plus the
+  artifact row) scrolls the Board by 12px at 1280x800, which was accepted
+  for now.
   Intent 09 already redesigned the Board's token row and settled the state
   shape, but each later token is still designed on its own. So once they all
   exist, review them together for one consistent look and layout:
@@ -251,6 +264,7 @@ apply any rule automatically (expiry, defeat, damage absorption).
   - **The Map**, read-only for now: does the status panel still read well,
     and is editing there worth adding?
   - **Runika's Artifacts:** where they sit on her card, next to the row.
+    They're on their own line above it for now (intent 17).
   - **State shape** (spec 09): plain fields per token, plus a small
     visibility table for hero-specific tokens. Is a fuller token registry
     worth it by then?

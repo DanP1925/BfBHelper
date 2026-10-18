@@ -129,6 +129,7 @@ export default function Home() {
             counted: battle.setHeroCountedToken,
             onOff: battle.setHeroOnOffToken,
           }}
+          setHeroArtifact={battle.setHeroArtifact}
           setStructureHp={battle.setStructureHp}
           onNewDraft={draft.returnToStart}
           onEndBattle={() => {

@@ -81,29 +81,29 @@ frontend/e2e/
 
 ### Data & state layer
 
-- [ ] M1. `lib/battle/types.ts`: `HeroBattleState` += `battleFistFaceUp`,
+- [x] M1. `lib/battle/types.ts`: `HeroBattleState` += `battleFistFaceUp`,
       `autoDeflectorFaceUp` and `shieldAmuletFaceUp: boolean` (one shared
       doc comment from the spec: `true` is face-up, every hero has them,
       only Runika's are read, never flipped on a hit, Rest, respawn or
       defeat). += `ArtifactField = (typeof ARTIFACT_FIELDS)[number]`.
       `BattleState.schemaVersion: 14`.
-- [ ] M2. `lib/battle/constants.ts`: += `ARTIFACT_OWNER: HeroId =
+- [x] M2. `lib/battle/constants.ts`: += `ARTIFACT_OWNER: HeroId =
       "runika"` and `ARTIFACT_FIELDS` (in Battle Fist, Auto Deflector,
       Shield Amulet order, `as const satisfies readonly
       BooleanHeroField[]`), next to `ON_OFF_TOKEN_FIELDS`, with the spec's
       doc comments.
-- [ ] M3. `lib/battle/reducer.ts`: += `SET_HERO_ARTIFACT { side, heroId,
+- [x] M3. `lib/battle/reducer.ts`: += `SET_HERO_ARTIFACT { side, heroId,
       field, faceUp }`, one `setHeroField(..., field, faceUp)` call, with
       a manual-only comment (no flip on a hit, Rest, respawn or defeat; no
       Runika check, since only the UI limits it).
       `createInitialHeroState` returns all three `true` (doc comment adds
       "Artifacts face-up"). `createInitialBattleState` writes
       `schemaVersion: 14`.
-- [ ] M4. `lib/useBattle.ts`: += `setHeroArtifact(side, heroId, field,
+- [x] M4. `lib/useBattle.ts`: += `setHeroArtifact(side, heroId, field,
       faceUp)`, a `useCallback` dispatching `SET_HERO_ARTIFACT`, in the
       `UseBattleResult` type with the spec's doc comment and in the returned
       object.
-- [ ] M5. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
+- [x] M5. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
       14`.
       - += `LegacyHeroBattleStateV13 = Omit<HeroBattleState,
         ArtifactField>`, and `LegacyHeroBattleStateV11` derives from it.
@@ -113,7 +113,7 @@ frontend/e2e/
         which `V13` inherits. `V13`'s doc comment says it's only the
         source for `battleMigrations[13]`.
       - += `PersistedBattleStateV14`.
-- [ ] M6. `lib/persistence/storage.ts`:
+- [x] M6. `lib/persistence/storage.ts`:
       - `hasValidBattleTeamShape` += a loop over `ARTIFACT_FIELDS`
         (boolean), and its doc comment adds "each Artifact a boolean".
       - += `upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14,
@@ -122,13 +122,13 @@ frontend/e2e/
         upgradeV13ToV14`.
       - `saveBattleState`, `isValidPersistedBattleState` and the import
         use `PersistedBattleStateV14`.
-- [ ] M7. `app/page.tsx`: `BattleBoardScreen` gets
+- [x] M7. `app/page.tsx`: `BattleBoardScreen` gets
       `setHeroArtifact={battle.setHeroArtifact}`.
       `screens/BattleBoardScreen`: += the `setHeroArtifact` prop, passed
       to each `BattleTeamPanel` as `onHeroArtifactChange={(heroId, field,
       faceUp) => setHeroArtifact(team.side, heroId, field, faceUp)}`. The
       Map gets no setter.
-- [ ] M8. Fixtures:
+- [x] M8. Fixtures:
       - `src/test/heroState.ts`'s `NO_TOKENS` gains the three flags as
         `true`, and its doc comment says the Artifacts are in there,
         face-up.
@@ -136,7 +136,7 @@ frontend/e2e/
         finds them).
       - `storage.test.ts`'s older-schema `withoutHeroFields` calls also
         strip the three fields.
-- [ ] M9. Data-layer tests:
+- [x] M9. Data-layer tests:
       - **reducer:** `SET_HERO_ARTIFACT` per field (face-down and back up,
         unknown-hero and same-value no-ops, works on a non-Runika hero);
         `SET_HERO_HP` to 0, `SET_HERO_POSITION` (out of the respawn area,
@@ -157,16 +157,17 @@ frontend/e2e/
 
 ### UI
 
-- [ ] M10. `app/globals.css`: += `--color-artifact: #7d9cf0`, with a
+- [x] M10. `app/globals.css`: += `--color-artifact: #7d9cf0`, with a
       comment like `--color-favored-enemy`'s (the rulebook tokens' blue,
       as a periwinkle bluer and more saturated than `--color-immobilize`,
-      bluer and darker than `--color-chill`).
-- [ ] M11. `components/ArtifactToggle/BattleFistIcon.tsx`,
+      bluer and darker than `--color-chill`). **Shipped as `#8f8cf5`**
+      after M18; the comment says violet-blue, apart from Immobilize.
+- [x] M11. `components/ArtifactToggle/BattleFistIcon.tsx`,
       `AutoDeflectorIcon.tsx`, `ShieldAmuletIcon.tsx` (new): the canvas's
       paths from spec 17's Open Items, a 16px viewBox with a 1.5
       `currentColor` stroke, `aria-hidden`, and a `size` prop (12px on
       the Board, 13px on the Map).
-- [ ] M12. `components/ArtifactToggle/ArtifactToggle.tsx` + `.module.css`
+- [x] M12. `components/ArtifactToggle/ArtifactToggle.tsx` + `.module.css`
       (new), with the spec's props (`faceUp`, `onChange`, `icon`,
       `summary`, `heroName`):
       - A `<button>` in `TokenToggle`'s 20px pill shape.
@@ -180,12 +181,12 @@ frontend/e2e/
         a `--color-muted` icon and 0.6 opacity, rising to 1 on hover.
       - The focus outline is in the accent. No transition under
         `prefers-reduced-motion`.
-- [ ] M13. `components/artifacts.ts` (new): `ArtifactLook`, `ARTIFACTS`
+- [x] M13. `components/artifacts.ts` (new): `ArtifactLook`, `ARTIFACTS`
       (field, name, bonus, Icon, in `ARTIFACT_FIELDS` order) and
       `artifactSummary`, with the spec's doc comments and bonus text
       ("+1 Attack", "+1 defense vs melee attacks", "+1 defense vs magic
       attacks").
-- [ ] M14. `components/HeroCard/HeroCard.tsx` + `.module.css`:
+- [x] M14. `components/HeroCard/HeroCard.tsx` + `.module.css`:
       - The battle variant += `artifacts?: HeroCardArtifacts` (exported
         type, keyed by `ArtifactField`).
       - When it's passed, render `.artifactRow` between `.levelRow` and
@@ -195,12 +196,12 @@ frontend/e2e/
         `artifactSummary(artifact)`.
       - The row is flex, has a 4px gap and doesn't wrap.
       - The token row and picker are untouched.
-- [ ] M15. `components/BattleTeamPanel/BattleTeamPanel.tsx`: +=
+- [x] M15. `components/BattleTeamPanel/BattleTeamPanel.tsx`: +=
       `onHeroArtifactChange` prop. For `hero.id === ARTIFACT_OWNER` only,
       pass `artifacts` built from `heroState` (`faceUp:
       heroState[field]`, `onChange` → `onHeroArtifactChange(hero.id,
       field, faceUp)`). No HP or position gate.
-- [ ] M16. `components/MapTeamStatusPanel/MapTeamStatusPanel.tsx`:
+- [x] M16. `components/MapTeamStatusPanel/MapTeamStatusPanel.tsx`:
       - For `hero.id === ARTIFACT_OWNER`, the face-up `ARTIFACTS` render
         after the `BATTLE_TOKENS` icons, each as a `.token` span:
         - `--token-accent: var(--color-artifact)`;
@@ -209,20 +210,25 @@ frontend/e2e/
         - `title` = the same plus " (face-up)".
       - The token line renders when the hero holds a token **or** has a
         face-up Artifact. Update its comment to say so.
-- [ ] M17. Check that `WinScreen`, `ResultsScreen`, `MapToken` and
+- [x] M17. Check that `WinScreen`, `ResultsScreen`, `MapToken` and
       `RespawnAreaStrip` need no edit (the spec's claim), and note any
-      that did.
-- [ ] M18. Spec Open Item: does `--color-artifact` `#7d9cf0` read apart
+      that did. **None needed an edit.**
+- [x] M18. Spec Open Item: does `--color-artifact` `#7d9cf0` read apart
       from Immobilize's ice blue and Chill's cyan on the same card, and
       from P2's teal, at 1280x800? Decide in the browser, and adjust it on
-      the canvas and in the spec if not.
-- [ ] M19. Spec Open Item: are the three icons legible at 12px on the
+      the canvas and in the spec if not. **Changed to `#8f8cf5`:**
+      `#7d9cf0` read as nearly the same blue as Immobilize's chip. The
+      violet-blue reads apart from Immobilize, Chill, Confuse and P2's
+      teal. Spec and canvas (version 89) updated.
+- [x] M19. Spec Open Item: are the three icons legible at 12px on the
       Board and 13px on the Map, and told apart at a glance, face-down
       too? Simplify a path that muddies, and update the spec and canvas.
-- [ ] M20. Spec Open Item: does the face-down look (dashed, muted, 0.6
+      **Kept as drawn.** The Auto Deflector orb is the weakest at 12px but
+      still tells apart.
+- [x] M20. Spec Open Item: does the face-down look (dashed, muted, 0.6
       opacity) read as "greyed out" yet still findable as a tap target at
-      1280x800? Decide in the browser, and update the spec.
-- [ ] M21. Spec Open Item: the Board at 1280x800 with Runika in the
+      1280x800? Decide in the browser, and update the spec. **Kept.**
+- [x] M21. Spec Open Item: the Board at 1280x800 with Runika in the
       heaviest case (an ally of Cyrus and an enemy of Kunoichi, Sedusa,
       Dazeem and Boreas):
       - She holds +1 Attack ×9, Confuse, Immobilize, Death Mark, Shield
@@ -232,11 +238,14 @@ frontend/e2e/
       - Her Map token line, with those tokens and three face-up
         Artifacts, fits the 170px panel.
 
-      Decide in the browser, and update the spec.
+      Decide in the browser, and update the spec. **Four lines, but the
+      Board's scroll area overflows by 12px**, stepper open or closed.
+      Accepted (the case needs five specific heroes; the page still fits,
+      and the monitor doesn't scroll). The Map line wraps to two and fits.
 
 ### Tests & verification
 
-- [ ] M22. Component and screen tests:
+- [x] M22. Component and screen tests:
       - **`ArtifactToggle`:**
         - `aria-pressed` follows `faceUp`;
         - the label is fixed, with the name and bonus;
@@ -261,7 +270,7 @@ frontend/e2e/
         - no icons for a non-Runika hero even though their flags are
           `true`.
       - **`WinScreen`:** no artifact row on the cards.
-- [ ] M23. `e2e/runika-artifacts.spec.ts` (new):
+- [x] M23. `e2e/runika-artifacts.spec.ts` (new):
       - Draft Runika. Her card shows three face-up Artifacts, and no
         other card has any.
       - Flip Auto Deflector face-down. It's greyed and drops off her Map
@@ -270,12 +279,12 @@ frontend/e2e/
       - It stays face-down when her HP goes to 0 and when she's moved
         out of the respawn area.
       - Flip it back up, and it shows on the Map again.
-- [ ] M24. `tsc --noEmit`, ESLint, and the full Vitest and Playwright
+- [x] M24. `tsc --noEmit`, ESLint, and the full Vitest and Playwright
       suites are green.
-- [ ] M25. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M25. Manual QA at 1280x800 (`/qa-screens`):
       - The artifact row is only on Runika's card, on either team, and the
         face-up and face-down looks read clearly (M18, M20). The focus
-        outline is periwinkle.
+        outline is in the accent.
       - The icons are readable at 12px and 13px (M19), and tooltips show
         the name, bonus and state.
       - Board and Map fit with Runika's heaviest card (M21).
@@ -286,7 +295,15 @@ frontend/e2e/
       - An existing schema-13 battle upgrades in place with all three
         face-up, keeping its tokens, Arena positions and Ice Wall.
       - New Draft resets them.
-- [ ] M26. Close out the intent:
+
+      **Done:** a seeded heaviest-case game was checked in the browser at
+      1280x800 and 2560x1440, covering the row's placement, both looks,
+      the accent (now violet-blue, M18), the icons and the fit. The
+      schema-13 upgrade and the New Draft reset are covered by the
+      storage and `useBattle` tests, not re-checked by hand. Defeated
+      dimming comes from the row's existing `.dimmed`, since the icons
+      sit inside it.
+- [x] M26. Close out the intent:
       - `npm version minor --no-git-tag-version` (→ 0.17.0).
       - In `BACKLOG.md`, mark Artifacts done in Runika's entry and in the
         hero-specific table, linking intent 17 and v0.17.0, as intent 15

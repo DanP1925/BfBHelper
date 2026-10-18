@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createInitialBattleState } from "../../../lib/battle/reducer";
-import type { BattleState } from "../../../lib/battle/types";
+import type { BattleState, HeroBattleState } from "../../../lib/battle/types";
 import type { Hero } from "../../../lib/draft/types";
 import { ARENA_POSITION } from "../../../lib/map/constants";
 import { createFreshGoldPiles, MAP_SPACE_IDS } from "../../../data/mapSpaces";
@@ -487,6 +487,87 @@ describe("BattleMapScreen", () => {
     expect(chill.compareDocumentPosition(favored) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  describe("Runika's Artifacts (intent/17)", () => {
+    const withRunika = [...p2Heroes, makeHero("runika", "Runika")];
+
+    function renderWithRunika(runika: Partial<HeroBattleState>) {
+      const base = makeBattleState();
+      render(
+        <BattleMapScreen
+          p1Heroes={p1Heroes}
+          p2Heroes={withRunika}
+          battleState={{
+            ...base,
+            p2: {
+              ...base.p2,
+              heroes: { ...base.p2.heroes, runika: { hp: 9, level: 1, ...NO_TOKENS, ...runika } },
+              heroPositions: { ...base.p2.heroPositions, runika: null },
+            },
+          }}
+          winner={null}
+          setHeroPosition={() => {}}
+          setGoldPile={() => {}}
+          onNewDraft={() => {}}
+          onEndBattle={() => {}}
+          onSwitchView={() => {}}
+          {...fixedProps}
+        />,
+      );
+    }
+
+    it("shows an icon per face-up Artifact after her tokens, and none for face-down ones", () => {
+      renderWithRunika({ attackTokens: 2, autoDeflectorFaceUp: false });
+
+      const fist = screen.getByLabelText("Battle Fist: +1 Attack");
+      expect(fist).toHaveAttribute("title", "Battle Fist: +1 Attack (face-up)");
+      expect(fist.style.getPropertyValue("--token-accent")).toBe("var(--color-artifact)");
+      expect(
+        screen.getByLabelText("Shield Amulet: +1 defense vs magic attacks"),
+      ).toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Auto Deflector/)).not.toBeInTheDocument();
+      const attack = screen.getByLabelText("2 +1 Attack tokens");
+      expect(attack.compareDocumentPosition(fist) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("gives her a token line for face-up Artifacts alone", () => {
+      renderWithRunika({});
+      expect(screen.getAllByLabelText(/^(Battle Fist|Auto Deflector|Shield Amulet):/)).toHaveLength(
+        3,
+      );
+    });
+
+    it("drops the line when all three are face-down and she holds nothing", () => {
+      renderWithRunika({
+        battleFistFaceUp: false,
+        autoDeflectorFaceUp: false,
+        shieldAmuletFaceUp: false,
+      });
+      expect(
+        screen.queryByLabelText(/^(Battle Fist|Auto Deflector|Shield Amulet):/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows no Artifacts for other heroes, though their flags are face-up too", () => {
+      render(
+        <BattleMapScreen
+          p1Heroes={p1Heroes}
+          p2Heroes={p2Heroes}
+          battleState={makeBattleState()}
+          winner={null}
+          setHeroPosition={() => {}}
+          setGoldPile={() => {}}
+          onNewDraft={() => {}}
+          onEndBattle={() => {}}
+          onSwitchView={() => {}}
+          {...fixedProps}
+        />,
+      );
+      expect(
+        screen.queryByLabelText(/^(Battle Fist|Auto Deflector|Shield Amulet):/),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('shows "End Battle" in the menu only once a winner exists', () => {
     const { rerender } = render(
       <BattleMapScreen
@@ -610,7 +691,7 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 13,
+      schemaVersion: 14,
       initiative: "p1",
       iceWall: null,
       p1: {

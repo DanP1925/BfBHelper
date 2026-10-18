@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { heroSpecificTokenSide } from "../../../lib/battle/heroSpecificTokens";
 import type {
+  ArtifactField,
   BattleState,
   CountedTokenField,
   OnOffTokenField,
@@ -28,6 +29,8 @@ type BattleBoardScreenProps = {
   setHeroLevel: (side: PlayerId, heroId: HeroId, value: number) => void;
   /** useBattle's setter for every token, keyed by stored field. */
   setHeroToken: BoardTokenSetters;
+  /** useBattle's setter for Runika's Artifacts (intent/17). */
+  setHeroArtifact: (side: PlayerId, heroId: HeroId, field: ArtifactField, faceUp: boolean) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
@@ -77,6 +80,7 @@ export function BattleBoardScreen({
   setHeroHp,
   setHeroLevel,
   setHeroToken,
+  setHeroArtifact,
   setStructureHp,
   onNewDraft,
   onEndBattle,
@@ -126,6 +130,9 @@ export function BattleBoardScreen({
               onHeroHpChange={(heroId, value) => setHeroHp(team.side, heroId, value)}
               onHeroLevelChange={(heroId, value) => setHeroLevel(team.side, heroId, value)}
               onHeroTokenChange={teamTokenSetters(team.side, rosters, setHeroToken)}
+              onHeroArtifactChange={(heroId, field, faceUp) =>
+                setHeroArtifact(team.side, heroId, field, faceUp)
+              }
               onStructureHpChange={(slot, value) => setStructureHp(team.side, slot, value)}
               openTokenKey={openTokenKey}
               onOpenTokenKeyChange={setOpenTokenKey}

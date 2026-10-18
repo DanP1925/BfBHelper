@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
 import type {
+  ArtifactField,
   BattleState,
   CountedTokenField,
   HeroPosition,
@@ -37,6 +38,9 @@ export type UseBattleResult = {
     field: OnOffTokenField,
     value: boolean,
   ) => void;
+  /** Flips one of Runika's Artifacts (intent/17), named by its stored
+   * field. `faceUp: false` is face-down. */
+  setHeroArtifact: (side: PlayerId, heroId: HeroId, field: ArtifactField, faceUp: boolean) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   /** Also moves a hero into or out of the Arena (intent/14): its position
    * is just another `HeroPosition`. */
@@ -168,6 +172,17 @@ export function useBattle(
     [],
   );
 
+  const setHeroArtifact = useCallback(
+    (side: PlayerId, heroId: HeroId, field: ArtifactField, faceUp: boolean) => {
+      setState((prev) =>
+        prev === null
+          ? prev
+          : battleReducer(prev, { type: "SET_HERO_ARTIFACT", side, heroId, field, faceUp }),
+      );
+    },
+    [],
+  );
+
   const setStructureHp = useCallback(
     (side: PlayerId, slot: keyof StructuresState, value: number) => {
       setState((prev) =>
@@ -209,6 +224,7 @@ export function useBattle(
     setHeroLevel,
     setHeroCountedToken,
     setHeroOnOffToken,
+    setHeroArtifact,
     setStructureHp,
     setHeroPosition,
     setGoldPile,

@@ -1,8 +1,10 @@
 import type { CSSProperties } from "react";
 import type { Hero, PlayerId } from "../../lib/draft/types";
+import { ARTIFACT_OWNER } from "../../lib/battle/constants";
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, HeroBattleState } from "../../lib/battle/types";
+import { ARTIFACTS, artifactSummary } from "../artifacts";
 import { BATTLE_TOKENS, type BattleToken } from "../battleTokens";
 import { tokenCountLabel, tokenTitle } from "../TokenChip/TokenChip";
 import styles from "./MapTeamStatusPanel.module.css";
@@ -53,6 +55,11 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
           const heroState = team.heroes[hero.id] ?? createInitialHeroState(hero);
           const { hp } = heroState;
           const held = BATTLE_TOKENS.filter((token) => holds(heroState, token));
+          // Every hero stores the flags, but only Runika's are shown (intent/17).
+          const faceUpArtifacts =
+            hero.id === ARTIFACT_OWNER
+              ? ARTIFACTS.filter((artifact) => heroState[artifact.field])
+              : [];
           const isDefeated = hp === 0;
           return (
             <div
@@ -73,11 +80,13 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                 {hp}
               </span>
               {/* Read-only token line (intents 06-11), only while the hero
-                  holds a token, in BATTLE_TOKENS' order. Its own line inside
-                  the row, so names never truncate for it, and `.dimmed`
-                  covers it. No roster check for hero-specific tokens: only
-                  the Board's gated controls set them. */}
-              {held.length > 0 && (
+                  holds a token or (Runika, intent/17) has a face-up
+                  Artifact: tokens in BATTLE_TOKENS' order, then her face-up
+                  Artifacts. Its own line inside the row, so names never
+                  truncate for it, and `.dimmed` covers it. No roster check
+                  for hero-specific tokens: only the Board's gated controls
+                  set them. */}
+              {(held.length > 0 || faceUpArtifacts.length > 0) && (
                 <span className={styles.tokenLine}>
                   {held.map((token) => {
                     // A counted token shows its icon and count, an on/off one its icon.
@@ -100,6 +109,17 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
                       </span>
                     );
                   })}
+                  {faceUpArtifacts.map((artifact) => (
+                    <span
+                      key={artifact.field}
+                      className={styles.token}
+                      style={{ "--token-accent": "var(--color-artifact)" } as CSSProperties}
+                      aria-label={artifactSummary(artifact)}
+                      title={`${artifactSummary(artifact)} (face-up)`}
+                    >
+                      <artifact.Icon size={13} />
+                    </span>
+                  ))}
                 </span>
               )}
             </div>

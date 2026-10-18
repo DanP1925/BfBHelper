@@ -116,6 +116,30 @@ describe("WinScreen", () => {
     expect(screen.queryByLabelText("Favored Enemy")).not.toBeInTheDocument();
   });
 
+  it("shows no Artifacts on Runika's card (intent/17)", () => {
+    const base = makeBattleState();
+    render(
+      <WinScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={[...p2Heroes, makeHero("runika", "Runika")]}
+        battleState={{
+          ...base,
+          p2: {
+            ...base.p2,
+            heroes: {
+              ...base.p2.heroes,
+              runika: { hp: 9, level: 1, ...NO_TOKENS, autoDeflectorFaceUp: false },
+            },
+          },
+        }}
+        winner="p2"
+        onNewDraft={() => {}}
+      />,
+    );
+    expect(screen.queryByRole("group", { name: "Runika's Artifacts" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Battle Fist/ })).not.toBeInTheDocument();
+  });
+
   it("renders a 'Player 2 Wins!' heading when p2 wins", () => {
     render(
       <WinScreen

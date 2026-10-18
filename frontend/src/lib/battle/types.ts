@@ -1,7 +1,7 @@
 import type { HeroId, PlayerId } from "../draft/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 import type { ARENA_POSITION } from "../map/constants";
-import type { ON_OFF_TOKEN_FIELDS } from "./constants";
+import type { ARTIFACT_FIELDS, ON_OFF_TOKEN_FIELDS } from "./constants";
 
 /** Where a hero is (intents 04 and 14): a board space, the Arena
  * (intent/14, off the board's spaces), or `null` for its team's respawn
@@ -62,6 +62,13 @@ export type HeroBattleState = {
    * (BATTLE_TOKENS' oneHolder). Changed only by hand: never cleared on
    * defeat (either hero's), respawn or a new round. */
   favoredEnemy: boolean;
+  /** Runika's Artifacts (intent/17): `true` is face-up, `false`
+   * face-down. Every hero has them, all face-up, so the shape stays one;
+   * only Runika's card and Map line read them (ARTIFACT_OWNER). Changed
+   * only by hand: never flipped on a hit, Rest, respawn or defeat. */
+  battleFistFaceUp: boolean;
+  autoDeflectorFaceUp: boolean;
+  shieldAmuletFaceUp: boolean;
 };
 
 /** A per-hero counted token's stored field (intents 06, 11, 12, 13). Each
@@ -77,6 +84,11 @@ export type CountedTokenField = keyof Pick<
  * action (SET_HERO_ON_OFF_TOKEN) and one useBattle setter. */
 export type OnOffTokenField = (typeof ON_OFF_TOKEN_FIELDS)[number];
 
+/** One of Runika's Artifacts' stored fields (intent/17), read from
+ * ARTIFACT_FIELDS. They share one reducer action (SET_HERO_ARTIFACT) and
+ * one useBattle setter. */
+export type ArtifactField = (typeof ARTIFACT_FIELDS)[number];
+
 export type BattleTeamState = {
   gold: number;
   heroes: Record<HeroId, HeroBattleState>;
@@ -91,7 +103,7 @@ export type BattleTeamState = {
 export type IceWallPosition = { xPct: number; yPct: number };
 
 export type BattleState = {
-  schemaVersion: 13;
+  schemaVersion: 14;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

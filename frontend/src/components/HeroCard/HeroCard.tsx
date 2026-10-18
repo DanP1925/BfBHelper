@@ -6,7 +6,9 @@ import {
   HERO_MAX_LEVEL,
   HERO_STARTING_LEVEL,
 } from "../../lib/battle/constants";
-import type { CountedTokenField, OnOffTokenField } from "../../lib/battle/types";
+import type { ArtifactField, CountedTokenField, OnOffTokenField } from "../../lib/battle/types";
+import { ARTIFACTS, artifactSummary } from "../artifacts";
+import { ArtifactToggle } from "../ArtifactToggle/ArtifactToggle";
 import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { TokenChip } from "../TokenChip/TokenChip";
@@ -50,7 +52,17 @@ type HeroCardProps =
        * left out (a hero-specific token this hero can't carry) gets no chip
        * and no picker option. Only the Battle Board passes it. */
       tokens?: HeroCardTokens;
+      /** Runika's Artifacts (intent/17), keyed by field. The artifact row
+       * renders only when this is provided: the Board passes it on Runika's
+       * card alone. */
+      artifacts?: HeroCardArtifacts;
     });
+
+/** Runika's three Artifacts' faces and setters (intent/17). */
+export type HeroCardArtifacts = Record<
+  ArtifactField,
+  { faceUp: boolean; onChange: (faceUp: boolean) => void }
+>;
 
 /** A battle card's token controls, one per stored field (intents 06-11). */
 export type HeroCardTokens = Partial<
@@ -168,7 +180,7 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { hp, level, onHpChange, onLevelChange, tokenPicker, tokens = {} } = props;
+    const { hp, level, onHpChange, onLevelChange, tokenPicker, tokens = {}, artifacts } = props;
     const isDefeated = hp === 0;
 
     // The fixed order (BATTLE_TOKENS): +1 Attack, Confuse, Immobilize, then
@@ -255,6 +267,23 @@ export function HeroCard(props: HeroCardProps) {
               </>
             )}
           </div>
+          {artifacts && (
+            <div
+              className={styles.artifactRow}
+              role="group"
+              aria-label={`${hero.name}'s Artifacts`}
+            >
+              {ARTIFACTS.map((artifact) => (
+                <ArtifactToggle
+                  key={artifact.field}
+                  {...artifacts[artifact.field]}
+                  icon={<artifact.Icon size={12} />}
+                  summary={artifactSummary(artifact)}
+                  heroName={hero.name}
+                />
+              ))}
+            </div>
+          )}
           {tokenPicker && (
             <div className={styles.tokenRow}>
               {tokenEntries.map((entry) =>

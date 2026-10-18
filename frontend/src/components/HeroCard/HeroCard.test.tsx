@@ -338,3 +338,79 @@ describe("HeroCard token row", () => {
     expect(screen.queryByRole("button", { name: "Add a token to Boreas" })).toBeNull();
   });
 });
+
+describe("HeroCard Artifacts (intent/17)", () => {
+  const runika = getHeroById("runika");
+
+  function renderRunika({ withArtifacts = true } = {}) {
+    const onChange = {
+      battleFistFaceUp: vi.fn(),
+      autoDeflectorFaceUp: vi.fn(),
+      shieldAmuletFaceUp: vi.fn(),
+    };
+    render(
+      <HeroCard
+        hero={runika}
+        variant="battle"
+        hp={9}
+        level={1}
+        tokenPicker={{ expanded: true, onExpandedChange: vi.fn() }}
+        tokens={{
+          attackTokens: { count: 0, onChange: vi.fn(), expanded: false, onExpandedChange: vi.fn() },
+          confused: { on: false, onChange: vi.fn() },
+          immobilized: { on: false, onChange: vi.fn() },
+        }}
+        artifacts={
+          withArtifacts
+            ? {
+                battleFistFaceUp: { faceUp: true, onChange: onChange.battleFistFaceUp },
+                autoDeflectorFaceUp: { faceUp: false, onChange: onChange.autoDeflectorFaceUp },
+                shieldAmuletFaceUp: { faceUp: true, onChange: onChange.shieldAmuletFaceUp },
+              }
+            : undefined
+        }
+      />,
+    );
+    return onChange;
+  }
+
+  const artifactGroup = () => screen.queryByRole("group", { name: "Runika's Artifacts" });
+
+  it("has no artifact row when `artifacts` isn't passed", () => {
+    renderRunika({ withArtifacts: false });
+    expect(artifactGroup()).toBeNull();
+  });
+
+  it("shows all three in order, face-down ones still there, with name and bonus", () => {
+    renderRunika();
+    const pills = within(artifactGroup()!).getAllByRole("button");
+    expect(pills.map((pill) => pill.getAttribute("aria-label"))).toEqual([
+      "Battle Fist: +1 Attack, on Runika",
+      "Auto Deflector: +1 defense vs melee attacks, on Runika",
+      "Shield Amulet: +1 defense vs magic attacks, on Runika",
+    ]);
+    expect(pills.map((pill) => pill.getAttribute("aria-pressed"))).toEqual([
+      "true",
+      "false",
+      "true",
+    ]);
+  });
+
+  it("a tap flips just that Artifact", () => {
+    const onChange = renderRunika();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Auto Deflector: +1 defense vs melee attacks, on Runika",
+      }),
+    );
+    expect(onChange.autoDeflectorFaceUp).toHaveBeenCalledWith(true);
+    expect(onChange.battleFistFaceUp).not.toHaveBeenCalled();
+  });
+
+  it("keeps the Artifacts out of the token row and the picker", () => {
+    renderRunika();
+    const picker = screen.getByRole("group", { name: "Add a token to Runika" });
+    expect(within(picker).queryByText(/Battle Fist|Auto Deflector|Shield Amulet/)).toBeNull();
+    expect(artifactGroup()!.contains(picker)).toBe(false);
+  });
+});
