@@ -91,9 +91,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 14", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 15", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(14);
+    expect(state.schemaVersion).toBe(15);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -101,6 +101,10 @@ describe("createInitialBattleState", () => {
 
   it("starts the Ice Wall in its holder", () => {
     expect(baseState().iceWall).toBeNull();
+  });
+
+  it("starts the Bear Trap in its holder", () => {
+    expect(baseState().bearTrap).toBeNull();
   });
 });
 
@@ -673,6 +677,66 @@ describe("battleReducer", () => {
     ])("is left alone by %s", (_label, action) => {
       const onBoard = placed(baseState());
       expect(battleReducer(onBoard, action).iceWall).toBe(onBoard.iceWall);
+    });
+  });
+
+  describe("SET_BEAR_TRAP", () => {
+    const placed = (state: BattleState) =>
+      battleReducer(state, { type: "SET_BEAR_TRAP", spaceId: MAP_SPACE_IDS[0] });
+
+    it("places the trap, moves it to any kind of space and sends it back to its holder", () => {
+      const onBoard = placed(baseState());
+      expect(onBoard.bearTrap).toBe(MAP_SPACE_IDS[0]);
+
+      let state = onBoard;
+      for (const spaceId of ["p1-tower-top", "p2-bit", GOLD_PILE_SPACE_IDS[0]] as const) {
+        state = battleReducer(state, { type: "SET_BEAR_TRAP", spaceId });
+        expect(state.bearTrap).toBe(spaceId);
+      }
+
+      expect(battleReducer(state, { type: "SET_BEAR_TRAP", spaceId: null }).bearTrap).toBeNull();
+    });
+
+    it("is a no-op (same reference) when the trap doesn't move", () => {
+      const inHolder = baseState();
+      expect(battleReducer(inHolder, { type: "SET_BEAR_TRAP", spaceId: null })).toBe(inHolder);
+
+      const onBoard = placed(inHolder);
+      expect(placed(onBoard)).toBe(onBoard);
+    });
+
+    it("changes nothing but the trap", () => {
+      const state = baseState();
+      const next = placed(state);
+      expect(next.p1).toBe(state.p1);
+      expect(next.p2).toBe(state.p2);
+      expect(next.goldPiles).toBe(state.goldPiles);
+      expect(next.initiative).toBe(state.initiative);
+      expect(next.iceWall).toBe(state.iceWall);
+    });
+
+    it.each<[string, BattleAction]>([
+      [
+        "a hero dropped on its space",
+        { type: "SET_HERO_POSITION", side: "p2", heroId: HERO_B.id, spaceId: MAP_SPACE_IDS[0] },
+      ],
+      [
+        "Immobilize",
+        {
+          type: "SET_HERO_ON_OFF_TOKEN",
+          side: "p2",
+          heroId: HERO_B.id,
+          field: "immobilized",
+          value: true,
+        },
+      ],
+      ["a hero's HP to 0", { type: "SET_HERO_HP", side: "p1", heroId: HERO_A.id, value: 0 }],
+      ["a level change", { type: "SET_HERO_LEVEL", side: "p1", heroId: HERO_A.id, value: 4 }],
+      ["a passed round", { type: "PASS_INITIATIVE" }],
+      ["the Ice Wall", { type: "SET_ICE_WALL", position: { xPct: 10, yPct: 10 } }],
+    ])("is left alone by %s", (_label, action) => {
+      const onBoard = placed(baseState());
+      expect(battleReducer(onBoard, action).bearTrap).toBe(MAP_SPACE_IDS[0]);
     });
   });
 

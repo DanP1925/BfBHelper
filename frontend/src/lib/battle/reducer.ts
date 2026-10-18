@@ -17,7 +17,7 @@ import {
   TOWER_STARTING_HP,
 } from "./constants";
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
-import type { GoldPileSpaceId } from "../../data/mapSpaces";
+import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 import type {
   ArtifactField,
   BattleState,
@@ -59,6 +59,7 @@ export type BattleAction =
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: HeroPosition }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
   | { type: "SET_ICE_WALL"; position: IceWallPosition | null }
+  | { type: "SET_BEAR_TRAP"; spaceId: MapSpaceId | null }
   | { type: "PASS_INITIATIVE" };
 
 function structureCeiling(slot: keyof StructuresState): number {
@@ -188,6 +189,15 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
       return { ...state, iceWall: next };
     }
 
+    // Manual only (intent/18): placing, moving and removing (`null`, back to
+    // its holder) are all this one action, and nothing else in this reducer
+    // touches the trap — not a hero dropped on its space, Immobilize,
+    // Boreas's HP to 0, a level change or a passed round. No roster check
+    // and no "is Boreas on this space" check: the players apply the card.
+    case "SET_BEAR_TRAP":
+      if (action.spaceId === state.bearTrap) return state;
+      return { ...state, bearTrap: action.spaceId };
+
     // Initiative always alternates (intent/05's Rules) — no "set to p1/p2"
     // form, and passing twice returns to the starting state, which is how a
     // wrong tap gets undone.
@@ -245,19 +255,21 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
  * default;
  * every hero starts in its team's respawn area, and every gold pile
  * starts full. `initiative` is the draft's coin-flip winner, who keeps the
- * marker for deployment and Round 1 (rulebook). The Ice Wall starts in its
- * holder, whether or not Dazeem was drafted. */
+ * marker for deployment and Round 1 (rulebook). The Ice Wall and the Bear
+ * Trap start in their holders, whether or not Dazeem or Boreas was
+ * drafted. */
 export function createInitialBattleState(
   p1Heroes: Hero[],
   p2Heroes: Hero[],
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 14,
+    schemaVersion: 15,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),
     initiative,
     iceWall: null,
+    bearTrap: null,
   };
 }

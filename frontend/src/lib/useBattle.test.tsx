@@ -421,6 +421,53 @@ describe("useBattle", () => {
     });
   });
 
+  describe("setBearTrap (intent/18)", () => {
+    it("persists the placed trap, which survives a reload and goes back to its holder", () => {
+      const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+      act(() => {
+        result.current.setBearTrap(MAP_SPACE_IDS[0]);
+      });
+      expect(result.current.state?.bearTrap).toBe(MAP_SPACE_IDS[0]);
+      expect(readRawState().bearTrap).toBe(MAP_SPACE_IDS[0]);
+      unmount();
+
+      const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      expect(reloaded.current.state?.bearTrap).toBe(MAP_SPACE_IDS[0]);
+
+      act(() => {
+        reloaded.current.setBearTrap(null);
+      });
+      expect(reloaded.current.state?.bearTrap).toBeNull();
+      expect(readRawState().bearTrap).toBeNull();
+    });
+
+    it("a hero dropped on its space, setHeroHp to 0 and passInitiative leave it on the board", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+      act(() => {
+        result.current.setBearTrap(MAP_SPACE_IDS[0]);
+        result.current.setHeroPosition("p2", HERO_B.id, MAP_SPACE_IDS[0]);
+      });
+      act(() => {
+        result.current.setHeroHp("p1", HERO_A.id, 0);
+        result.current.passInitiative();
+      });
+      expect(result.current.state?.bearTrap).toBe(MAP_SPACE_IDS[0]);
+    });
+
+    it("a battle for a different draft starts with the trap in its holder", () => {
+      const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      act(() => {
+        result.current.setBearTrap(MAP_SPACE_IDS[0]);
+      });
+      unmount();
+
+      const { result: next } = renderHook(() => useBattle([HERO_B], [HERO_A], "p1"));
+      expect(next.current.state?.bearTrap).toBeNull();
+    });
+  });
+
   it("setHeroHp to 0 also moves the hero to its respawn area, in one update", () => {
     const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
     const spaceId = MAP_SPACE_IDS[0];

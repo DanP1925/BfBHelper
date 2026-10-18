@@ -1,0 +1,28 @@
+/* RespawnAreaStrip's section and label, in Boreas's emerald (intent/18)
+   instead of the team colour. */
+.holder {
+  composes: area from "../RespawnAreaStrip/RespawnAreaStrip.module.css";
+}
+
+.label {
+  composes: label from "../RespawnAreaStrip/RespawnAreaStrip.module.css";
+  border-left-color: var(--color-favored-enemy);
+}
+
+.box {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-panel-bg);
+  border: 1px dashed var(--color-favored-enemy);
+  border-radius: 8px;
+  transition:
+    background-color 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.boxDragOver {
+  background: rgba(63, 207, 134, 0.14);
+  box-shadow: 0 0 0 2px var(--color-favored-enemy) inset;
+}

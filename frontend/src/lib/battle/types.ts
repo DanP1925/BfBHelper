@@ -103,7 +103,7 @@ export type BattleTeamState = {
 export type IceWallPosition = { xPct: number; yPct: number };
 
 export type BattleState = {
-  schemaVersion: 14;
+  schemaVersion: 15;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,
@@ -116,4 +116,9 @@ export type BattleState = {
    * Changed only by hand: never cleared on Dazeem's defeat, a level
    * change or a new round. */
   iceWall: IceWallPosition | null;
+  /** Boreas's Bear Trap (intent/18): the board space it's on, or `null`
+   * while it's in its holder. Changed only by hand: never cleared when an
+   * enemy is dropped on its space, on Boreas's defeat, a level change or
+   * a new round. */
+  bearTrap: MapSpaceId | null;
 };

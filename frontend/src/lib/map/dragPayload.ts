@@ -48,6 +48,17 @@ export function serializeIceWallDrag(event: DragEvent): void {
   event.dataTransfer.effectAllowed = "move";
 }
 
+/** Boreas's Bear Trap (intent/18) gets its own MIME type too, so only the
+ * board's spaces and its holder take it. */
+const BEAR_TRAP_DRAG_MIME_TYPE = "application/x-bfbhelper-bear-trap";
+
+/** Called from `BearTrapMarker`'s `onDragStart`. Carries no data: there's
+ * only one trap, and where it lands is the space it's dropped on. */
+export function serializeBearTrapDrag(event: DragEvent): void {
+  event.dataTransfer.setData(BEAR_TRAP_DRAG_MIME_TYPE, "1");
+  event.dataTransfer.effectAllowed = "move";
+}
+
 /** Whether a drag carries `mimeType`. Unlike its data, a drag's MIME
  * *types* are readable during dragenter/dragover, not just on drop. */
 function carries(event: DragEvent, mimeType: string): boolean {
@@ -57,6 +68,11 @@ function carries(event: DragEvent, mimeType: string): boolean {
 /** Whether a drag is the Ice Wall. Works during the whole drag. */
 export function isIceWallDrag(event: DragEvent): boolean {
   return carries(event, ICE_WALL_DRAG_MIME_TYPE);
+}
+
+/** Whether a drag is the Bear Trap. Works during the whole drag. */
+export function isBearTrapDrag(event: DragEvent): boolean {
+  return carries(event, BEAR_TRAP_DRAG_MIME_TYPE);
 }
 
 /** Whether a drag is a hero token. Works during the whole drag; the

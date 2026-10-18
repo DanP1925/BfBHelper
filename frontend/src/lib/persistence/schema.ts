@@ -34,7 +34,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 14 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 15 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -256,7 +256,10 @@ export type PersistedBattleStateV13 = Omit<PersistedBattleStateV12, "schemaVersi
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 14
- * (intent/17: per-hero Artifact flags, face-up by default). */
+ * (intent/17: per-hero Artifact flags, face-up by default) — now only the
+ * migration source shape `battleMigrations[14]` upgrades from. Its
+ * top-level fields come from `PersistedBattleStateV2` onward, not
+ * `BattleState`, so it never gains `bearTrap`. */
 export type PersistedBattleStateV14 = Omit<
   PersistedBattleStateV13,
   "schemaVersion" | "p1" | "p2"
@@ -264,6 +267,14 @@ export type PersistedBattleStateV14 = Omit<
   schemaVersion: 14;
   p1: BattleTeamState;
   p2: BattleTeamState;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 15
+ * (intent/18: a top-level `bearTrap`, the space it's on or `null` while
+ * it's in its holder). */
+export type PersistedBattleStateV15 = Omit<PersistedBattleStateV14, "schemaVersion"> & {
+  schemaVersion: 15;
+  bearTrap: MapSpaceId | null;
 };
 
 /** Which screen is showing once a draft is done. Only a non-`"results"`

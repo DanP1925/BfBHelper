@@ -5,7 +5,7 @@ import type { DragEvent } from "react";
 
 /**
  * The drag-over highlight shared by the Map's drop targets
- * (`useHeroDropTarget`, `useIceWallDropTarget`), for one kind of drag:
+ * (`useHeroDropTarget`, `useMarkerDropTarget`), for one kind of drag:
  * only drags that `matches` light the target up or let it take a drop.
  *
  * `isDragOver` is tracked with an enter/leave counter rather than a plain

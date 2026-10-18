@@ -152,6 +152,7 @@ export default function Home() {
           setHeroPosition={battle.setHeroPosition}
           setGoldPile={battle.setGoldPile}
           setIceWall={battle.setIceWall}
+          setBearTrap={battle.setBearTrap}
           onNewDraft={draft.returnToStart}
           onEndBattle={() => {
             setView("win");
