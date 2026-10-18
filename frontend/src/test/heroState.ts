@@ -1,3 +1,4 @@
+import { ARTIFACTS_FACE_UP } from "../lib/battle/constants";
 import type { HeroBattleState } from "../lib/battle/types";
 
 /** Every token field of a fresh hero (createInitialHeroState), for test
@@ -13,7 +14,5 @@ export const NO_TOKENS: Omit<HeroBattleState, "hp" | "level"> = {
   stoneTokens: 0,
   chillTokens: 0,
   favoredEnemy: false,
-  battleFistFaceUp: true,
-  autoDeflectorFaceUp: true,
-  shieldAmuletFaceUp: true,
+  ...ARTIFACTS_FACE_UP,
 };

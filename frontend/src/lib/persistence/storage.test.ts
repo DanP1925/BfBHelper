@@ -1397,42 +1397,6 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("Artifact flags (intent/17)", () => {
-    it("round-trips a face-down Artifact", () => {
-      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
-      const state: BattleState = {
-        ...sampleBattleState,
-        p1: {
-          ...sampleBattleState.p1,
-          heroes: {
-            ...sampleBattleState.p1.heroes,
-            [heroId]: { hp: 5, level: 1, ...NO_TOKENS, autoDeflectorFaceUp: false },
-          },
-        },
-      };
-      saveBattleState(state);
-
-      expect(loadBattleState()).toEqual(state);
-    });
-
-    it("accepts a face-down Artifact on any hero (shape, not rules)", () => {
-      const heroId = Object.keys(sampleBattleState.p2.heroes)[0];
-      const state: BattleState = {
-        ...sampleBattleState,
-        p2: {
-          ...sampleBattleState.p2,
-          heroes: {
-            ...sampleBattleState.p2.heroes,
-            [heroId]: { hp: 5, level: 1, ...NO_TOKENS, shieldAmuletFaceUp: false },
-          },
-        },
-      };
-      saveBattleState(state);
-
-      expect(loadBattleState()).toEqual(state);
-    });
-  });
-
   describe("iceWall validation (intent/16)", () => {
     it.each([
       ["placed", { xPct: 48.6, yPct: 21.9 }],
@@ -1546,8 +1510,9 @@ describe("saveBattleState / loadBattleState", () => {
         expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
       });
 
-      // Shape only: no owner check, and no one-holder check for Favored Enemy.
-      it("round-trips a holder on each side at once", () => {
+      // Shape only: no owner check, no one-holder check for Favored Enemy,
+      // and a face-down Artifact is fine on any hero.
+      it.each([true, false])("round-trips %s on a hero on each side at once", (value) => {
         const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
         const p2HeroId = Object.keys(sampleBattleState.p2.heroes)[0] as HeroId;
         const held: BattleState = {
@@ -1556,14 +1521,14 @@ describe("saveBattleState / loadBattleState", () => {
             ...sampleBattleState.p1,
             heroes: {
               ...sampleBattleState.p1.heroes,
-              [p1HeroId]: { ...sampleBattleState.p1.heroes[p1HeroId], [field]: true },
+              [p1HeroId]: { ...sampleBattleState.p1.heroes[p1HeroId], [field]: value },
             },
           },
           p2: {
             ...sampleBattleState.p2,
             heroes: {
               ...sampleBattleState.p2.heroes,
-              [p2HeroId]: { ...sampleBattleState.p2.heroes[p2HeroId], [field]: true },
+              [p2HeroId]: { ...sampleBattleState.p2.heroes[p2HeroId], [field]: value },
             },
           },
         };

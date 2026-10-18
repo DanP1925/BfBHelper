@@ -1,19 +1,8 @@
-/* One of Runika's Artifacts (intent/17), in TokenToggle's 20px pill shape.
- * Face-down by default (greyed out, dashed outline); `.faceUp` lights it in
- * --color-artifact. */
+/* One of Runika's Artifacts (intent/17): TokenToggle's lit pill (its 20px
+ * shape, accent and focus outline, read from `--token-accent`) while
+ * face-up; `.faceDown` greys it out with a dashed outline. */
 .toggle {
-  box-sizing: border-box;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  color: var(--color-muted);
-  background: none;
-  border: 1px dashed var(--color-button-border);
-  border-radius: 999px;
-  opacity: 0.6;
-  cursor: pointer;
+  composes: toggle from "../TokenToggle/TokenToggle.module.css";
   transition:
     background-color 150ms ease-out,
     border-color 150ms ease-out,
@@ -21,20 +10,14 @@
     opacity 150ms ease-out;
 }
 
-.toggle:hover {
-  opacity: 1;
+.faceDown {
+  color: var(--color-muted);
+  background: none;
+  border: 1px dashed var(--color-button-border);
+  opacity: 0.6;
 }
 
-.toggle:focus-visible {
-  outline: 2px solid var(--color-artifact);
-  outline-offset: 2px;
-}
-
-.faceUp {
-  color: var(--color-artifact);
-  background: color-mix(in srgb, var(--color-artifact) 16%, transparent);
-  border-style: solid;
-  border-color: var(--color-artifact);
+.faceDown:hover {
   opacity: 1;
 }
 

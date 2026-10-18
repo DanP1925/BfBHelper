@@ -10,6 +10,7 @@ import type { DraftState, HeroId, PlayerId } from "../draft/types";
 import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
   ARTIFACT_FIELDS,
+  ARTIFACTS_FACE_UP,
   BIT_STARTING_HP,
   HERO_COUNTED_TOKEN_CEILINGS,
   HERO_HP_CEILING,
@@ -219,11 +220,7 @@ function upgradeV12ToV13(data: unknown): PersistedBattleStateV13 | null {
 
 /** Schema 13 → 14: every hero gets Runika's three Artifacts face-up
  * (intent/17: "upgrades in place, with all three face-up"). */
-const upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14, {
-  battleFistFaceUp: true,
-  autoDeflectorFaceUp: true,
-  shieldAmuletFaceUp: true,
-});
+const upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14, ARTIFACTS_FACE_UP);
 
 /**
  * Same idea as `migrations` above, for the battle-state payload.
@@ -419,10 +416,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
     for (const [field, ceiling] of Object.entries(HERO_COUNTED_TOKEN_CEILINGS)) {
       if (!isNumberInRange(hv[field], 0, ceiling)) return false;
     }
-    for (const field of ON_OFF_TOKEN_FIELDS) {
-      if (typeof hv[field] !== "boolean") return false;
-    }
-    for (const field of ARTIFACT_FIELDS) {
+    for (const field of [...ON_OFF_TOKEN_FIELDS, ...ARTIFACT_FIELDS]) {
       if (typeof hv[field] !== "boolean") return false;
     }
     if (!(heroId in positions)) return false;

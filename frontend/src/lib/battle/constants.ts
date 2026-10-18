@@ -59,6 +59,13 @@ export const ARTIFACT_FIELDS = [
   "shieldAmuletFaceUp",
 ] as const satisfies readonly BooleanHeroField[];
 
+/** Every Artifact face-up: a fresh hero's (createInitialHeroState) and an
+ * upgraded save's (storage's schema 13 → 14) faces, built from
+ * ARTIFACT_FIELDS so a new Artifact can't be left out. */
+export const ARTIFACTS_FACE_UP = Object.fromEntries(
+  ARTIFACT_FIELDS.map((field) => [field, true]),
+) as Record<(typeof ARTIFACT_FIELDS)[number], true>;
+
 type BooleanHeroField = {
   [F in keyof HeroBattleState]: HeroBattleState[F] extends boolean ? F : never;
 }[keyof HeroBattleState];

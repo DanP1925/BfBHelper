@@ -10,6 +10,7 @@ import {
   clampStructureHp,
 } from "./bounds";
 import {
+  ARTIFACTS_FACE_UP,
   BIT_STARTING_HP,
   HERO_STARTING_LEVEL,
   TEAM_STARTING_GOLD,
@@ -219,9 +220,7 @@ export function createInitialHeroState(hero: Hero): HeroBattleState {
     stoneTokens: 0,
     chillTokens: 0,
     favoredEnemy: false,
-    battleFistFaceUp: true,
-    autoDeflectorFaceUp: true,
-    shieldAmuletFaceUp: true,
+    ...ARTIFACTS_FACE_UP,
   };
 }
 

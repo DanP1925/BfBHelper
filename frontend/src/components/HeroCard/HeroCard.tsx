@@ -6,7 +6,12 @@ import {
   HERO_MAX_LEVEL,
   HERO_STARTING_LEVEL,
 } from "../../lib/battle/constants";
-import type { ArtifactField, CountedTokenField, OnOffTokenField } from "../../lib/battle/types";
+import type {
+  ArtifactField,
+  CountedTokenField,
+  HeroBattleState,
+  OnOffTokenField,
+} from "../../lib/battle/types";
 import { ARTIFACTS, artifactSummary } from "../artifacts";
 import { ArtifactToggle } from "../ArtifactToggle/ArtifactToggle";
 import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
@@ -52,17 +57,17 @@ type HeroCardProps =
        * left out (a hero-specific token this hero can't carry) gets no chip
        * and no picker option. Only the Battle Board passes it. */
       tokens?: HeroCardTokens;
-      /** Runika's Artifacts (intent/17), keyed by field. The artifact row
-       * renders only when this is provided: the Board passes it on Runika's
-       * card alone. */
+      /** Runika's Artifacts (intent/17). The artifact row renders only when
+       * this is provided: the Board passes it on Runika's card alone. */
       artifacts?: HeroCardArtifacts;
     });
 
-/** Runika's three Artifacts' faces and setters (intent/17). */
-export type HeroCardArtifacts = Record<
-  ArtifactField,
-  { faceUp: boolean; onChange: (faceUp: boolean) => void }
->;
+/** Runika's three Artifacts' faces (`true` is face-up) and one setter
+ * named by field (intent/17). */
+export type HeroCardArtifacts = {
+  faces: Pick<HeroBattleState, ArtifactField>;
+  onChange: (field: ArtifactField, faceUp: boolean) => void;
+};
 
 /** A battle card's token controls, one per stored field (intents 06-11). */
 export type HeroCardTokens = Partial<
@@ -276,7 +281,8 @@ export function HeroCard(props: HeroCardProps) {
               {ARTIFACTS.map((artifact) => (
                 <ArtifactToggle
                   key={artifact.field}
-                  {...artifacts[artifact.field]}
+                  faceUp={artifacts.faces[artifact.field]}
+                  onChange={(faceUp) => artifacts.onChange(artifact.field, faceUp)}
                   icon={<artifact.Icon size={12} />}
                   summary={artifactSummary(artifact)}
                   heroName={hero.name}

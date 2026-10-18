@@ -121,9 +121,15 @@
     "autoDeflectorFaceUp",
     "shieldAmuletFaceUp",
   ] as const satisfies readonly BooleanHeroField[];
+
+  /** Every Artifact face-up, built from ARTIFACT_FIELDS (added by
+   * /simplify): a fresh hero's, an upgraded save's and NO_TOKENS'. */
+  export const ARTIFACTS_FACE_UP = Object.fromEntries(
+    ARTIFACT_FIELDS.map((field) => [field, true]),
+  ) as Record<(typeof ARTIFACT_FIELDS)[number], true>;
   ```
-- `createInitialHeroState(hero)` (`reducer.ts`) returns all three `true`,
-  and its doc comment adds "Artifacts face-up". Per intent's Constraints,
+- `createInitialHeroState(hero)` (`reducer.ts`) spreads
+  `ARTIFACTS_FACE_UP`, and its doc comment adds "Artifacts face-up". Per intent's Constraints,
   new battles, upgraded saves and the `?? createInitialHeroState(hero)`
   fallbacks all agree. `createInitialBattleState` writes
   `schemaVersion: 14`.
@@ -151,10 +157,10 @@
   - The payload types move from `PersistedBattleStateV13` to `V14`, plus
     the `schemaVersion` literal (to 14). There's no field copying, since
     the flags ride inside `p1`/`p2`.
-  - **Validation:** `hasValidBattleTeamShape` gains one loop next to the
-    on/off one:
+  - **Validation:** `hasValidBattleTeamShape`'s on/off loop also covers
+    the Artifacts (one loop, merged by `/simplify`):
     ```ts
-    for (const field of ARTIFACT_FIELDS) {
+    for (const field of [...ON_OFF_TOKEN_FIELDS, ...ARTIFACT_FIELDS]) {
       if (typeof hv[field] !== "boolean") return false;
     }
     ```
@@ -166,11 +172,7 @@
     ```ts
     /** Schema 13 → 14: every hero gets Runika's three Artifacts face-up
      * (intent/17: "upgrades in place, with all three face-up"). */
-    const upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14, {
-      battleFistFaceUp: true,
-      autoDeflectorFaceUp: true,
-      shieldAmuletFaceUp: true,
-    });
+    const upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14, ARTIFACTS_FACE_UP);
     ```
     `battleMigrations` gains `13: upgradeV13ToV14`. `loadPersisted` chains
     steps, so saves from schemas 1-12 also land on 14.
@@ -279,15 +281,17 @@
     `title="Battle Fist: +1 Attack (face-up, tap to flip)"` (intent's
     Scope: "Each Artifact's bonus is shown, not applied"). A tap calls
     `onChange(!faceUp)`.
-  - **Face-up:** lit like `TokenToggle`, in `--color-artifact`: a solid
-    accent border, a 16% accent fill and an accent icon.
+  - **Face-up:** `TokenToggle`'s lit pill itself: its CSS `composes`
+    `TokenToggle`'s `.toggle` (changed by `/simplify`, instead of a copy),
+    with `--token-accent: var(--color-artifact)` set inline.
   - **Face-down:** greyed out (intent's Scope): a dashed
     `--color-button-border` outline, no fill, a `--color-muted` icon and
     0.6 opacity, rising to 1 on hover. The dashed outline and the opacity
     both carry the state, so it doesn't rest on hue alone.
-  - Not a reuse of `TokenToggle`: that one is only rendered lit, and its
-    tooltip says "tap to remove". A flag for "always rendered, greys when
-    off" would make it a second component in disguise.
+  - Not a reuse of the `TokenToggle` component: that one is only rendered
+    lit, and its tooltip says "tap to remove". A flag for "always
+    rendered, greys when off" would make it a second component in
+    disguise. Only its pill styles are shared.
 - **Icons** (new, in `components/ArtifactToggle/`: `BattleFistIcon.tsx`,
   `AutoDeflectorIcon.tsx`, `ShieldAmuletIcon.tsx`, `size` prop,
   `aria-hidden`). Each follows the token icon style (simplified line-art
@@ -312,15 +316,16 @@
   `--color-chill` `#5ccfe6`.
 - **`HeroCard`** (battle variant) gains one optional prop:
   ```ts
-  /** Runika's Artifacts (intent/17), keyed by field. The artifact row
-   * renders only when this is provided: the Board passes it on Runika's
-   * card alone. */
+  /** Runika's Artifacts (intent/17). The artifact row renders only when
+   * this is provided: the Board passes it on Runika's card alone. */
   artifacts?: HeroCardArtifacts;
 
-  export type HeroCardArtifacts = Record<
-    ArtifactField,
-    { faceUp: boolean; onChange: (faceUp: boolean) => void }
-  >;
+  /** Her faces and one setter named by field (changed by /simplify from a
+   * per-field record of closures). */
+  export type HeroCardArtifacts = {
+    faces: Pick<HeroBattleState, ArtifactField>;
+    onChange: (field: ArtifactField, faceUp: boolean) => void;
+  };
   ```
   - When it's there, a new `.artifactRow` renders between `.levelRow`
     and `.tokenRow`: a `role="group"` with
@@ -333,9 +338,9 @@
     8-token sizing (intent's Scope).
   - The Win Screen passes no `artifacts`, so its cards don't change.
 - **`BattleTeamPanel`** gains `onHeroArtifactChange` and, for
-  `hero.id === ARTIFACT_OWNER` only, builds `artifacts` from
-  `heroState` (`faceUp: heroState[field]`,
-  `onChange: (faceUp) => onHeroArtifactChange(hero.id, field, faceUp)`).
+  `hero.id === ARTIFACT_OWNER` only, passes `artifacts` as
+  `{ faces: heroState, onChange: (field, faceUp) =>
+  onHeroArtifactChange(hero.id, field, faceUp) }`.
   Every other hero gets no prop, so no row (intent's Scope: "Runika's own
   card only").
 - **Height at 1280x800.** Runika's card grows by one 20px line plus the
