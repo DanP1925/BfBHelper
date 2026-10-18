@@ -3,7 +3,9 @@
 Untriaged ideas and feedback not yet scoped into an `intent/` doc. When an item
 is picked up, link the intent/PR that covers it and check it off.
 
-Completing everything in this backlog = **v1.0.0**.
+**v1.0.0** (reached 2026-10-18 with intent 18): a game can be played with
+only the physical cards, every hero's needs below met. What's left is
+polish, under After 1.0 at the end.
 
 ## From playtest 2026-10-10
 
@@ -104,7 +106,13 @@ when the hero who uses them is in the battle, on either team.
   v0.15.0. An emerald crosshair on/off chip, added through the "+" picker on
   Boreas's enemies only and on one of them at a time (hidden from every
   picker while held), and a crosshair icon in the Map's status panel. A tap
-  removes it; it's never cleared automatically. Bear Trap is still open.
+  removes it; it's never cleared automatically.
+  **Bear Trap done:** scoped in `intent/18_bear-trap.md`, built in v1.0.0.
+  An emerald trap tile dragged from a holder beside Boreas's team column
+  onto any board space (not the Arena), where it snaps and sits beside the
+  heroes there, and back to remove it. A drop between spaces does nothing.
+  Triggering it (Immobilize) and removing it, even on Boreas's defeat, are
+  by hand.
 - **Cyrus (Paladin):** *Holy Aura* gives Shield 1 to another friendly hero in
   Cyrus's space after a Paladin power; power cards give more Shield. Shield
   tokens are hero-specific (only shown when Cyrus is in the battle), counted
@@ -213,7 +221,7 @@ Hero-specific (only when that hero is in the battle):
 | Feature | Kind | Hero |
 |---|---|---|
 | Favored Enemy (done, v0.15.0) | one permanent marker on an enemy | Boreas |
-| Bear Trap | single marker on a map space | Boreas |
+| Bear Trap (done, v1.0.0) | single marker on a map space | Boreas |
 | Shield (done, v0.11.0) | count per hero | Cyrus |
 | Chill (done, v0.13.0) | count per hero | Dazeem |
 | Ice Wall (done, v0.16.0) | single marker on a path between spaces | Dazeem |
@@ -242,6 +250,33 @@ apply any rule automatically (expiry, defeat, damage absorption).
   holder hang in the empty margin outside their owner's team column,
   the Arena first when both are on one team, with matching column-style
   labels. Nothing overlaps or scrolls at 1280x800.
+
+- [x] **Drive the token wiring from `BATTLE_TOKENS`.** Do this before Chill.
+  Done (v0.11.1): a new token is now its `BATTLE_TOKENS` row, its stored
+  field and setter, and one line in `page.tsx`'s `setHeroToken` map.
+  Since v0.13.0 (intent 13), a counted token needs no setter or `page.tsx`
+  line: just its row, stored field and ceiling.
+  Added 2026-10-16 from intent 11's `/simplify` review.
+  Each hero-specific token still costs about 25 lines across four files:
+  a setter prop on `BattleBoardScreen`, a gated callback prop on
+  `BattleTeamPanel`, a props object built there, and a named prop on
+  `HeroCard` (plus `HeroCard`'s hand-kept `counted` / `toggles` maps).
+  Instead:
+  - one `tokens` map passed down, keyed by stored field and built by a
+    loop over `BATTLE_TOKENS`; leaving a field out turns its control off
+  - an optional `heroSpecific` id on each `BATTLE_TOKENS` row, linking it
+    to its `HERO_SPECIFIC_TOKENS` rule, so the visibility gating is one
+    loop instead of one `heroSpecificTokenSide` call per token
+  - open-state keys built from the field (`${side}:${heroId}:${field}`)
+  Keep the stored fields, reducer actions and `useBattle` setters as they
+  are (spec 09's plain-fields choice). About 80-120 lines plus test prop
+  updates. After it, Chill and Stone are each a table row plus their
+  stored-state work. Its own `refactor:` PR.
+
+## After 1.0
+
+Polish moved past v1.0.0 (decided 2026-10-18): none of it blocks playing
+with only the cards.
 
 - [ ] **Review every token's display again once all tokens exist.** Do this
   after the hero-specific tokens are built, Runika's Artifacts last. Added
@@ -278,24 +313,3 @@ apply any rule automatically (expiry, defeat, damage absorption).
 - [ ] **Turn-passing animation in the draft.** Animate the turn banner and
   team panel highlight when the pick passes to the other player. Parked
   from intent 10, added 2026-10-15.
-- [x] **Drive the token wiring from `BATTLE_TOKENS`.** Do this before Chill.
-  Done (v0.11.1): a new token is now its `BATTLE_TOKENS` row, its stored
-  field and setter, and one line in `page.tsx`'s `setHeroToken` map.
-  Since v0.13.0 (intent 13), a counted token needs no setter or `page.tsx`
-  line: just its row, stored field and ceiling.
-  Added 2026-10-16 from intent 11's `/simplify` review.
-  Each hero-specific token still costs about 25 lines across four files:
-  a setter prop on `BattleBoardScreen`, a gated callback prop on
-  `BattleTeamPanel`, a props object built there, and a named prop on
-  `HeroCard` (plus `HeroCard`'s hand-kept `counted` / `toggles` maps).
-  Instead:
-  - one `tokens` map passed down, keyed by stored field and built by a
-    loop over `BATTLE_TOKENS`; leaving a field out turns its control off
-  - an optional `heroSpecific` id on each `BATTLE_TOKENS` row, linking it
-    to its `HERO_SPECIFIC_TOKENS` rule, so the visibility gating is one
-    loop instead of one `heroSpecificTokenSide` call per token
-  - open-state keys built from the field (`${side}:${heroId}:${field}`)
-  Keep the stored fields, reducer actions and `useBattle` setters as they
-  are (spec 09's plain-fields choice). About 80-120 lines plus test prop
-  updates. After it, Chill and Stone are each a table row plus their
-  stored-state work. Its own `refactor:` PR.

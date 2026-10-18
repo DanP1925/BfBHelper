@@ -5,7 +5,13 @@ import type { BattleState, HeroBattleState } from "../../../lib/battle/types";
 import type { Hero } from "../../../lib/draft/types";
 import { ARENA_POSITION } from "../../../lib/map/constants";
 import { createFreshGoldPiles, MAP_SPACE_IDS } from "../../../data/mapSpaces";
-import { dropHero, dropIceWall, fakeDataTransfer } from "../../../test/heroDrag";
+import {
+  bearTrapDragTransfer,
+  dropBearTrap,
+  dropHero,
+  dropIceWall,
+  fakeDataTransfer,
+} from "../../../test/heroDrag";
 import { NO_TOKENS } from "../../../test/heroState";
 import { BattleMapScreen, INITIAL_MAP_CAMERA } from "./BattleMapScreen";
 
@@ -25,9 +31,10 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 14,
+    schemaVersion: 15,
     initiative: "p1",
     iceWall: null,
+    bearTrap: null,
     p1: {
       gold: 0,
       heroes: {
@@ -65,12 +72,14 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
 /** No test here exercises zoom/pan, so the camera is fixed at its default;
  * the initiative badge's own behavior is covered by InitiativeBadge.test
  * and page.test. The Ice Wall's tests (`renderWall`) pass their own
- * `setIceWall` and, where they need it, a camera. */
+ * `setIceWall` and, where they need it, a camera; the Bear Trap's
+ * (`renderTrap`) their own `setBearTrap`. */
 const fixedProps = {
   camera: INITIAL_MAP_CAMERA,
   onCameraChange: () => {},
   onPassInitiative: () => {},
   setIceWall: () => {},
+  setBearTrap: () => {},
 };
 
 describe("BattleMapScreen", () => {
@@ -674,17 +683,19 @@ describe("BattleMapScreen", () => {
   });
 
   it("fans out 4+ heroes sharing one space instead of collapsing to a point", () => {
+    // No Boreas: his Bear Trap holder would add a draggable marker.
     const crowdedHeroes = [
-      makeHero("boreas", "Boreas"),
+      makeHero("dolgolae", "Dolgolae"),
       makeHero("caligar", "Caligar"),
       makeHero("ceralin", "Ceralin"),
       makeHero("cynthia", "Cynthia"),
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 14,
+      schemaVersion: 15,
       initiative: "p1",
       iceWall: null,
+      bearTrap: null,
       p1: {
         gold: 0,
         heroes: Object.fromEntries(
@@ -1029,6 +1040,158 @@ describe("BattleMapScreen", () => {
       fireEvent.mouseMove(icon, { clientX: 140, clientY: 130 });
 
       expect(onCameraChange).not.toHaveBeenCalled();
+    });
+
+    it("lets the pointer through the placed wall while the Bear Trap is dragged too", () => {
+      const { boardTransform } = renderWall({
+        iceWall: { xPct: 50, yPct: 50 },
+        adjust: (base) => ({ ...base, bearTrap: MAP_SPACE_IDS[0] }),
+      });
+      const marker = within(boardTransform).getByRole("img", { name: "Ice Wall" });
+      const trap = within(boardTransform).getByRole("img", { name: "Bear Trap" });
+
+      fireEvent.dragStart(trap, { dataTransfer: fakeDataTransfer() });
+      expect(marker.style.pointerEvents).toBe("none");
+    });
+  });
+
+  describe("the Bear Trap (intent/18)", () => {
+    const boreasTeam = [makeHero("boreas", "Boreas"), makeHero("caligar", "Caligar")];
+    const otherTeam = [makeHero("sterling", "Sterling")];
+
+    function renderTrap({
+      p1 = boreasTeam,
+      p2 = otherTeam,
+      bearTrap = null,
+      adjust = (state) => state,
+    }: {
+      p1?: Hero[];
+      p2?: Hero[];
+      bearTrap?: BattleState["bearTrap"];
+      adjust?: (state: BattleState) => BattleState;
+    } = {}) {
+      const setBearTrap = vi.fn();
+      const setHeroPosition = vi.fn();
+      const battleState = adjust({ ...createInitialBattleState(p1, p2, "p1"), bearTrap });
+      const { container } = render(
+        <BattleMapScreen
+          p1Heroes={p1}
+          p2Heroes={p2}
+          battleState={battleState}
+          winner={null}
+          setHeroPosition={setHeroPosition}
+          setGoldPile={() => {}}
+          onNewDraft={() => {}}
+          onEndBattle={() => {}}
+          onSwitchView={() => {}}
+          {...fixedProps}
+          setBearTrap={setBearTrap}
+        />,
+      );
+      const boardTransform = container.querySelector('img[src="/map/board.jpg"]')!
+        .parentElement as HTMLElement;
+      // Every `MapSpace` drop target (its `.space` class), in MAP_SPACES order.
+      const spaces = Array.from(boardTransform.querySelectorAll('[class*="space"]')).filter(
+        (el) => !el.className.includes("structureIcon"),
+      );
+      return {
+        setBearTrap,
+        setHeroPosition,
+        boardTransform,
+        board: boardTransform.parentElement!,
+        spaces,
+      };
+    }
+
+    const holder = () => screen.queryByRole("region", { name: "Bear Trap" });
+    const respawnArea = (label: string) =>
+      screen.getByRole("region", { name: `${label} respawning area` });
+
+    it("shows nothing without Boreas", () => {
+      renderTrap({ p1: [makeHero("caligar", "Caligar")], bearTrap: MAP_SPACE_IDS[0] });
+      expect(holder()).toBeNull();
+      expect(screen.queryByRole("img", { name: "Bear Trap" })).toBeNull();
+    });
+
+    it.each([
+      ["p1", "Player 1"],
+      ["p2", "Player 2"],
+    ] as const)("puts the holder beside Boreas's column when he's on %s", (side, label) => {
+      const teams =
+        side === "p1" ? { p1: boreasTeam, p2: otherTeam } : { p1: otherTeam, p2: boreasTeam };
+      renderTrap(teams);
+      const zones = holder()!.parentElement!;
+      expect(zones.parentElement).toBe(respawnArea(label).parentElement);
+      expect(zones.className).toContain(side === "p1" ? "outerZonesP1" : "outerZonesP2");
+    });
+
+    it("comes after the Ice Wall holder when Dazeem shares Boreas's team", () => {
+      renderTrap({ p1: [...boreasTeam, makeHero("dazeem", "Dazeem")] });
+      const wallHolder = screen.getByRole("region", { name: "Ice Wall" });
+      expect(holder()!.parentElement).toBe(wallHolder.parentElement);
+      expect(wallHolder.compareDocumentPosition(holder()!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it("holds the trap while it's off the board", () => {
+      renderTrap();
+      expect(within(holder()!).getByRole("img", { name: "Bear Trap" })).toBeInTheDocument();
+      expect(screen.getAllByRole("img", { name: "Bear Trap" })).toHaveLength(1);
+    });
+
+    it("draws a placed trap inside its space, not in the holder", () => {
+      const { spaces } = renderTrap({ bearTrap: MAP_SPACE_IDS[2] });
+      expect(within(spaces[2] as HTMLElement).getByRole("img", { name: "Bear Trap" })).toBeTruthy();
+      expect(screen.getAllByRole("img", { name: "Bear Trap" })).toHaveLength(1);
+      expect(within(holder()!).queryByRole("img", { name: "Bear Trap" })).toBeNull();
+    });
+
+    it("snaps the trap to the space it's dropped on, without moving any hero", () => {
+      const { setBearTrap, setHeroPosition, spaces } = renderTrap();
+      dropBearTrap(spaces[3]);
+      expect(setBearTrap).toHaveBeenCalledWith(MAP_SPACE_IDS[3]);
+      expect(setHeroPosition).not.toHaveBeenCalled();
+    });
+
+    it("sends the trap back to the holder on a drop there", () => {
+      const { setBearTrap } = renderTrap({ bearTrap: MAP_SPACE_IDS[0] });
+      dropBearTrap(holder()!);
+      expect(setBearTrap).toHaveBeenCalledWith(null);
+    });
+
+    it("ignores a trap dropped between spaces, in a respawn area or the Arena", () => {
+      const felix = makeHero("felix", "Felix");
+      const { setBearTrap, board } = renderTrap({
+        p1: [...boreasTeam, felix],
+        adjust: (base) => ({
+          ...base,
+          p1: {
+            ...base.p1,
+            heroes: { ...base.p1.heroes, felix: { ...base.p1.heroes.felix, level: 4 } },
+            heroPositions: { ...base.p1.heroPositions, felix: MAP_SPACE_IDS[0] },
+          },
+        }),
+      });
+      dropBearTrap(board);
+      dropBearTrap(respawnArea("Player 1"));
+      dropBearTrap(screen.getByRole("region", { name: "The Arena" }));
+      expect(setBearTrap).not.toHaveBeenCalled();
+    });
+
+    it("moves a hero dropped onto the trapped space, and leaves the trap", () => {
+      const { setBearTrap, setHeroPosition, spaces } = renderTrap({ bearTrap: MAP_SPACE_IDS[1] });
+      const trap = within(spaces[1] as HTMLElement).getByRole("img", { name: "Bear Trap" });
+      // Dropped right on the trap's tile: it bubbles to its space.
+      dropHero(trap, { side: "p2", heroId: "sterling" });
+      expect(setHeroPosition).toHaveBeenCalledWith("p2", "sterling", MAP_SPACE_IDS[1]);
+      expect(setBearTrap).not.toHaveBeenCalled();
+    });
+
+    it("highlights a space for the trap as well as for a hero", () => {
+      const { spaces } = renderTrap();
+      fireEvent.dragEnter(spaces[0], { dataTransfer: bearTrapDragTransfer() });
+      expect(spaces[0].className).toContain("spaceDragOver");
+      fireEvent.dragLeave(spaces[0]);
+      expect(spaces[0].className).not.toContain("spaceDragOver");
     });
   });
 });

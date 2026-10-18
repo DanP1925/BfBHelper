@@ -1,7 +1,7 @@
 # Spec 18: Bear Trap
 
-> **DRAFT.** Architecture for intent 18's scope. Build-out has not started
-> yet. See [../intent/18_bear-trap.md](../intent/18_bear-trap.md) for the
+> **BUILT.** Architecture for intent 18's scope, all built in one PR
+> (plan 18). See [../intent/18_bear-trap.md](../intent/18_bear-trap.md) for the
 > product-level problem, scope, and behavior this spec exists to satisfy.
 
 ## Architecture Overview
@@ -330,11 +330,23 @@ infra.
   Arena" artboard only, with an In holder / Placed tweak, and the holder
   in the outer margin zone column with the Arena and Ice Wall. See UI
   Design Reference.
-- Confirm the battle schema version at build time. It's 15 if nothing
-  else bumps it first.
-- Check a trap sharing a space with a full fan-out of hero tokens, and
-  on a gold-pile space with its gold marker, at 100% and 250% zoom.
-- Check the Map at 1280x800 with Felix (Arena showing), Dazeem and
-  Boreas on one team: the three stacked zones in the outer margin.
-- Check that `mergeDropHandlers` keeps the space's highlight correct
-  when a hero and the trap are dragged in turn over the same space.
+- ~~Confirm the battle schema version at build time.~~
+  **Decided:** 15. `main` was at 14 after Runika's Artifacts.
+- ~~Check a trap sharing a space with a full fan-out of hero tokens, and
+  on a gold-pile space with its gold marker, at 100% and 250% zoom.~~
+  **Decided (user, 2026-10-18): keep the fixed (+30px, +14px) offset.**
+  With one hero it sits clear beside the token, as on the canvas. With
+  four heroes fanned out on the middle gold pile it overlaps the rim of
+  the lower-right token at 100%, but no face and not the gold count, and
+  stays grabbable; at 250% it sits mostly clear. Pushing it out by the
+  fan-out radius was offered and not needed.
+- ~~Check the Map at 1280x800 with Felix (Arena showing), Dazeem and
+  Boreas on one team: the three stacked zones in the outer margin.~~
+  **Decided:** fits with no scroll. The three zones end well above the
+  fold in the margin beside Player 1's column.
+- ~~Check that `mergeDropHandlers` keeps the space's highlight correct
+  when a hero and the trap are dragged in turn over the same space.~~
+  **Decided:** each hook keeps its own enter/leave counter, so the
+  highlight clears after either drag. Covered by the `BattleMapScreen`
+  and `BearTrapHolder` unit tests (a native drag can't be screenshotted
+  mid-drag).

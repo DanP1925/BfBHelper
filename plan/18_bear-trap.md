@@ -33,7 +33,7 @@ on the Battle Board changes.
 **Structure: one build PR**, like 16, after this plan ships as its own
 `docs:` PR. It's one stored value, one action, two small components, a
 hook generalization and one screen's wiring, so a vertical slice is the
-whole feature. One minor bump (→ 0.18.0) at the end.
+whole feature. One bump at the end, to 1.0.0 (user, 2026-10-18: this completes v1).
 
 **Parallel-safe split.** The data layer (M1-M7: `lib/battle/`,
 `lib/persistence/`, `useBattle`) and the drag layer (M8-M10:
@@ -75,25 +75,25 @@ frontend/e2e/
 
 ### Data & state layer
 
-- [ ] M1. `lib/battle/types.ts`: `BattleState` += `bearTrap: MapSpaceId |
+- [x] M1. `lib/battle/types.ts`: `BattleState` += `bearTrap: MapSpaceId |
       null` with the spec's doc comment (`null` = in its holder, changed
       only by hand), `schemaVersion: 15`.
-- [ ] M2. `lib/battle/reducer.ts`: += `SET_BEAR_TRAP { spaceId:
+- [x] M2. `lib/battle/reducer.ts`: += `SET_BEAR_TRAP { spaceId:
       MapSpaceId | null }`. An equal write returns the same state. No
       roster check, no "is Boreas on this space" check, no clamping.
       `createInitialBattleState` writes `bearTrap: null` and
       `schemaVersion: 15`. A comment says nothing else in the reducer
       touches the trap (not a hero dropped on its space, Immobilize, HP
       to 0, a level change or a passed round).
-- [ ] M3. `lib/battle/bearTrap.ts` (new): `BEAR_TRAP_OWNER = "boreas"` and
+- [x] M3. `lib/battle/bearTrap.ts` (new): `BEAR_TRAP_OWNER = "boreas"` and
       `bearTrapOwnerSide(state)` = `heroSide(state, BEAR_TRAP_OWNER)`, the
       same shape as `iceWall.ts`. No level, HP or position check.
-- [ ] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
+- [x] M4. `lib/persistence/schema.ts`: `CURRENT_BATTLE_SCHEMA_VERSION =
       15`. += `PersistedBattleStateV15` = `PersistedBattleStateV14` with
       `schemaVersion: 15` and `bearTrap: MapSpaceId | null`.
       `PersistedBattleStateV14`'s doc comment says it's now only the
       source for `battleMigrations[14]`.
-- [ ] M5. `lib/persistence/storage.ts`:
+- [x] M5. `lib/persistence/storage.ts`:
       - += `upgradeV14ToV15`, a top-level step like `upgradeV12ToV13`
         (`bearTrap: null`), and `battleMigrations` += `14:
         upgradeV14ToV15`
@@ -101,44 +101,44 @@ frontend/e2e/
         `isValidPersistedBattleState` rejects anything else
       - `saveBattleState` writes `bearTrap`, `loadBattleState` returns
         it, and both use `PersistedBattleStateV15` and `schemaVersion: 15`
-- [ ] M6. `lib/useBattle.ts`: += `setBearTrap(spaceId)`, modelled on
+- [x] M6. `lib/useBattle.ts`: += `setBearTrap(spaceId)`, modelled on
       `setIceWall`.
-- [ ] M7. `app/page.tsx`: passes `battle.setBearTrap` to
+- [x] M7. `app/page.tsx`: passes `battle.setBearTrap` to
       `BattleMapScreen` as `setBearTrap`, next to `setIceWall`.
 
 ### Drag layer
 
-- [ ] M8. `lib/map/dragPayload.ts`: += `BEAR_TRAP_DRAG_MIME_TYPE`
+- [x] M8. `lib/map/dragPayload.ts`: += `BEAR_TRAP_DRAG_MIME_TYPE`
       (`"application/x-bfbhelper-bear-trap"`),
       `serializeBearTrapDrag(event)` (no data, `effectAllowed = "move"`)
       and `isBearTrapDrag(event)`, built on the existing `carries`.
-- [ ] M9. `lib/map/useMarkerDropTarget.ts`: `git mv` from
+- [x] M9. `lib/map/useMarkerDropTarget.ts`: `git mv` from
       `useIceWallDropTarget.ts` and generalize to
       `useMarkerDropTarget(matches, onDrop)`: `useDragHighlight(matches)`
       and an early return on `!matches(event)`. Update its two callers
       (`BattleMapScreen`'s board, `IceWallHolder`) to pass
       `isIceWallDrag`, and `useDragHighlight`'s doc comment.
-- [ ] M10. `lib/map/mergeDropHandlers.ts` (new): `mergeDropHandlers(a, b)`
+- [x] M10. `lib/map/mergeDropHandlers.ts` (new): `mergeDropHandlers(a, b)`
       returns one set of `onDragEnter` / `onDragOver` / `onDragLeave` /
       `onDrop` that calls both. Each hook ignores the other's drag, so
       calling both is safe.
 
 ### UI
 
-- [ ] M11. `components/BearTrapMarker/` (new): the canvas's marker, a
+- [x] M11. `components/BearTrapMarker/` (new): the canvas's marker, a
       `draggable` 26x26px tile with `aria-label="Bear Trap"`, an
       `rgba(24, 19, 16, 0.9)` fill, a 1.5px `--color-favored-enemy`
       border, 6px radius, and the 16px line-art trap icon (16x16 viewBox,
       1.5 stroke, inline SVG, `aria-hidden`): two jaws hinged at the
       bottom, two teeth each, a base plate. Its `onDragStart` calls
       `serializeBearTrapDrag`. Takes an optional `style`.
-- [ ] M12. `components/BearTrapHolder/` (new): `<section
+- [x] M12. `components/BearTrapHolder/` (new): `<section
       aria-label="Bear Trap">` with `useMarkerDropTarget(isBearTrapDrag,
       () => onDrop())`. It composes `RespawnAreaStrip`'s `area` and
       `label` CSS like `IceWallHolder`, with an emerald left bar and a
       48px dashed emerald box. It renders `BearTrapMarker` inside while
       `holdsTrap`. Hero and wall drops are ignored.
-- [ ] M13. `screens/BattleMapScreen/MapSpace.tsx`:
+- [x] M13. `screens/BattleMapScreen/MapSpace.tsx`:
       - += `hasBearTrap: boolean` and `onDropBearTrap: () => void` props
       - calls `useMarkerDropTarget(isBearTrapDrag, onDropBearTrap)` next
         to `useHeroDropTarget`, and spreads
@@ -148,7 +148,7 @@ frontend/e2e/
         above the hero tokens and below the gold marker, offset (+30px,
         +14px) from the centre, with `scale(1 / Math.sqrt(zoom))`. For
         Towers and Bits that's the hero-standing tile, not the dial.
-- [ ] M14. `screens/BattleMapScreen/BattleMapScreen.tsx`:
+- [x] M14. `screens/BattleMapScreen/BattleMapScreen.tsx`:
       - += `setBearTrap` prop
       - `const bearTrapSide = bearTrapOwnerSide(battleState)`.
         `outerZones(side)` renders when `arenaSide`, `iceWallSide` or
@@ -162,15 +162,19 @@ frontend/e2e/
         is a hero or the trap (`isHeroDrag || isBearTrapDrag`), so the
         on-board Ice Wall lets the trap through to the space under it.
         Still only tracked while the wall is on the board.
-- [ ] M15. Spec Open Item: a trap sharing a space with a full fan-out of
+- [x] M15. Spec Open Item: a trap sharing a space with a full fan-out of
       hero tokens (3-4), and on a gold-pile space with its gold marker,
       at 100% and 250% zoom. The tile should stay grabbable, not hide a
       hero's face, and not cover the gold count. Adjust the offset if
       not. Decide in the browser and update the spec.
+      **Kept the fixed offset (user, 2026-10-18).** One hero: clear
+      beside the token, as on the canvas. Four heroes on the middle gold
+      pile: it overlaps the rim of the lower-right token at 100% (no face,
+      not the gold count) and sits mostly clear at 250%.
 
 ### Tests & verification
 
-- [ ] M16. Tests:
+- [x] M16. Tests:
       - fixtures: every hand-written `BattleState` gains `bearTrap: null`
         and `schemaVersion: 15` (`tsc` finds them)
       - `src/test/heroDrag.ts`: += `bearTrapDragTransfer()` and
@@ -202,6 +206,10 @@ frontend/e2e/
       - `MapSpace`: renders the marker only with `hasBearTrap`; a trap
         drop calls `onDropBearTrap` and not `onDropHero`; a hero drop
         still calls `onDropHero` and not `onDropBearTrap`
+        **Done through `BattleMapScreen`'s tests** (a trap drop on a
+        space moves no hero; a hero dropped on the trap's tile lands on
+        its space and leaves the trap; a space highlights for the trap),
+        not a separate `MapSpace` test file.
       - `BattleMapScreen`: no holder or marker without Boreas; with
         Boreas on p1 the holder is in P1's outer zones, on p2 in P2's,
         after the Arena and Ice Wall holder when they share a team; the
@@ -217,16 +225,18 @@ frontend/e2e/
         spaces and it stays put; drag a hero onto the trapped space and
         the trap stays; Boreas's HP to 0 leaves it on the board; drag it
         back to the holder; a draft without Boreas shows no holder
-- [ ] M17. Spec Open Item: the Map at 1280x800 with Felix (Arena
+- [x] M17. Spec Open Item: the Map at 1280x800 with Felix (Arena
       showing), Dazeem and Boreas on one team, on each side: the three
       zones stacked in the outer margin. They should end above the fold
       without making the Map scroll. If not, decide in the browser
       (e.g. shrink the holders' boxes) and update the spec.
-- [ ] M18. `tsc --noEmit`, ESLint, full Vitest and Playwright suites
+      **Fits** with no scroll on Player 1's side; Player 2's side was
+      checked with Boreas alone (the stacking is the same box).
+- [x] M18. `tsc --noEmit`, ESLint, full Vitest and Playwright suites
       green (the existing ice-wall, battle-map and arena e2e specs too,
       since `useIceWallDropTarget` and `MapSpace`'s handlers changed
       underneath).
-- [ ] M19. Manual QA at 1280x800 (`/qa-screens`):
+- [x] M19. Manual QA at 1280x800 (`/qa-screens`):
       - the holder only with Boreas drafted, in his team's outer column,
         on either side; neither team's column moves
       - the trap snaps to a space and sits beside the heroes there, in
@@ -240,7 +250,17 @@ frontend/e2e/
         its holder and every token, Artifact, Arena position, Ice Wall
         and gold pile kept
       - New Draft sends the trap back to its holder
-- [ ] M20. `npm version minor --no-git-tag-version` (→ 0.18.0). In
+      Done with a one-off Playwright script at 1280x800 and 2560x1440
+      (three scenes: crowded gold pile at 100% and 250%, one hero on a
+      plain space with Boreas on Player 2, the trap in its holder), plus
+      the user trying it on the dev server. The schema-14 upgrade, New
+      Draft and a trap dropped under the wall were checked by the unit
+      tests, not by hand.
+- [x] M20. `npm version minor --no-git-tag-version` (→ 0.18.0). In
       `BACKLOG.md`, mark Bear Trap done in Boreas's entry and the
       hero-specific table, linking intent 18 and v0.18.0. Mark spec 18
-      **BUILT**.
+      **BUILT**. **Changed (user, 2026-10-18): 1.0.0, not 0.18.0.** This
+      completes the hero playability review, so the user called it v1.
+      The three open polish items (token-display review, two draft
+      animations) moved to a new "After 1.0" section of `BACKLOG.md`, and
+      CLAUDE.md's 1.0.0 rule now says "playable with only the cards".

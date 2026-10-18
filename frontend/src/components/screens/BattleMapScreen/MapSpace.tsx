@@ -5,8 +5,12 @@ import type { StructuresState } from "../../../lib/battle/types";
 import type { Hero, HeroId } from "../../../lib/draft/types";
 import type { GoldPileSpaceId, MapSpaceDef } from "../../../data/mapSpaces";
 import { useHeroDropTarget } from "../../../lib/map/useHeroDropTarget";
+import { useMarkerDropTarget } from "../../../lib/map/useMarkerDropTarget";
+import { mergeDropHandlers } from "../../../lib/map/mergeDropHandlers";
+import { isBearTrapDrag } from "../../../lib/map/dragPayload";
 import { fanOffset } from "../../../lib/map/fanOut";
 import { structureIcon } from "../../../lib/battle/structureDisplay";
+import { BearTrapMarker } from "../../BearTrapMarker/BearTrapMarker";
 import { MapToken } from "../../MapToken/MapToken";
 import styles from "./BattleMapScreen.module.css";
 
@@ -43,6 +47,11 @@ type MapSpaceProps = {
    *   1x (where the gap and the sqrt-scaled size are closest). */
   zoom: number;
   onDropHero: (side: PlayerId, heroId: HeroId) => void;
+  /** Boreas's Bear Trap (intent/18) is on this space: draw it beside the
+   * heroes here. */
+  hasBearTrap: boolean;
+  /** The trap was dropped on this space. */
+  onDropBearTrap: () => void;
 };
 
 /**
@@ -53,8 +62,9 @@ type MapSpaceProps = {
  * decorative, no drag handlers) and the drop target itself at the
  * separate hero-standing tile (`heroXPct`/`heroYPct`) — since the board
  * art draws those at different spots. Within the drop target, z-order
- * bottom-to-top: fanned-out hero tokens -> the gold-pile marker, always
- * topmost so a token landing nearby can never visually bury it. The
+ * bottom-to-top: fanned-out hero tokens -> the Bear Trap (intent/18), set
+ * off to one side so the heroes stay readable -> the gold-pile marker,
+ * always topmost so a token landing nearby can never visually bury it. The
  * marker is deliberately read-only (icon + count, no stepper) — this same
  * node is also where heroes stand, and a `NumberStepper` has nowhere to go
  * without overlapping a token; the real controls live in `GoldPilesBar`.
@@ -62,7 +72,9 @@ type MapSpaceProps = {
  * Highlights itself while a hero is being dragged over it — every space
  * is a valid drop target (no reachability validation, per intent's Out
  * of Scope), so this is purely "you can drop here," not "this move is
- * legal." The drag handling is `useHeroDropTarget`'s.
+ * legal." Every space takes the Bear Trap too, and highlights for it the
+ * same way. The drag handling is `useHeroDropTarget`'s and
+ * `useMarkerDropTarget`'s, merged.
  */
 export function MapSpace({
   space,
@@ -71,14 +83,17 @@ export function MapSpace({
   goldPiles,
   zoom,
   onDropHero,
+  hasBearTrap,
+  onDropBearTrap,
 }: MapSpaceProps) {
   const hp = structureHp(structures, space);
   const isDestroyed = hp === 0;
   const goldCount = space.kind === "gold" ? goldPiles[space.id as GoldPileSpaceId] : null;
 
-  const { isDragOver, dropHandlers } = useHeroDropTarget((payload) =>
-    onDropHero(payload.side, payload.heroId),
-  );
+  const hero = useHeroDropTarget((payload) => onDropHero(payload.side, payload.heroId));
+  const trap = useMarkerDropTarget(isBearTrapDrag, onDropBearTrap);
+  const isDragOver = hero.isDragOver || trap.isDragOver;
+  const dropHandlers = mergeDropHandlers(hero.dropHandlers, trap.dropHandlers);
 
   const isStructure = space.kind === "tower" || space.kind === "bit";
   const heroXPct = isStructure ? space.heroXPct : space.xPct;
@@ -125,6 +140,21 @@ export function MapSpace({
             />
           );
         })}
+        {/* Beside the heroes, not over them: offset right of the centre
+            token and above its name label. A hero dropped on it bubbles
+            to this space, which is the right target, so unlike the Ice
+            Wall it needs no pointer-events toggle. */}
+        {hasBearTrap && (
+          <BearTrapMarker
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: `translate(-50%, -50%) translate(30px, 14px) scale(${1 / Math.sqrt(zoom)})`,
+              zIndex: 1,
+            }}
+          />
+        )}
         {goldCount !== null && goldCount > 0 && (
           <div
             className={styles.goldMarker}

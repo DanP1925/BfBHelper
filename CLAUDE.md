@@ -17,13 +17,16 @@
   with `cd frontend && npm version patch --no-git-tag-version` (or `minor`), which
   updates both files. The `Version check` workflow fails a PR whose title type needs
   a bump but whose `frontend/` changes left the version unchanged.
-- Pre-1.0 bump rules:
-  - **Minor** (`0.X.0`): an intent is completed. If an intent spans several PRs,
+- Bump rules (the same before and after 1.0):
+  - **Minor** (`1.X.0`): an intent is completed. If an intent spans several PRs,
     bump in the one that finishes it.
-  - **Patch** (`0.x.Y`): a `fix:`, `perf:`, `refactor:` or polish PR that changes
+  - **Patch** (`1.x.Y`): a `fix:`, `perf:`, `refactor:` or polish PR that changes
     `frontend/` but doesn't complete an intent.
   - **No bump**: `docs:`, `chore:`, `ci:` or `test:`-only changes.
-- **1.0.0** = everything in `BACKLOG.md` is done.
+  - **Major**: only when the user calls for it.
+- **1.0.0** (intent 18, 2026-10-18) = a game can be played with only the physical
+  cards: every hero's needs in `BACKLOG.md` are met. The remaining polish items
+  moved to its "After 1.0" section.
 - After the PR merges, the `Tag release` workflow tags the merged commit on `main`
   with an annotated `vX.Y.Z` tag (if that tag doesn't exist yet). Don't tag by hand.
 - Past intents were tagged after the fact: `v0.1.0`–`v0.3.0` for intents 01–03,

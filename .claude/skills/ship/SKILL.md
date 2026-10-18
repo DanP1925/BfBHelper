@@ -27,7 +27,8 @@ Optional argument: a PR title or type hint (e.g. `/ship fix`).
 ## 2. Choose the type, then the bump
 
 Pick the Conventional Commit type from what the diff does, not from how
-big it is. Then apply the pre-1.0 bump rules:
+big it is. Then apply the bump rules (the same before and after 1.0.0; a
+major bump only when the user calls for it):
 
 | Situation | Bump |
 |---|---|

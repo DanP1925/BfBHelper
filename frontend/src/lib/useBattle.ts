@@ -13,7 +13,7 @@ import type {
   StructuresState,
 } from "./battle/types";
 import type { Hero, HeroId, PlayerId } from "./draft/types";
-import type { GoldPileSpaceId } from "../data/mapSpaces";
+import type { GoldPileSpaceId, MapSpaceId } from "../data/mapSpaces";
 import { loadBattleState, saveBattleState } from "./persistence/storage";
 
 export type UseBattleResult = {
@@ -49,6 +49,9 @@ export type UseBattleResult = {
   /** Places or moves Dazeem's Ice Wall (intent/16), or sends it back to its
    * holder with `null`. Clamped in the reducer. */
   setIceWall: (position: IceWallPosition | null) => void;
+  /** Places or moves Boreas's Bear Trap (intent/18) onto a board space, or
+   * sends it back to its holder with `null`. */
+  setBearTrap: (spaceId: MapSpaceId | null) => void;
   passInitiative: () => void;
 };
 
@@ -212,6 +215,12 @@ export function useBattle(
     );
   }, []);
 
+  const setBearTrap = useCallback((spaceId: MapSpaceId | null) => {
+    setState((prev) =>
+      prev === null ? prev : battleReducer(prev, { type: "SET_BEAR_TRAP", spaceId }),
+    );
+  }, []);
+
   const passInitiative = useCallback(() => {
     setState((prev) => (prev === null ? prev : battleReducer(prev, { type: "PASS_INITIATIVE" })));
   }, []);
@@ -229,6 +238,7 @@ export function useBattle(
     setHeroPosition,
     setGoldPile,
     setIceWall,
+    setBearTrap,
     passInitiative,
   };
 }

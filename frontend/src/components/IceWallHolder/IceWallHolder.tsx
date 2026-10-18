@@ -1,6 +1,7 @@
 "use client";
 
-import { useIceWallDropTarget } from "../../lib/map/useIceWallDropTarget";
+import { isIceWallDrag } from "../../lib/map/dragPayload";
+import { useMarkerDropTarget } from "../../lib/map/useMarkerDropTarget";
 import { IceWallMarker } from "../IceWallMarker/IceWallMarker";
 import styles from "./IceWallHolder.module.css";
 
@@ -16,10 +17,10 @@ type IceWallHolderProps = {
  * Where Dazeem's Ice Wall (intent/16) starts and returns to, under the
  * respawn area in his team's column. Styled like `RespawnAreaStrip`, with
  * a frost-cyan bar and dashed box. Only the wall drops here; hero drags
- * pass through (`useIceWallDropTarget`).
+ * pass through (`useMarkerDropTarget`).
  */
 export function IceWallHolder({ holdsWall, onDrop }: IceWallHolderProps) {
-  const { isDragOver, dropHandlers } = useIceWallDropTarget(onDrop);
+  const { isDragOver, dropHandlers } = useMarkerDropTarget(isIceWallDrag, onDrop);
 
   return (
     <section className={styles.holder} aria-label="Ice Wall" {...dropHandlers}>

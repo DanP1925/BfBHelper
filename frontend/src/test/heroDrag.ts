@@ -1,6 +1,7 @@
 import { createEvent, fireEvent } from "@testing-library/react";
 import type { DragEvent } from "react";
 import {
+  serializeBearTrapDrag,
   serializeHeroDragPayload,
   serializeIceWallDrag,
   type HeroDragPayload,
@@ -34,6 +35,19 @@ export function iceWallDragTransfer() {
   const dataTransfer = fakeDataTransfer();
   serializeIceWallDrag({ dataTransfer } as unknown as DragEvent);
   return dataTransfer;
+}
+
+/** A transfer carrying the Bear Trap (intent/18), as `BearTrapMarker` writes it. */
+export function bearTrapDragTransfer() {
+  const dataTransfer = fakeDataTransfer();
+  serializeBearTrapDrag({ dataTransfer } as unknown as DragEvent);
+  return dataTransfer;
+}
+
+/** Fires a `drop` of the Bear Trap on `element`. Unlike the wall, where it
+ * lands is the target itself, so no cursor position is needed. */
+export function dropBearTrap(element: Element) {
+  fireEvent.drop(element, { dataTransfer: bearTrapDragTransfer() });
 }
 
 /** Fires a `drop` on `element` carrying `payload`. With no payload the

@@ -11,14 +11,16 @@ import type {
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { clamp } from "../../../lib/battle/bounds";
 import { arenaOwnerSide, canEnterArena, isArenaShown } from "../../../lib/battle/arena";
+import { bearTrapOwnerSide } from "../../../lib/battle/bearTrap";
 import { iceWallOwnerSide } from "../../../lib/battle/iceWall";
 import type { BattleState, HeroPosition, IceWallPosition } from "../../../lib/battle/types";
 import { ARENA_POSITION } from "../../../lib/map/constants";
-import { isHeroDrag } from "../../../lib/map/dragPayload";
-import { useIceWallDropTarget } from "../../../lib/map/useIceWallDropTarget";
+import { isBearTrapDrag, isHeroDrag, isIceWallDrag } from "../../../lib/map/dragPayload";
+import { useMarkerDropTarget } from "../../../lib/map/useMarkerDropTarget";
 import type { GoldPileSpaceId, MapSpaceId } from "../../../data/mapSpaces";
 import { MAP_SPACES } from "../../../data/mapSpaces";
 import { ArenaPanel } from "../../ArenaPanel/ArenaPanel";
+import { BearTrapHolder } from "../../BearTrapHolder/BearTrapHolder";
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { GoldPilesBar } from "../../GoldPilesBar/GoldPilesBar";
 import { IceWallHolder } from "../../IceWallHolder/IceWallHolder";
@@ -41,6 +43,8 @@ type BattleMapScreenProps = {
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
   /** Places, moves or (with `null`) removes Dazeem's Ice Wall (intent/16). */
   setIceWall: (position: IceWallPosition | null) => void;
+  /** Places, moves or (with `null`) removes Boreas's Bear Trap (intent/18). */
+  setBearTrap: (spaceId: MapSpaceId | null) => void;
   onNewDraft: () => void;
   /** Called only once "End Battle" is confirmed in the dialog below. */
   onEndBattle: () => void;
@@ -78,6 +82,7 @@ export function BattleMapScreen({
   setHeroPosition,
   setGoldPile,
   setIceWall,
+  setBearTrap,
   onNewDraft,
   onEndBattle,
   onSwitchView,
@@ -158,7 +163,8 @@ export function BattleMapScreen({
   // the zoom and pan transform, so the wall stays on that spot of the art
   // at any zoom or pan. A wall dropped over a space lands here too: the
   // space's own drop handler ignores it and doesn't stop propagation.
-  const { isDragOver: isWallOverBoard, dropHandlers: boardWallDropHandlers } = useIceWallDropTarget(
+  const { isDragOver: isWallOverBoard, dropHandlers: boardWallDropHandlers } = useMarkerDropTarget(
+    isIceWallDrag,
     (event: ReactDragEvent<HTMLElement>) => {
       const rect = boardTransformRef.current?.getBoundingClientRect();
       if (!rect || rect.width === 0 || rect.height === 0) return;
@@ -172,23 +178,29 @@ export function BattleMapScreen({
   const iceWallSide = iceWallOwnerSide(battleState);
   const wallOnBoard = iceWallSide !== null && battleState.iceWall !== null;
 
-  // Whether a hero token is being dragged, so the Ice Wall can let drops
-  // through to the space under it. Only tracked while a wall is on the
-  // board, so other hero drags don't re-render the screen. Set from the
-  // drag's own start (which carries the hero's drag type) and cleared on
-  // any drop or drag end on this screen: a token that moved has remounted
-  // elsewhere, so its own `dragend` may not reach here, but the drop does.
-  const [isHeroDragging, setIsHeroDragging] = useState(false);
-  const heroDragTracking = {
+  // Whether something that lands on a space (a hero token, or the Bear Trap)
+  // is being dragged, so the Ice Wall can let drops through to the space
+  // under it. Only tracked while a wall is on the board, so other drags
+  // don't re-render the screen. Set from the drag's own start (which
+  // carries its drag type) and cleared on any drop or drag end on this
+  // screen: a token or trap that moved has remounted elsewhere, so its own
+  // `dragend` may not reach here, but the drop does.
+  const [isSpaceDragging, setIsSpaceDragging] = useState(false);
+  const spaceDragTracking = {
     onDragStart: (event: ReactDragEvent<HTMLElement>) => {
-      if (wallOnBoard && isHeroDrag(event)) setIsHeroDragging(true);
+      if (wallOnBoard && (isHeroDrag(event) || isBearTrapDrag(event))) setIsSpaceDragging(true);
     },
-    onDropCapture: () => setIsHeroDragging(false),
-    onDragEnd: () => setIsHeroDragging(false),
+    onDropCapture: () => setIsSpaceDragging(false),
+    onDragEnd: () => setIsSpaceDragging(false),
   };
 
   const iceWallHolder = (
     <IceWallHolder holdsWall={battleState.iceWall === null} onDrop={() => setIceWall(null)} />
+  );
+
+  const bearTrapSide = bearTrapOwnerSide(battleState);
+  const bearTrapHolder = (
+    <BearTrapHolder holdsTrap={battleState.bearTrap === null} onDrop={() => setBearTrap(null)} />
   );
 
   const arenaSide = isArenaShown(battleState) ? arenaOwnerSide(battleState) : null;
@@ -226,14 +238,16 @@ export function BattleMapScreen({
   );
 
   // The hero-specific drop zones go in the empty margin outside their
-  // owner's team column: Felix's Arena, then Dazeem's Ice Wall holder.
+  // owner's team column: Felix's Arena, then Dazeem's Ice Wall holder, then
+  // Boreas's Bear Trap holder.
   const outerZones = (side: PlayerId) =>
-    (arenaSide === side || iceWallSide === side) && (
+    (arenaSide === side || iceWallSide === side || bearTrapSide === side) && (
       <div
         className={`${styles.outerZones} ${side === "p1" ? styles.outerZonesP1 : styles.outerZonesP2}`}
       >
         {arenaSide === side && arenaPanel}
         {iceWallSide === side && iceWallHolder}
+        {bearTrapSide === side && bearTrapHolder}
       </div>
     );
 
@@ -245,7 +259,7 @@ export function BattleMapScreen({
   ];
 
   return (
-    <div className={styles.screen} {...heroDragTracking}>
+    <div className={styles.screen} {...spaceDragTracking}>
       <div className={styles.topBar}>
         <ViewToggle active="map" onSwitchView={onSwitchView} />
         <div className={styles.topBarActions}>
@@ -305,13 +319,15 @@ export function BattleMapScreen({
                       goldPiles={battleState.goldPiles}
                       zoom={zoom}
                       onDropHero={(side, heroId) => setHeroPosition(side, heroId, space.id)}
+                      hasBearTrap={bearTrapSide !== null && battleState.bearTrap === space.id}
+                      onDropBearTrap={() => setBearTrap(space.id)}
                     />
                   ))}
                   {/* After the spaces, so it's always grabbable, even near a
                       space whose invisible drop circle would otherwise sit
-                      on top of it. While a hero is dragged it lets the
-                      pointer through, so it never takes a drop meant for
-                      the space under it. It counter-scales by 1/sqrt(zoom)
+                      on top of it. While a hero or the Bear Trap is dragged
+                      it lets the pointer through, so it never takes a drop
+                      meant for the space under it. It counter-scales by 1/sqrt(zoom)
                       like a hero token: still growing with the paths it
                       covers, just slower than the art. */}
                   {iceWallSide !== null && battleState.iceWall !== null && (
@@ -322,7 +338,7 @@ export function BattleMapScreen({
                         top: `${battleState.iceWall.yPct}%`,
                         transform: `translate(-50%, -50%) scale(${1 / Math.sqrt(zoom)})`,
                         zIndex: 3,
-                        pointerEvents: isHeroDragging ? "none" : undefined,
+                        pointerEvents: isSpaceDragging ? "none" : undefined,
                       }}
                     />
                   )}

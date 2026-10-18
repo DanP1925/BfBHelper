@@ -42,6 +42,7 @@ import {
   type PersistedBattleStateV12,
   type PersistedBattleStateV13,
   type PersistedBattleStateV14,
+  type PersistedBattleStateV15,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -222,6 +223,19 @@ function upgradeV12ToV13(data: unknown): PersistedBattleStateV13 | null {
  * (intent/17: "upgrades in place, with all three face-up"). */
 const upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14, ARTIFACTS_FACE_UP);
 
+/** Schema 14 → 15: a top-level `bearTrap: null` (intent/18: "upgrades in
+ * place", with the trap in its holder). Everything else passes through
+ * unchanged; the current-shape validator checks it afterward. */
+function upgradeV14ToV15(data: unknown): PersistedBattleStateV15 | null {
+  if (typeof data !== "object" || data === null) return null;
+  return {
+    ...(data as PersistedBattleStateV14),
+    schemaVersion: 15,
+    bearTrap: null,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -241,6 +255,7 @@ const battleMigrations: MigrationSteps = {
   11: upgradeV11ToV12,
   12: upgradeV12ToV13,
   13: upgradeV13ToV14,
+  14: upgradeV14ToV15,
 };
 
 function isBrowser(): boolean {
@@ -438,7 +453,13 @@ function isValidIceWall(value: unknown): boolean {
   return isNumberInRange(wall.xPct, 0, 100) && isNumberInRange(wall.yPct, 0, 100);
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV14 {
+/** `null` (in its holder) or a known board space (intent/18). `"arena"`
+ * isn't a map space, so a trap can never be stored there. */
+function isValidBearTrap(value: unknown): boolean {
+  return value === null || isMapSpaceIdLike(value);
+}
+
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV15 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -456,6 +477,7 @@ function isValidPersistedBattleState(data: unknown): data is PersistedBattleStat
   }
 
   if (!isValidIceWall(candidate.iceWall)) return false;
+  if (!isValidBearTrap(candidate.bearTrap)) return false;
 
   return true;
 }
@@ -618,13 +640,14 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV14 = {
+  const payload: PersistedBattleStateV15 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
     goldPiles: state.goldPiles,
     initiative: state.initiative,
     iceWall: state.iceWall,
+    bearTrap: state.bearTrap,
     updatedAt: new Date().toISOString(),
   };
 
@@ -648,12 +671,13 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 14,
+    schemaVersion: 15,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,
     initiative: data.initiative,
     iceWall: data.iceWall,
+    bearTrap: data.bearTrap,
   };
 }
 
