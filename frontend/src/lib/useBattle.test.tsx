@@ -4,7 +4,7 @@ import type { Hero } from "./draft/types";
 import { BATTLE_STATE_STORAGE_KEY } from "./persistence/schema";
 import { saveBattleState } from "./persistence/storage";
 import { createInitialBattleState } from "./battle/reducer";
-import { ON_OFF_TOKEN_FIELDS } from "./battle/constants";
+import { ARTIFACT_FIELDS, ON_OFF_TOKEN_FIELDS } from "./battle/constants";
 import { GOLD_PILE_SPACE_IDS, MAP_SPACE_IDS } from "../data/mapSpaces";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "./map/constants";
 import { heroIdSetsMatch, useBattle } from "./useBattle";
@@ -126,6 +126,9 @@ describe("useBattle", () => {
       stoneTokens: 2,
       chillTokens: 4,
       favoredEnemy: true,
+      battleFistFaceUp: false,
+      autoDeflectorFaceUp: true,
+      shieldAmuletFaceUp: false,
     };
     saveBattleState(persisted);
 
@@ -142,6 +145,9 @@ describe("useBattle", () => {
       stoneTokens: 2,
       chillTokens: 4,
       favoredEnemy: true,
+      battleFistFaceUp: false,
+      autoDeflectorFaceUp: true,
+      shieldAmuletFaceUp: false,
     });
   });
 
@@ -263,6 +269,32 @@ describe("useBattle", () => {
         });
         expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBeNull();
         expect(result.current.state?.p2.heroes[HERO_B.id][field]).toBe(true);
+      });
+    },
+  );
+
+  describe.each(ARTIFACT_FIELDS.map((field) => ({ field })))(
+    "setHeroArtifact ($field)",
+    ({ field }) => {
+      it("persists a face-down flip, which survives a reload and can be flipped back up", () => {
+        const { result, unmount } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+        act(() => {
+          result.current.setHeroArtifact("p2", HERO_B.id, field, false);
+        });
+        expect(result.current.state?.p2.heroes[HERO_B.id][field]).toBe(false);
+        expect(result.current.state?.p1.heroes[HERO_A.id][field]).toBe(true);
+        expect(readRawState().p2.heroes[HERO_B.id][field]).toBe(false);
+        unmount();
+
+        const { result: reloaded } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+        expect(reloaded.current.state?.p2.heroes[HERO_B.id][field]).toBe(false);
+
+        act(() => {
+          reloaded.current.setHeroArtifact("p2", HERO_B.id, field, true);
+        });
+        expect(reloaded.current.state?.p2.heroes[HERO_B.id][field]).toBe(true);
+        expect(readRawState().p2.heroes[HERO_B.id][field]).toBe(true);
       });
     },
   );

@@ -1,3 +1,4 @@
+import type { HeroId } from "../draft/types";
 import type { CountedTokenField, HeroBattleState } from "./types";
 
 /** Starting battle-state constants for the Battle Board (intent/02) — all
@@ -43,6 +44,19 @@ export const ON_OFF_TOKEN_FIELDS = [
   "immobilized",
   "deathMarked",
   "favoredEnemy",
+] as const satisfies readonly BooleanHeroField[];
+
+/** The hero whose card and Map line show the Artifacts (intent/17). */
+export const ARTIFACT_OWNER: HeroId = "runika";
+
+/** Runika's Artifacts' stored fields (intent/17), in the card's order:
+ * Battle Fist, Auto Deflector, Shield Amulet (the rulebook's, p. 3).
+ * ArtifactField is read from this list, and storage validation loops over
+ * it. */
+export const ARTIFACT_FIELDS = [
+  "battleFistFaceUp",
+  "autoDeflectorFaceUp",
+  "shieldAmuletFaceUp",
 ] as const satisfies readonly BooleanHeroField[];
 
 type BooleanHeroField = {

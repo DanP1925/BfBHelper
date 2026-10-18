@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { DraftState, HeroId } from "../draft/types";
 import { createInitialBattleState } from "../battle/reducer";
-import { BIT_STARTING_HP, ON_OFF_TOKEN_FIELDS, TOWER_STARTING_HP } from "../battle/constants";
+import {
+  ARTIFACT_FIELDS,
+  BIT_STARTING_HP,
+  ON_OFF_TOKEN_FIELDS,
+  TOWER_STARTING_HP,
+} from "../battle/constants";
 import { COUNTED_TOKENS } from "../../test/countedTokens";
 import { NO_TOKENS } from "../../test/heroState";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
@@ -70,7 +75,8 @@ const p2InitiativeDraft: DraftState = {
  * `deathMarked` before schema 7, intent/09; `shieldTokens` before schema
  * 8, intent/11; `stoneTokens` before schema 9, intent/12; `chillTokens`
  * before schema 10, intent/13; `favoredEnemy` before schema 12,
- * intent/15). */
+ * intent/15; the Artifact flags, ARTIFACT_FIELDS, before schema 14,
+ * intent/17). */
 function withoutHeroFields(team: BattleState["p1"], ...fields: (keyof HeroBattleState)[]) {
   return {
     ...team,
@@ -377,7 +383,7 @@ describe("saveBattleState / loadBattleState", () => {
     expect(loadBattleState()).toEqual(state);
   });
 
-  describe("schema-1 -> 13 migration (intents 04 + 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-1 -> 14 migration (intents 04 + 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17)", () => {
     beforeEach(() => {
       saveDraft(p2InitiativeDraft);
     });
@@ -414,7 +420,7 @@ describe("saveBattleState / loadBattleState", () => {
       const loaded = loadBattleState();
 
       expect(loaded).not.toBeNull();
-      expect(loaded?.schemaVersion).toBe(13);
+      expect(loaded?.schemaVersion).toBe(14);
       expect(loaded?.initiative).toBe("p2");
       expect(loaded?.iceWall).toBeNull();
       expect(loaded?.p1.heroes).toEqual({
@@ -438,7 +444,7 @@ describe("saveBattleState / loadBattleState", () => {
       );
     });
 
-    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 13 on disk", () => {
+    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 14 on disk", () => {
       persistRawSchema1(
         { "agatha-trunch": { hp: 10, level: 1 } },
         { baldwin: { hp: 9, level: 1 } },
@@ -450,7 +456,7 @@ describe("saveBattleState / loadBattleState", () => {
 
       const raw = window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY);
       const parsed = JSON.parse(raw as string);
-      expect(parsed.schemaVersion).toBe(13);
+      expect(parsed.schemaVersion).toBe(14);
       expect(parsed.initiative).toBe("p2");
       expect(parsed.iceWall).toBeNull();
       expect(parsed.p1.heroPositions["agatha-trunch"]).toBeNull();
@@ -465,7 +471,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-2 -> 13 migration (intents 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-2 -> 14 migration (intents 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema2(state: BattleState) {
       const { initiative: _omitted, ...rest } = withoutIceWall(state);
       void _omitted;
@@ -483,6 +489,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           p2: withoutHeroFields(
             rest.p2,
@@ -494,6 +501,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           schemaVersion: 2,
           updatedAt: new Date().toISOString(),
@@ -516,12 +524,12 @@ describe("saveBattleState / loadBattleState", () => {
 
       // midBattle's heroes already have attackTokens: 0, confused: false,
       // immobilized: false, deathMarked: false, shieldTokens: 0,
-      // stoneTokens: 0, chillTokens: 0 and favoredEnemy: false, which is
-      // what the v3 -> v4, v4 -> v5, v5 -> v6, v6 -> v7, v7 -> v8, v8 -> v9,
-      // v9 -> v10 and v11 -> v12 steps add back to the stripped schema-2
-      // payload (v10 -> v11 only bumps the version), and iceWall: null,
-      // which v12 -> v13 adds.
-      expect(loadBattleState()).toEqual({ ...midBattle, schemaVersion: 13, initiative: "p2" });
+      // stoneTokens: 0, chillTokens: 0, favoredEnemy: false and the
+      // Artifacts face-up, which is what the v3 -> v4, v4 -> v5, v5 -> v6,
+      // v6 -> v7, v7 -> v8, v8 -> v9, v9 -> v10, v11 -> v12 and v13 -> v14
+      // steps add back to the stripped schema-2 payload (v10 -> v11 only
+      // bumps the version), and iceWall: null, which v12 -> v13 adds.
+      expect(loadBattleState()).toEqual({ ...midBattle, schemaVersion: 14, initiative: "p2" });
     });
 
     it("returns null and clears the key when there's no valid draft to default from", () => {
@@ -540,7 +548,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-3 -> 13 migration (intents 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-3 -> 14 migration (intents 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema3(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -556,6 +564,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           p2: withoutHeroFields(
             state.p2,
@@ -567,6 +576,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           schemaVersion: 3,
           updatedAt: new Date().toISOString(),
@@ -628,7 +638,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-4 -> 13 migration (intents 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-4 -> 14 migration (intents 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema4(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -643,6 +653,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           p2: withoutHeroFields(
             state.p2,
@@ -653,6 +664,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           schemaVersion: 4,
           updatedAt: new Date().toISOString(),
@@ -721,7 +733,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-5 -> 13 migration (intents 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-5 -> 14 migration (intents 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema5(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -735,6 +747,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           p2: withoutHeroFields(
             state.p2,
@@ -744,6 +757,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           schemaVersion: 5,
           updatedAt: new Date().toISOString(),
@@ -813,7 +827,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-6 -> 13 migration (intents 09 + 11 + 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-6 -> 14 migration (intents 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema6(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -826,6 +840,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           p2: withoutHeroFields(
             state.p2,
@@ -834,6 +849,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           schemaVersion: 6,
           updatedAt: new Date().toISOString(),
@@ -905,7 +921,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-7 -> 13 migration (intents 11 + 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-7 -> 14 migration (intents 11 + 12 + 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema7(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -917,6 +933,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           p2: withoutHeroFields(
             state.p2,
@@ -924,6 +941,7 @@ describe("saveBattleState / loadBattleState", () => {
             "stoneTokens",
             "chillTokens",
             "favoredEnemy",
+            ...ARTIFACT_FIELDS,
           ),
           schemaVersion: 7,
           updatedAt: new Date().toISOString(),
@@ -996,14 +1014,26 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-8 -> 13 migration (intents 12 + 13 + 14 + 15 + 16)", () => {
+  describe("schema-8 -> 14 migration (intents 12 + 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema8(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...withoutIceWall(state),
-          p1: withoutHeroFields(state.p1, "stoneTokens", "chillTokens", "favoredEnemy"),
-          p2: withoutHeroFields(state.p2, "stoneTokens", "chillTokens", "favoredEnemy"),
+          p1: withoutHeroFields(
+            state.p1,
+            "stoneTokens",
+            "chillTokens",
+            "favoredEnemy",
+            ...ARTIFACT_FIELDS,
+          ),
+          p2: withoutHeroFields(
+            state.p2,
+            "stoneTokens",
+            "chillTokens",
+            "favoredEnemy",
+            ...ARTIFACT_FIELDS,
+          ),
           schemaVersion: 8,
           updatedAt: new Date().toISOString(),
         }),
@@ -1077,14 +1107,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-9 -> 13 migration (intents 13 + 14 + 15 + 16)", () => {
+  describe("schema-9 -> 14 migration (intents 13 + 14 + 15 + 16 + 17)", () => {
     function persistRawSchema9(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...withoutIceWall(state),
-          p1: withoutHeroFields(state.p1, "chillTokens", "favoredEnemy"),
-          p2: withoutHeroFields(state.p2, "chillTokens", "favoredEnemy"),
+          p1: withoutHeroFields(state.p1, "chillTokens", "favoredEnemy", ...ARTIFACT_FIELDS),
+          p2: withoutHeroFields(state.p2, "chillTokens", "favoredEnemy", ...ARTIFACT_FIELDS),
           schemaVersion: 9,
           updatedAt: new Date().toISOString(),
         }),
@@ -1145,14 +1175,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-10 -> 13 migration (intents 14 + 15 + 16)", () => {
+  describe("schema-10 -> 14 migration (intents 14 + 15 + 16 + 17)", () => {
     function persistRawSchema10(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...withoutIceWall(state),
-          p1: withoutHeroFields(state.p1, "favoredEnemy"),
-          p2: withoutHeroFields(state.p2, "favoredEnemy"),
+          p1: withoutHeroFields(state.p1, "favoredEnemy", ...ARTIFACT_FIELDS),
+          p2: withoutHeroFields(state.p2, "favoredEnemy", ...ARTIFACT_FIELDS),
           schemaVersion: 10,
           updatedAt: new Date().toISOString(),
         }),
@@ -1191,14 +1221,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-11 -> 13 migration (intents 15 + 16)", () => {
+  describe("schema-11 -> 14 migration (intents 15 + 16 + 17)", () => {
     function persistRawSchema11(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...withoutIceWall(state),
-          p1: withoutHeroFields(state.p1, "favoredEnemy"),
-          p2: withoutHeroFields(state.p2, "favoredEnemy"),
+          p1: withoutHeroFields(state.p1, "favoredEnemy", ...ARTIFACT_FIELDS),
+          p2: withoutHeroFields(state.p2, "favoredEnemy", ...ARTIFACT_FIELDS),
           schemaVersion: 11,
           updatedAt: new Date().toISOString(),
         }),
@@ -1226,6 +1256,9 @@ describe("saveBattleState / loadBattleState", () => {
               stoneTokens: 2,
               chillTokens: 3,
               favoredEnemy: false,
+              battleFistFaceUp: true,
+              autoDeflectorFaceUp: true,
+              shieldAmuletFaceUp: true,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: ARENA_POSITION },
@@ -1244,12 +1277,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-12 -> 13 migration (intent/16)", () => {
+  describe("schema-12 -> 14 migration (intents 16 + 17)", () => {
     function persistRawSchema12(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...withoutIceWall(state),
+          p1: withoutHeroFields(state.p1, ...ARTIFACT_FIELDS),
+          p2: withoutHeroFields(state.p2, ...ARTIFACT_FIELDS),
           schemaVersion: 12,
           updatedAt: new Date().toISOString(),
         }),
@@ -1279,6 +1314,9 @@ describe("saveBattleState / loadBattleState", () => {
               stoneTokens: 2,
               chillTokens: 3,
               favoredEnemy: true,
+              battleFistFaceUp: true,
+              autoDeflectorFaceUp: true,
+              shieldAmuletFaceUp: true,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: ARENA_POSITION },
@@ -1299,6 +1337,99 @@ describe("saveBattleState / loadBattleState", () => {
 
       expect(loadBattleState()).toBeNull();
       expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("schema-13 -> 14 migration (intent/17)", () => {
+    function persistRawSchema13(state: BattleState) {
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({
+          ...state,
+          p1: withoutHeroFields(state.p1, ...ARTIFACT_FIELDS),
+          p2: withoutHeroFields(state.p2, ...ARTIFACT_FIELDS),
+          schemaVersion: 13,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+    }
+
+    it("upgrades in place with every hero's Artifacts face-up, every token, position and the wall kept", () => {
+      const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0];
+      const midBattle: BattleState = {
+        ...sampleBattleState,
+        initiative: "p2",
+        p1: {
+          ...sampleBattleState.p1,
+          heroes: {
+            ...sampleBattleState.p1.heroes,
+            [p1HeroId]: {
+              hp: 3,
+              level: 4,
+              ...NO_TOKENS,
+              attackTokens: 2,
+              confused: true,
+              chillTokens: 3,
+              favoredEnemy: true,
+            },
+          },
+          heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: ARENA_POSITION },
+        },
+        iceWall: { xPct: 48.6, yPct: 21.9 },
+      };
+      persistRawSchema13(midBattle);
+
+      const loaded = loadBattleState();
+      expect(loaded).toEqual(midBattle);
+      for (const hero of [
+        ...Object.values(loaded?.p1.heroes ?? {}),
+        ...Object.values(loaded?.p2.heroes ?? {}),
+      ]) {
+        for (const field of ARTIFACT_FIELDS) expect(hero[field]).toBe(true);
+      }
+    });
+
+    it("still rejects a schema-13 payload whose other fields are invalid", () => {
+      persistRawSchema13({ ...sampleBattleState, p1: { ...sampleBattleState.p1, gold: -1 } });
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("Artifact flags (intent/17)", () => {
+    it("round-trips a face-down Artifact", () => {
+      const heroId = Object.keys(sampleBattleState.p1.heroes)[0];
+      const state: BattleState = {
+        ...sampleBattleState,
+        p1: {
+          ...sampleBattleState.p1,
+          heroes: {
+            ...sampleBattleState.p1.heroes,
+            [heroId]: { hp: 5, level: 1, ...NO_TOKENS, autoDeflectorFaceUp: false },
+          },
+        },
+      };
+      saveBattleState(state);
+
+      expect(loadBattleState()).toEqual(state);
+    });
+
+    it("accepts a face-down Artifact on any hero (shape, not rules)", () => {
+      const heroId = Object.keys(sampleBattleState.p2.heroes)[0];
+      const state: BattleState = {
+        ...sampleBattleState,
+        p2: {
+          ...sampleBattleState.p2,
+          heroes: {
+            ...sampleBattleState.p2.heroes,
+            [heroId]: { hp: 5, level: 1, ...NO_TOKENS, shieldAmuletFaceUp: false },
+          },
+        },
+      };
+      saveBattleState(state);
+
+      expect(loadBattleState()).toEqual(state);
     });
   });
 
@@ -1386,9 +1517,10 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  // Every on/off token: Confuse (intent/07), Immobilize (intent/08), Death
-  // Mark (intent/09), Favored Enemy (intent/15).
-  describe.each(ON_OFF_TOKEN_FIELDS.map((field) => ({ field })))(
+  // Every per-hero boolean: the on/off tokens, Confuse (intent/07),
+  // Immobilize (intent/08), Death Mark (intent/09), Favored Enemy
+  // (intent/15), and Runika's Artifacts (intent/17).
+  describe.each([...ON_OFF_TOKEN_FIELDS, ...ARTIFACT_FIELDS].map((field) => ({ field })))(
     "$field validation",
     ({ field }) => {
       it.each([
@@ -1576,7 +1708,7 @@ describe("saveBattleState / loadBattleState", () => {
     // split exists to prevent: bumping the battle schema must never make
     // loadDraft() also expect a migration that doesn't exist for drafts.
     it("loadDraft still loads a schema-1 draft after CURRENT_BATTLE_SCHEMA_VERSION has been bumped past 1", () => {
-      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(13);
+      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(14);
       saveDraft(midDraftState);
 
       expect(loadDraft()).toEqual(midDraftState);

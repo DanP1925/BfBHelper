@@ -1,7 +1,7 @@
 # Spec 17: Runika's Artifacts
 
-> **DRAFT.** Architecture for intent 17's scope. Build-out has not started
-> yet. See [../intent/17_runika-artifacts.md](../intent/17_runika-artifacts.md)
+> **BUILT.** Architecture for intent 17's scope, all built in one PR
+> (plan 17). See [../intent/17_runika-artifacts.md](../intent/17_runika-artifacts.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -305,10 +305,11 @@
   13px on the Map, like the token icons.
 - **Accent color.** A new `globals.css` token, `--color-artifact`, with a
   comment like `--color-favored-enemy`'s. The rulebook's Artifact tokens
-  are a mid blue, so it's a periwinkle, `#7d9cf0`, picked on the canvas.
-  It's bluer and more saturated than `--color-immobilize` `#8fb4e0`, and
-  bluer and darker than `--color-chill` `#5ccfe6`. Both can sit on
-  Runika's card, so check they read apart (Open Items).
+  are a mid blue, pushed toward violet: `#8f8cf5` (updated 2026-10-18 from
+  the canvas's first `#7d9cf0`, which read too close to
+  `--color-immobilize` `#8fb4e0` on the same card; Open Items). It stays
+  short of `--color-confuse`'s magenta and well apart from
+  `--color-chill` `#5ccfe6`.
 - **`HeroCard`** (battle variant) gains one optional prop:
   ```ts
   /** Runika's Artifacts (intent/17), keyed by field. The artifact row
@@ -342,8 +343,9 @@
   card is as tall as a hero with two token lines today. The heaviest case
   is Runika holding all eight tokens as an ally of Cyrus and an enemy of
   Kunoichi, Sedusa, Dazeem and Boreas. That's spec 15's three token lines
-  plus the artifact line. The case needs five specific heroes in one game
-  (Open Items).
+  plus the artifact line. The case needs five specific heroes in one game.
+  It scrolls the Board by 12px at 1280x800, which was accepted (Open
+  Items).
 - **Map** (`MapTeamStatusPanel`): for `hero.id === ARTIFACT_OWNER`, the
   token line also maps over `ARTIFACTS`, keeping only face-up ones, and
   renders each after the `BATTLE_TOKENS` icons as a `.token` span. Each
@@ -362,7 +364,7 @@
 
 ## UI Design Reference
 Added to two existing artboards on the same canvas as intents 01-16
-("BfbHelper — App Flow", version 88):
+("BfbHelper — App Flow", version 89):
 https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
 
 - **The roster:** Runika replaces Agatha Trunch as Player 1's fourth
@@ -372,7 +374,8 @@ https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
 - **"Battle Board":**
   - **The artifact row** sits on Runika's card between the level row and
     the token row: three icon-only pills in Battle Fist, Auto Deflector,
-    Shield Amulet order, in `--color-artifact` `#7d9cf0`.
+    Shield Amulet order, in `--color-artifact` `#8f8cf5` (version 89
+    moved it from `#7d9cf0`).
   - **Seeds:** Battle Fist and Shield Amulet face-up (lit), Auto
     Deflector face-down (dashed, muted, 0.6 opacity), as after one enemy
     hit. Tapping any pill flips it.
@@ -390,7 +393,7 @@ https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
 - "Battle Map — Arena" isn't touched. Runika isn't in its roster.
 
 This is a prototype for visual direction only, the same caveat as earlier
-intents' references. It settles the periwinkle accent, the three icons,
+intents' references. It settles the violet-blue accent, the three icons,
 the face-down look, the row's place on the card and the Map's face-up-only
 icons. If a revised canvas supersedes these choices, it wins over what's
 written here.
@@ -403,6 +406,10 @@ infra.
 - `--color-artifact` is `#7d9cf0` on the canvas. Check at 1280x800 that a
   face-up pill reads apart from Immobilize's ice blue and Chill's cyan on
   the same card, and from P2's teal.
+  **Decided (2026-10-18):** changed to `#8f8cf5`. In the browser `#7d9cf0`
+  read as nearly the same blue as Immobilize's chip right below it. The
+  violet-blue reads apart from Immobilize, Chill, Confuse and P2's teal.
+  Canvas updated to version 89.
 - The canvas draws the icons (16px viewBox, stroke 1.5):
   ```svg
   <!-- Battle Fist -->
@@ -420,13 +427,23 @@ infra.
   Check each reads at 12px on the Board and 13px on the Map, and that the
   three are told apart at a glance, face-down too. Simplify a path that
   muddies.
+  **Decided (2026-10-18):** kept as drawn. The fist and the winged amulet
+  read clearly at 12px. The Auto Deflector orb is the weakest, but it's
+  still told apart from the other two.
 - Check the face-down look (dashed, muted, 0.6 opacity) at 1280x800: is
   it clearly "greyed out" yet still findable as a tap target?
+  **Decided (2026-10-18):** kept. It reads as off, and the dashed outline
+  still marks the tap target.
 - Check the Board at 1280x800 with Runika in the heaviest case (all eight
   tokens, plus the artifact row): her card is four lines below the level
   row at most, and the Board doesn't scroll, with any stepper open. Also
   check her Map token line with tokens plus three face-up Artifacts in
   the 170px panel.
-- Schema number: this assumes intent 16's Ice Wall (schema 13, v0.16.0)
+  **Decided (2026-10-18):** four lines, as predicted, but the Board's
+  scroll area overflows by 12px, stepper open or closed. Accepted, since
+  the case needs five specific heroes. The page itself still fits, and the
+  monitor doesn't scroll. Her Map line wraps to two lines and fits.
+- ~~Schema number: this assumes intent 16's Ice Wall (schema 13, v0.16.0)
   stays the latest. If another schema bump lands first, this becomes the
-  next number, with its `PersistedBattleStateV…` and `upgradeV…` renamed.
+  next number, with its `PersistedBattleStateV…` and `upgradeV…` renamed.~~
+  **Decided:** nothing else landed first, so it's 13 → 14 as written.

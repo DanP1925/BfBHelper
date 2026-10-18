@@ -9,6 +9,7 @@ import type { MapSpaceId } from "../../data/mapSpaces";
 import type { DraftState, HeroId, PlayerId } from "../draft/types";
 import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
+  ARTIFACT_FIELDS,
   BIT_STARTING_HP,
   HERO_COUNTED_TOKEN_CEILINGS,
   HERO_HP_CEILING,
@@ -39,6 +40,7 @@ import {
   type PersistedBattleStateV11,
   type PersistedBattleStateV12,
   type PersistedBattleStateV13,
+  type PersistedBattleStateV14,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -215,6 +217,14 @@ function upgradeV12ToV13(data: unknown): PersistedBattleStateV13 | null {
   };
 }
 
+/** Schema 13 → 14: every hero gets Runika's three Artifacts face-up
+ * (intent/17: "upgrades in place, with all three face-up"). */
+const upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14, {
+  battleFistFaceUp: true,
+  autoDeflectorFaceUp: true,
+  shieldAmuletFaceUp: true,
+});
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -233,6 +243,7 @@ const battleMigrations: MigrationSteps = {
   10: upgradeV10ToV11,
   11: upgradeV11ToV12,
   12: upgradeV12ToV13,
+  13: upgradeV13ToV14,
 };
 
 function isBrowser(): boolean {
@@ -385,8 +396,10 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * compare against): gold is non-negative, each structure is within its
  * own floor/ceiling, every `heroes` entry has a real hero id with hp/level
  * within bounds, each counted token within `HERO_COUNTED_TOKEN_CEILINGS`,
- * and each on/off token in `ON_OFF_TOKEN_FIELDS` a boolean (shape only: it doesn't check
- * hero-specific visibility, `HERO_SPECIFIC_TOKENS`), and every one of those
+ * each on/off token in `ON_OFF_TOKEN_FIELDS` a boolean (shape only: it doesn't check
+ * hero-specific visibility, `HERO_SPECIFIC_TOKENS`), and each Artifact in
+ * `ARTIFACT_FIELDS` a boolean (shape only: any hero may hold a face-down
+ * one, though only Runika's are ever flipped), and every one of those
  * hero ids also has a `heroPositions` entry that's either `null`, `"arena"`
  * or a real map-space id (shape only: it doesn't check who may be in the
  * Arena, `canEnterArena`).
@@ -409,6 +422,9 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
     for (const field of ON_OFF_TOKEN_FIELDS) {
       if (typeof hv[field] !== "boolean") return false;
     }
+    for (const field of ARTIFACT_FIELDS) {
+      if (typeof hv[field] !== "boolean") return false;
+    }
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
     if (position !== null && position !== ARENA_POSITION && !isMapSpaceIdLike(position)) {
@@ -428,7 +444,7 @@ function isValidIceWall(value: unknown): boolean {
   return isNumberInRange(wall.xPct, 0, 100) && isNumberInRange(wall.yPct, 0, 100);
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV13 {
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV14 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -608,7 +624,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV13 = {
+  const payload: PersistedBattleStateV14 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -638,7 +654,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 13,
+    schemaVersion: 14,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,

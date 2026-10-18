@@ -1,10 +1,21 @@
 import type { Hero, HeroId, PlayerId } from "../../lib/draft/types";
-import { BIT_STARTING_HP, TOWER_SLOTS, TOWER_STARTING_HP } from "../../lib/battle/constants";
+import {
+  ARTIFACT_FIELDS,
+  ARTIFACT_OWNER,
+  BIT_STARTING_HP,
+  TOWER_SLOTS,
+  TOWER_STARTING_HP,
+} from "../../lib/battle/constants";
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
-import type { BattleTeamState, HeroBattleState, StructuresState } from "../../lib/battle/types";
+import type {
+  ArtifactField,
+  BattleTeamState,
+  HeroBattleState,
+  StructuresState,
+} from "../../lib/battle/types";
 import { BATTLE_TOKENS, type BattleTokenField } from "../battleTokens";
-import { HeroCard, type HeroCardTokens } from "../HeroCard/HeroCard";
+import { HeroCard, type HeroCardArtifacts, type HeroCardTokens } from "../HeroCard/HeroCard";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { StructureSlot } from "../StructureSlot/StructureSlot";
 import styles from "./BattleTeamPanel.module.css";
@@ -23,6 +34,9 @@ type BattleTeamPanelProps = {
    * hero-specific token's field on the side its rule excludes (e.g. Death
    * Mark on Kunoichi's own team), which is what hides its control. */
   onHeroTokenChange: TeamTokenSetters;
+  /** Flips one of Runika's Artifacts (intent/17). Only her card gets the
+   * controls (ARTIFACT_OWNER). */
+  onHeroArtifactChange: (heroId: HeroId, field: ArtifactField, faceUp: boolean) => void;
   onStructureHpChange: (slot: keyof StructuresState, value: number) => void;
   /** Which token chip or "+" picker on the Board is open, owned by
    * `BattleBoardScreen` so opening one in this panel closes any open in the
@@ -77,6 +91,26 @@ function heroTokens(
   return tokens;
 }
 
+/** Runika's Artifact controls (intent/17), built from her stored faces. Her
+ * card is only rendered while she's drafted, so that's the whole
+ * visibility rule; there's no HP or position gate (the card flips them all
+ * face-up on respawn). */
+function heroArtifacts(
+  hero: Hero,
+  heroState: HeroBattleState,
+  onHeroArtifactChange: BattleTeamPanelProps["onHeroArtifactChange"],
+): HeroCardArtifacts {
+  return Object.fromEntries(
+    ARTIFACT_FIELDS.map((field) => [
+      field,
+      {
+        faceUp: heroState[field],
+        onChange: (faceUp: boolean) => onHeroArtifactChange(hero.id, field, faceUp),
+      },
+    ]),
+  ) as HeroCardArtifacts;
+}
+
 export function BattleTeamPanel({
   label,
   side,
@@ -86,6 +120,7 @@ export function BattleTeamPanel({
   onHeroHpChange,
   onHeroLevelChange,
   onHeroTokenChange,
+  onHeroArtifactChange,
   onStructureHpChange,
   openTokenKey,
   onOpenTokenKeyChange,
@@ -138,6 +173,11 @@ export function BattleTeamPanel({
                 openTokenKey,
                 onOpenTokenKeyChange,
               )}
+              artifacts={
+                hero.id === ARTIFACT_OWNER
+                  ? heroArtifacts(hero, heroState, onHeroArtifactChange)
+                  : undefined
+              }
             />
           );
         })}

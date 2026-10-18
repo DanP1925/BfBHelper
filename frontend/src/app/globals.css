@@ -37,6 +37,10 @@
    * emerald, bluer than --color-shield and greener than --color-chill, both
    * often on the same hero. */
   --color-favored-enemy: #3fcf86;
+  /* Runika's Artifacts (intent/17): the rulebook tokens' blue, pushed toward
+   * violet so it reads apart from --color-immobilize's ice blue (often on
+   * her card) while staying short of --color-confuse's purple. */
+  --color-artifact: #8f8cf5;
 
   --background: var(--color-bg);
   --foreground: var(--color-text);

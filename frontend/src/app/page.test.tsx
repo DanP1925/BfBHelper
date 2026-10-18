@@ -740,6 +740,68 @@ describe("Home: Favored Enemy (intent/15)", () => {
   });
 });
 
+describe("Home: Runika's Artifacts (intent/17)", () => {
+  const artifactGroups = () => screen.queryAllByRole("group", { name: /'s Artifacts$/ });
+  const autoDeflector = () =>
+    screen.getByRole("button", {
+      name: "Auto Deflector: +1 defense vs melee attacks, on Runika",
+    });
+
+  it.each([
+    [
+      "Player 1",
+      ["runika", "baldwin", "caligar", "ceralin"],
+      ["cynthia", "felix", "kerrick", "motley"],
+    ],
+    [
+      "Player 2",
+      ["baldwin", "caligar", "ceralin", "cynthia"],
+      ["runika", "felix", "kerrick", "motley"],
+    ],
+  ] as const)("shows the row on Runika's card alone when she's on %s", (_label, p1, p2) => {
+    seedDraft([...p1], [...p2]);
+    render(<Home />);
+
+    const groups = artifactGroups();
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toHaveAccessibleName("Runika's Artifacts");
+    expect(within(groups[0]).getAllByRole("button")).toHaveLength(3);
+  });
+
+  it("shows no row without Runika", () => {
+    seedDraft(
+      ["baldwin", "caligar", "ceralin", "cynthia"],
+      ["dolgolae", "felix", "kerrick", "motley"],
+    );
+    render(<Home />);
+
+    expect(artifactGroups()).toHaveLength(0);
+  });
+
+  it("flips at 0 HP in the respawn area, and the face survives a reload", () => {
+    seedDraft(
+      ["runika", "baldwin", "caligar", "ceralin"],
+      ["cynthia", "felix", "kerrick", "motley"],
+    );
+    const { unmount } = render(<Home />);
+    const runika = getHeroById("runika").name;
+
+    // Every hero starts in the respawn area; take her to 0 HP too.
+    const decreaseHp = screen.getByRole("button", { name: `Decrease ${runika} HP` });
+    while (!decreaseHp.hasAttribute("disabled")) fireEvent.click(decreaseHp);
+
+    expect(autoDeflector()).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(autoDeflector());
+    expect(autoDeflector()).toHaveAttribute("aria-pressed", "false");
+    unmount();
+
+    render(<Home />);
+    expect(autoDeflector()).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(autoDeflector());
+    expect(autoDeflector()).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
 function attackChipName(heroName: string): RegExp {
   return new RegExp(`^${heroName}: \\d+ \\+1 Attack token`);
 }

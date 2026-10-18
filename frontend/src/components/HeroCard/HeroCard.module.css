@@ -216,6 +216,15 @@
   padding-left: 2px;
 }
 
+/* Runika's Artifacts (intent/17), between the level row and the token row
+   and apart from it: never added or removed, so they don't wrap with the
+   chips. Three pills fit the info column at 1280x800. */
+.artifactRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Counted tokens (intent/06). Its own row under the level row, so an
    expanding chip never pushes the level controls around, and later tokens
    (Confuse, Immobilize) can sit beside it and wrap. */

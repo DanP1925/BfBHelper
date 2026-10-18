@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Hero } from "../draft/types";
 import {
+  ARTIFACT_FIELDS,
   BIT_STARTING_HP,
   HERO_HP_CEILING,
   ON_OFF_TOKEN_FIELDS,
@@ -90,9 +91,9 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 13", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 14", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(13);
+    expect(state.schemaVersion).toBe(14);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -270,6 +271,76 @@ describe("battleReducer", () => {
     expect(both.p1.heroes[HERO_A.id].favoredEnemy).toBe(true);
     expect(both.p1.heroes[HERO_B.id].favoredEnemy).toBe(true);
   });
+
+  // Runika's Artifacts (intent/17) share SET_HERO_ARTIFACT: replace, manual
+  // only, no Runika check.
+  describe.each(ARTIFACT_FIELDS.map((field) => ({ field })))(
+    "SET_HERO_ARTIFACT ($field)",
+    ({ field }) => {
+      function flip(state: BattleState, faceUp: boolean): BattleState {
+        return battleReducer(state, {
+          type: "SET_HERO_ARTIFACT",
+          field,
+          side: "p1",
+          heroId: HERO_A.id,
+          faceUp,
+        });
+      }
+
+      it("starts face-up and flips face-down and back, changing nothing but that flag", () => {
+        const state = baseState();
+        expect(state.p1.heroes[HERO_A.id][field]).toBe(true);
+
+        const down = flip(state, false);
+        expect(down.p1.heroes[HERO_A.id]).toEqual({
+          ...state.p1.heroes[HERO_A.id],
+          [field]: false,
+        });
+        expect(down.p1.heroPositions).toBe(state.p1.heroPositions);
+        expect(down.p2).toBe(state.p2);
+
+        expect(flip(down, true).p1.heroes[HERO_A.id][field]).toBe(true);
+      });
+
+      it("works on any hero: only the UI limits it to Runika", () => {
+        // Neither roster has Runika.
+        expect(flip(baseState(), false).p1.heroes[HERO_A.id][field]).toBe(false);
+      });
+
+      it("is a no-op for an unknown heroId, or when the face is unchanged", () => {
+        const state = baseState();
+        expect(
+          battleReducer(state, {
+            type: "SET_HERO_ARTIFACT",
+            field,
+            side: "p1",
+            heroId: "sterling",
+            faceUp: false,
+          }),
+        ).toBe(state);
+        expect(flip(state, true)).toBe(state);
+      });
+
+      // Neither a hit (HP down), defeat (HP to 0), a respawn (a move out of
+      // the respawn area) nor anything else flips it back up.
+      it("survives HP changes, moves (Arena included), tokens, the Ice Wall and PASS_INITIATIVE", () => {
+        const hero = { side: "p1", heroId: HERO_A.id } as const;
+        const others: BattleAction[] = [
+          { type: "SET_HERO_HP", ...hero, value: 3 },
+          { type: "SET_HERO_HP", ...hero, value: 0 },
+          { type: "SET_HERO_POSITION", ...hero, spaceId: null },
+          { type: "SET_HERO_POSITION", ...hero, spaceId: MAP_SPACE_IDS[0] },
+          { type: "SET_HERO_POSITION", ...hero, spaceId: ARENA_POSITION },
+          { type: "SET_HERO_COUNTED_TOKEN", ...hero, field: "attackTokens", value: 2 },
+          { type: "SET_HERO_ON_OFF_TOKEN", ...hero, field: "confused", value: true },
+          { type: "SET_ICE_WALL", position: { xPct: 10, yPct: 10 } },
+          { type: "PASS_INITIATIVE" },
+        ];
+        const state = others.reduce(battleReducer, flip(baseState(), false));
+        expect(state.p1.heroes[HERO_A.id][field]).toBe(false);
+      });
+    },
+  );
 
   // Every counted token (intents 06, 11-13) goes through the same
   // SET_HERO_COUNTED_TOKEN: clamp-and-replace, manual only, no visibility
