@@ -2,8 +2,9 @@
 
 ## Problem
 Runika's trait gives her three Artifacts: Battle Fist, Auto Deflector and
-Shield Amulet. Each one is either face-up or face-down, and several of her
-power cards gain an extra effect while a given Artifact is face-up. The
+Shield Amulet. Each one is either face-up or face-down. A face-up Artifact
+gives her a bonus, and several of her power cards gain an extra effect
+while a given Artifact is face-up. The
 app doesn't track them anywhere. Players using the app instead of the
 physical tokens have to remember which Artifacts are still face-up. That
 breaks the product vision of playing with just the cards.
@@ -24,9 +25,16 @@ This phase covers only:
   the respawn area too.
 - **Runika's own card only.** No other hero gets them, on either team.
 - **Shown and edited on the Battle Board:**
-  - **Always shown** (decided 2026-10-18). All three sit on Runika's card,
-    each named, for the whole battle. A tap flips one between face-up and
-    face-down. A face-down Artifact is greyed out.
+  - **Always shown** (decided 2026-10-18). All three sit on Runika's card
+    for the whole battle, each as its own icon with its name in the
+    tooltip and accessible label. Visible text labels don't fit the
+    card at 1280x800 (decided 2026-10-18, spec 17). A tap flips one
+    between face-up and face-down. A face-down Artifact is greyed out.
+  - **Each Artifact's bonus is shown, not applied** (decided
+    2026-10-18). The tooltip and accessible label also give its bonus,
+    e.g. "Battle Fist: +1 Attack", so players don't need the physical
+    token to know what it does. Players apply the bonus at the table, as
+    with Favored Enemy's +2 Attack.
   - **Not part of intent 09's token row or "+" picker** (decided
     2026-10-18). They're never added or removed, only flipped, so they
     don't count toward the row's 8-token sizing.
@@ -41,7 +49,9 @@ This phase covers only:
   team status panel on Runika's token line, next to any other tokens she
   holds. Only **face-up** Artifacts are shown, each as its own icon, so a
   face-down one drops off the line. This is the same "shown only while
-  held" rule as every other token. Not on the hero tokens on the board.
+  held" rule as every other token. Each icon's tooltip and accessible
+  label give the Artifact's name and bonus, as on the Board. Not on the
+  hero tokens on the board.
   The Map stays read-only for every token (decided 2026-10-15). QA of the
   seven-token case (intent 13) shows the panel has room for the extra
   icons at 1280x800.
@@ -53,10 +63,11 @@ This phase covers only:
 ## Proposed Outcome
 Runika is drafted, and her Battle Board card shows all three Artifacts
 face-up. An enemy hits her, and her player taps Auto Deflector, which
-greys out and drops off her line on the Map. Next round she plays a
-power card and checks her card: Battle Fist is still face-up, so she
-gets its extra effect. Later she Rests, and her player taps Auto
-Deflector face-up again.
+greys out and drops off her line on the Map. Next round a melee attack
+hits her, and she gets no Auto Deflector defense. Then she plays a power
+card and checks her card: Battle Fist is still face-up, so she gets +1
+Attack and the card's extra effect. Later she Rests, and her player taps
+Auto Deflector face-up again.
 
 ## Rules (from the rulebook and Runika's card)
 Runika's hero card, *Master Armiger*:
@@ -67,14 +78,20 @@ Runika's hero card, *Master Armiger*:
 
 - The box has **3 Runika Artifacts** (Battle Fist, Auto Deflector, Shield
   Amulet) (p. 3).
-- The Artifacts do nothing on their own (confirmed 2026-10-18). Some of
-  Runika's power cards gain an extra effect while a given Artifact is
-  face-up. No power card places a token.
+- **Each face-up Artifact gives Runika a bonus,** printed on its token
+  (confirmed 2026-10-18; the rulebook's art on p. 3 shows it):
+  - **Battle Fist:** +1 Attack.
+  - **Auto Deflector:** +1 defense vs melee attacks.
+  - **Shield Amulet:** +1 defense vs magic attacks.
+- Some of Runika's power cards also gain an extra effect while a given
+  Artifact is face-up (confirmed 2026-10-18). No power card places a
+  token.
 - The rulebook's hero summary calls her a "passive self-boost from
   artifact tokens".
 
-The app shows which Artifacts are face-up. Players flip them on hits,
-Rests and respawns, and apply the power cards' extra effects themselves.
+The app shows which Artifacts are face-up and what each one gives. Players
+flip them on hits, Rests and respawns, and apply the bonuses and the power
+cards' extra effects themselves.
 
 ## Users
 Same as intents 01-16: players of Battle for Biternia using the app
@@ -108,6 +125,8 @@ alongside the physical cards.
   or a defeat.
 - **A "flip all face-up" control** for Rest or respawn (decided
   2026-10-18).
+- **Applying the Artifacts' bonuses,** e.g. a running total of Runika's
+  Attack or defense. The app doesn't track attacks or defense at all.
 - **Showing or applying the power cards' extra effects,** on Runika's
   card or anywhere else.
 - **Showing face-down Artifacts on the Map.** Only face-up ones appear on
