@@ -163,6 +163,9 @@ frontend/e2e/
       `.arenaSlot` to its right, top-aligned, hanging below Player 2's
       column. Measured: board and side columns identical hidden, empty and
       full; Arena ends at 775px of 800, no scroll. No reserved height.
+      **Later (v0.17.1):** a long side column ran into that slot, so the
+      Arena moved to the margin outside Felix's team column, still out of
+      flow, with the column-style label (spec Layout).
 - [x] M13. Spec open item: the gold label and dashed border read as
       neutral and not as a gold-pile control next to `GoldPilesBar`.
       Decide in the browser; adjust on the canvas and in the spec if not.

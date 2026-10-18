@@ -230,7 +230,7 @@ apply any rule automatically (expiry, defeat, damage absorption).
 
 ## Follow-ups
 
-- [ ] **The Arena overlaps a long side column on the Map.** Found in
+- [x] **The Arena overlaps a long side column on the Map.** Found in
   intent 16's QA, added 2026-10-18. The Arena's slot (spec 14) hangs out of
   flow beside the gold bar, into the space under a side column (Player 2's,
   or Player 1's when Dazeem's Ice Wall holder is on Player 2). At 1280x800,
@@ -238,6 +238,10 @@ apply any rule automatically (expiry, defeat, damage absorption).
   respawn area holding 3-4 heroes), the Arena box covers the bottom of its
   respawn area. Decide where the Arena should go when there's no room
   under the column.
+  Done in `fix/arena-overlap` (v0.17.1): the Arena and the Ice Wall
+  holder hang in the empty margin outside their owner's team column,
+  the Arena first when both are on one team, with matching column-style
+  labels. Nothing overlaps or scrolls at 1280x800.
 
 - [ ] **Review every token's display again once all tokens exist.** Do this
   after the hero-specific tokens are built, Runika's Artifacts last. Added

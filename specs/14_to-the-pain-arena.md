@@ -244,24 +244,28 @@ export function canEnterArena(state: BattleState, hero: HeroDragPayload): boolea
     `onDrop={({ side, heroId }) => setHeroPosition(side, heroId,
     ARENA_POSITION)}`.
   - `setHeroPosition`'s prop type widens to `HeroPosition`.
-- **Placement** (canvas, UI Design Reference): to the right of
-  `GoldPilesBar` under the board. The side columns are per team, and the
-  Arena is shared. `boardColumn`'s gold bar sits in a
-  `position: relative` `.bottomRow`, and the Arena in an absolutely
-  positioned `.arenaSlot` inside it (`top: 0; left: calc(100% + 28px)`),
-  top-aligned with the bar.
+- **Placement** (decided 2026-10-18, replacing the canvas's spot): **in
+  the empty margin outside Felix's team column**, top-aligned with it:
+  left of Player 1's column or right of Player 2's. `BattleMapScreen`
+  computes `arenaSide` (`arenaOwnerSide` while `isArenaShown`) and
+  renders the panel in that `.sideGroup`'s `.outerZones` box
+  (`position: absolute; top: 0`, `right` or `left: calc(100% + 16px)`,
+  142px wide). Dazeem's Ice Wall holder (spec 16) shares that box: when
+  both heroes are on one team, the Arena comes first and the holder below
+  it.
 - **Out of flow, so nothing moves** (decided 2026-10-17 in the browser,
-  plan M12). In flow, the Arena made the bottom row taller than the gold
-  bar, moving the board up 19px when it appeared, and the bar plus the
-  Arena were wider than the board, pushing the side columns out (further
-  in a duel, since "Agatha Trunch" widens the box). Out of flow, the
-  board, gold bar and side columns stay put whether the Arena is hidden,
-  empty or full. At 1280x800 it hangs into the empty space below Player
-  2's column, ending at 775px with no scroll; on the 2560x1440 monitor it
-  ends at 1165px. It doesn't reserve height while hidden. The catch: being
-  out of flow, it doesn't grow the scroll area, so a viewport much
-  shorter than 800px could clip it. Only 1280x800 and 2560x1440 are signed
-  off.
+  plan M12, and still true). In flow, the Arena made the bottom row
+  taller than the gold bar, moving the board up 19px when it appeared, and
+  the bar plus the Arena were wider than the board, pushing the side
+  columns out. It first hung beside the gold bar, into the space under
+  Player 2's column, but a long column (two token lines per hero and a
+  full respawn area) ran into it (BACKLOG follow-up, 2026-10-18). Nothing
+  else lives in the outer margin, so it never covers anything however long
+  the columns run. At 1280x800 that margin is 170px, so the box sits 12px
+  from the screen edge with no scroll, horizontal or vertical, in every
+  tested case; at 2560x1440 there's plenty of room. Being out of flow, it
+  doesn't grow the scroll area, so a viewport narrower than 1280px could
+  clip it. Only 1280x800 and 2560x1440 are signed off.
 - **Not shown** on the Battle Board, `ResultsScreen`, `WinScreen` or in
   `MapTeamStatusPanel`, which lists each team's heroes and tokens but
   never positions (intent's Scope and Out of Scope).
@@ -286,7 +290,9 @@ https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
   level isn't drawn, since the Map doesn't show levels.
 - **Placement:** the Arena sits in the row under the board, to the right
   of the gold-pile bar. Both are centred together in that row, so the side
-  columns and the board keep their size.
+  columns and the board keep their size. **Superseded** (2026-10-18): the
+  build puts it in the margin outside Felix's team column (Layout); the
+  artboard wasn't updated, and the build wins.
 - **Named "The Arena"** (decided 2026-10-17), not "To the Pain Arena": the
   label and the panel's `aria-label` both read "The Arena".
 - **Look** (decided 2026-10-17: the label stays small): a dashed box
@@ -294,7 +300,11 @@ https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
   left-aligned. The label is 9px gold uppercase in the heading font,
   with no icon, so it takes about 12px above the box and no width beside
   it. The box is `--color-panel-bg` and sized for two tokens, about 132px
-  wide and 76px tall.
+  wide and 76px tall. **Superseded** (2026-10-18): beside the Ice Wall
+  holder, the label now matches it and the respawn area. `ArenaPanel`
+  composes `RespawnAreaStrip`'s `area` and `label`, so it's the column
+  label size in muted text with a 3px gold left bar, and the box fills
+  the 142px margin box.
 - **Occupants** are the ordinary Map tokens in their team rings, with
   names below: Felix (P2 teal) and Agatha Trunch (P1 red). Their old board
   spaces are empty, and their status-panel lines don't change.

@@ -1,21 +1,13 @@
+/* RespawnAreaStrip's section and label, like the Ice Wall holder beside
+   it, in gold instead of the team colour: the Arena belongs to neither
+   team. */
 .arena {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
+  composes: area from "../RespawnAreaStrip/RespawnAreaStrip.module.css";
 }
 
-/* Small, on top of the box (decided 2026-10-17), so it takes no width
-   beside it. Gold reads as neutral: the Arena belongs to neither team. */
 .label {
-  font-family: var(--font-heading);
-  font-size: 0.6rem;
-  font-weight: 600;
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-gold);
-  padding-left: 2px;
+  composes: label from "../RespawnAreaStrip/RespawnAreaStrip.module.css";
+  border-left-color: var(--color-gold);
 }
 
 .box {

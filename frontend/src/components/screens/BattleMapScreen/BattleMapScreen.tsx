@@ -10,7 +10,7 @@ import type {
 } from "react";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
 import { clamp } from "../../../lib/battle/bounds";
-import { canEnterArena, isArenaShown } from "../../../lib/battle/arena";
+import { arenaOwnerSide, canEnterArena, isArenaShown } from "../../../lib/battle/arena";
 import { iceWallOwnerSide } from "../../../lib/battle/iceWall";
 import type { BattleState, HeroPosition, IceWallPosition } from "../../../lib/battle/types";
 import { ARENA_POSITION } from "../../../lib/map/constants";
@@ -191,6 +191,8 @@ export function BattleMapScreen({
     <IceWallHolder holdsWall={battleState.iceWall === null} onDrop={() => setIceWall(null)} />
   );
 
+  const arenaSide = isArenaShown(battleState) ? arenaOwnerSide(battleState) : null;
+
   const teams: Array<{ side: PlayerId; label: string; heroes: Hero[] }> = [
     { side: "p1", label: "Player 1", heroes: p1Heroes },
     { side: "p2", label: "Player 2", heroes: p2Heroes },
@@ -214,6 +216,26 @@ export function BattleMapScreen({
       }
     }
   }
+
+  const arenaPanel = (
+    <ArenaPanel
+      occupants={arena}
+      canDrop={(payload) => canEnterArena(battleState, payload)}
+      onDrop={({ side, heroId }) => setHeroPosition(side, heroId, ARENA_POSITION)}
+    />
+  );
+
+  // The hero-specific drop zones go in the empty margin outside their
+  // owner's team column: Felix's Arena, then Dazeem's Ice Wall holder.
+  const outerZones = (side: PlayerId) =>
+    (arenaSide === side || iceWallSide === side) && (
+      <div
+        className={`${styles.outerZones} ${side === "p1" ? styles.outerZonesP1 : styles.outerZonesP2}`}
+      >
+        {arenaSide === side && arenaPanel}
+        {iceWallSide === side && iceWallHolder}
+      </div>
+    );
 
   // Same menu/dialog logic as BattleBoardScreen — the battle itself
   // doesn't care which screen is showing.
@@ -248,7 +270,7 @@ export function BattleMapScreen({
                 heroes={respawn.p1}
                 onDrop={(heroId) => setHeroPosition("p1", heroId, null)}
               />
-              {iceWallSide === "p1" && iceWallHolder}
+              {outerZones("p1")}
             </div>
 
             {/* The gold piles sit right under the board, not under the whole
@@ -350,27 +372,10 @@ export function BattleMapScreen({
                 </div>
               </div>
 
-              <div className={styles.bottomRow}>
-                <GoldPilesBar
-                  goldPiles={battleState.goldPiles}
-                  onChange={(pileId, value) => setGoldPile(pileId, value)}
-                />
-                {isArenaShown(battleState) && (
-                  <div
-                    className={
-                      iceWallSide === "p2"
-                        ? `${styles.arenaSlot} ${styles.arenaSlotLeft}`
-                        : styles.arenaSlot
-                    }
-                  >
-                    <ArenaPanel
-                      occupants={arena}
-                      canDrop={(payload) => canEnterArena(battleState, payload)}
-                      onDrop={({ side, heroId }) => setHeroPosition(side, heroId, ARENA_POSITION)}
-                    />
-                  </div>
-                )}
-              </div>
+              <GoldPilesBar
+                goldPiles={battleState.goldPiles}
+                onChange={(pileId, value) => setGoldPile(pileId, value)}
+              />
             </div>
 
             <div className={styles.sideGroup}>
@@ -386,7 +391,7 @@ export function BattleMapScreen({
                 heroes={respawn.p2}
                 onDrop={(heroId) => setHeroPosition("p2", heroId, null)}
               />
-              {iceWallSide === "p2" && iceWallHolder}
+              {outerZones("p2")}
             </div>
           </div>
         </div>
