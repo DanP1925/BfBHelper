@@ -25,8 +25,11 @@
   - **No bump**: `docs:`, `chore:`, `ci:` or `test:`-only changes.
   - **Major**: only when the user calls for it.
 - **1.0.0** (intent 18, 2026-10-18) = a game can be played with only the physical
-  cards: every hero's needs in `BACKLOG.md` are met. The remaining polish items
-  moved to its "After 1.0" section.
+  cards: every hero's needs are met. The polish left over from it is part of
+  the 2.0.0 work.
+- **2.0.0** (goal set 2026-10-26) = a game can be played without the rulebook
+  beside it: the right balance of manual and automatic, with automation and
+  QoL where they cut human error. Its items are in `BACKLOG.md`'s "Toward 2.0".
 - After the PR merges, the `Tag release` workflow tags the merged commit on `main`
   with an annotated `vX.Y.Z` tag (if that tag doesn't exist yet). Don't tag by hand.
 - Past intents were tagged after the fact: `v0.1.0`–`v0.3.0` for intents 01–03,
@@ -48,6 +51,11 @@
 - `plan/` holds one `NN_feature-name.md` per feature too, same numbering as its
   intent/spec. It's a living build checklist for the Build phase — written before
   implementation starts and checked off incrementally in the PR(s) that do that work.
+- `BACKLOG.md` items are at most 3 sentences: what and why. Open questions, code
+  pointers, rulebook quotes and QA findings go in the item's intent once it's
+  scoped. The intro and version notes at the top can be longer.
+  Each item carries a stage label, defined at the top of `BACKLOG.md`: update it
+  when an item's intent, spec or PR lands, or when its PR merges.
 
 ## Testing
 - Formatting is Prettier (`frontend/.prettierrc.json`, width 100): run

@@ -1,315 +1,97 @@
 # Backlog
 
-Untriaged ideas and feedback not yet scoped into an `intent/` doc. When an item
-is picked up, link the intent/PR that covers it and check it off.
+Ideas, feedback and bugs, tracked from triage until they ship. Each item
+stays short (at most 3 sentences): the detail, open questions and research go
+in its intent once it's scoped.
 
-**v1.0.0** (reached 2026-10-18 with intent 18): a game can be played with
-only the physical cards, every hero's needs below met. What's left is
-polish, under After 1.0 at the end.
+Each item carries a stage label, for the step it has reached:
 
-## From playtest 2026-10-10
+- `Triage`: the item has been created. Every item starts here.
+- `Intent`: its `intent/NN_*.md` exists, the what and the why.
+- `Spec`: its `specs/NN_*.md` exists, the how.
+- `Implement`: the PR with the code changes is open.
+- `Verify`: the change needs manual verification before it counts as done.
+- `Done`: the code is merged.
 
-First full physical game played alongside the app, at `79d851b` (intent 04 —
-Battle Map merged). Paused mid-game; everything not listed below worked smoothly.
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Triage
+    Triage --> Intent
+    Triage --> Spec: what and why known
+    Triage --> Implement: how known too
+    Intent --> Spec
+    Spec --> Implement
+    Implement --> Verify: risky change
+    Implement --> Done
+    Verify --> Done
+    Done --> [*]: v2.0.0 released
+```
 
-Teams: Caligar, Vladiator, Sterling, Ceralin vs Cynthia, Motley, Agatha Trunch,
-Ken Obi.
+A simple item can skip ahead: from `Triage` to `Spec` when the what and why are
+already clear, or straight to `Implement` when the how is too. `Verify` is only
+for changes risky enough to need it. `Done` items stay until v2.0.0 is
+released, then they're removed: their docs and the git history keep the
+record.
 
-- [x] **Keep Map zoom/pan when switching tabs.** Switching Board → Map resets
-  zoom to 100% and un-pans, because zoom/pan is local state in
-  `BattleMapScreen` and the screen unmounts on a view toggle. Lift that state
-  into `page.tsx`. Resetting on page reload is fine — no persistence needed.
-  *Size: small polish PR, no new intent.* Done in `fix/keep-map-zoom-pan` (v0.4.1).
-- [x] **Initiative indicator + passing it each round.** Neither the Battle
-  Board nor the Battle Map shows who has initiative; it's only shown on the
-  Draft Board (`draft.initiative`, decided by the pre-draft coin flip).
-  Initiative flips every round — the player without it gets it — so both
-  screens need a display plus a "next round" control to pass it. Possibly a
-  round counter too. *Size: small intent (05).* Scoped in
-  `intent/05_initiative-indicator.md`. Done in `feat/initiative-indicator`
-  (v0.5.0): a tappable badge on both screens passes initiative. The round
-  counter was deferred (no rule depends on it).
-- [x] **Bug: every hero starts 1 HP short.** Applies to all 19 heroes.
-  `lib/battle/reducer.ts` starts each hero at `baseHp`, but the rulebook ("Prepare the Hero Mats", step 3) sets
-  starting HP to base HP + level (1), e.g. Vladiator starts at 11, not 10.
-  Fix only the starting HP. Keep the flat 15 HP ceiling and the manual HP
-  bump on level-up as they are (decided 2026-10-10). *Size: small fix PR.*
-  Done in `fix/starting-hp-plus-level` (v0.4.2).
-- [x] **+1 Attack tokens.** Not tracked anywhere; needed even by the heroes
-  played in this game (e.g. Caligar's power card gives two). Per the rulebook,
-  each token adds 1 to all of that hero's attacks; they're removed at the end
-  of the hero's next activation or when it's stunned, and stay if the hero who
-  placed them is defeated. Needs per-hero counts (2+), on allies too.
-  Scoped in `intent/06_attack-tokens.md`. Done in `feat/attack-tokens` (v0.6.0).
-- [x] **Confuse tokens.** Not tracked anywhere; needed even by the heroes
-  played in this game. Per the rulebook, in the next round's Orders Phase a
-  confused hero is assigned the top action-deck card instead of one from the
-  hand, then the token is removed. It doesn't affect activation in the round
-  it's applied, and stays if the hero who placed it is defeated.
-  Scoped in `intent/07_confuse-tokens.md`. Done in `feat/confuse-tokens` (v0.7.0).
-- [x] **Immobilize status.** General (not hero-specific). Per the rulebook,
-  an immobilized hero's standee is laid on its side; the next time it would
-  move, it stands back up instead of moving. In the app: an on/off toggle per
-  hero, shown on the Board and the Map, cleared by hand.
-  Scoped in `intent/08_immobilize.md`. Done in `feat/immobilize` (v0.8.0):
-  an ice-blue chain toggle on each hero card and a chain icon in the Map's
-  status panel. It never blocks a move and is never cleared automatically.
+**v1.0.0** (reached 2026-10-18 with intent 18): a game can be played with only
+the physical cards, every hero's needs met. The polish left over from it is
+now part of Toward 2.0.
 
-## Hero playability review
+**v2.0.0 goal** (set 2026-10-26): players can play without needing the
+rulebook beside them. v1 kept every rule manual (nothing expires, clears or
+triggers on its own). v2 looks for the right balance between manual and
+automatic: quality-of-life changes and automation where they cut down on human
+error, manual control where it keeps the table in charge.
 
-What each hero needs for a game played with only the cards. Token rules are
-in the +1 Attack, Confuse and Immobilize items above. Other heroes need further
-hero-specific features, listed per hero below.
+## Bugs
 
-**Visibility rule (decided 2026-10-10):** hero-specific tokens and statuses
-(e.g. Boreas's Favored Enemy and Bear Trap) are only shown and interactive
-when the hero who uses them is in the battle, on either team.
+- `Triage` **The wrong team's Tower disappeared on the Map.** Player 2's Tower was
+  brought to 0 HP, but a Player 1 Tower disappeared from the Map. Reproduce it
+  first: the Map code reads each Tower's own HP, so the Board's steppers or the
+  Top/Middle/Bottom labels are the suspects.
+- `Triage` **Swap Player 1's and Player 2's colors.** Player 1 is red and Player 2
+  is blue today. Swap them everywhere: Draft, Board, Map and structure icons.
 
-- **Caligar (Cleric):** *Healing Word* is manual HP edits, so nothing new is
-  needed. One power card gives a target hero in Caligar's space two +1 Attack
-  tokens, so tokens need per-hero counts (2+) and can go on allies.
-- **Vladiator (Barbarian):** *Rage* (+1 melee Attack per 4 HP below max) is
-  worked out by the player, with no app display. Needs nothing.
-- **Sterling (Archer):** *Deadly Aim* (melee attacks on Basic cards gain Ranged
-  if Sterling didn't move this round) is remembered at the table, with no app
-  tracking. No power cards place tokens. Needs nothing.
-- **Ceralin (Fighter):** *Heavy Armor* (+1 defense vs melee attacks) is a
-  static passive applied at the table. No power cards place tokens. Needs
-  nothing.
-- **Cynthia (Fire Mage):** *Fan the Flames* gives Cynthia three +1 Attack
-  tokens on Rest. One tap per token is fine for adding them (decided
-  2026-10-10). Power cards only use +1 Attack tokens. Needs +1 Attack tokens.
-- **Motley (Monk):** *Lightning Reflexes* (Parry cards gain Interrupt) is
-  resolved with the physical cards. No power cards place tokens. Needs nothing.
-- **Agatha Trunch (Minotaur):** *Momentum* (+1 melee Attack per move until the
-  end of the round) is tracked in the player's head. It isn't modeled as +1
-  Attack tokens, which expire differently and apply to all attacks. One power
-  card confuses. Needs Confuse tokens.
-- **Ken Obi (Apprentice):** *Become the Master* (level-up costs 1 less gold;
-  +1 Attack at level 4) is handled by the player, since the app doesn't charge
-  gold for leveling and already shows the level. No power cards place tokens.
-  Needs nothing.
-- **Baldwin (Bard):** *Spoony Bard* gives each other friendly hero in Baldwin's
-  space a +1 Attack token after a Bard power, which is one tap per hero (no
-  group shortcut). Power cards also use Confuse. Needs +1 Attack and Confuse
-  tokens.
-- **Boreas (Hunter):** *Favored Enemy* is a simple marker: pick one enemy hero
-  once, and it shows a Favored Enemy badge on the Board and the Map for the
-  rest of the game. It's never removed, even on defeat (rulebook exception).
-  No battle-start prompt. Power cards also use Immobilize (general, see above)
-  and the Bear Trap token: a single token placed on a map space; when an enemy
-  hero triggers it, that hero is immobilized and the trap is discarded (also
-  discarded if Boreas is defeated, per the rulebook). In the app: a Bear Trap
-  marker that can be placed on a map space and removed. Needs a Favored Enemy
-  marker and a Bear Trap (hero-specific), plus Immobilize.
-  **Favored Enemy done:** scoped in `intent/15_favored-enemy.md`, built in
-  v0.15.0. An emerald crosshair on/off chip, added through the "+" picker on
-  Boreas's enemies only and on one of them at a time (hidden from every
-  picker while held), and a crosshair icon in the Map's status panel. A tap
-  removes it; it's never cleared automatically.
-  **Bear Trap done:** scoped in `intent/18_bear-trap.md`, built in v1.0.0.
-  An emerald trap tile dragged from a holder beside Boreas's team column
-  onto any board space (not the Arena), where it snaps and sits beside the
-  heroes there, and back to remove it. A drop between spaces does nothing.
-  Triggering it (Immobilize) and removing it, even on Boreas's defeat, are
-  by hand.
-- **Cyrus (Paladin):** *Holy Aura* gives Shield 1 to another friendly hero in
-  Cyrus's space after a Paladin power; power cards give more Shield. Shield
-  tokens are hero-specific (only shown when Cyrus is in the battle), counted
-  per hero, one tap per token. Per the rulebook, each shield absorbs 1 damage
-  after defense and stays if the hero who placed it is defeated. Shields are
-  removed by hand when damage comes in, with no automatic damage handling.
-  Needs Shield tokens (hero-specific).
-  **Done:** scoped in `intent/11_shield-tokens.md`, built in v0.11.0. A green
-  "+1 Shield" counted chip (0-9), added through the "+" picker on Cyrus's
-  team only (Cyrus included), and a shield icon with the count in the Map's
-  status panel. Never spent on damage or cleared automatically.
-- **Dazeem (Ice Mage):** *Winter's Chill* gives an enemy hit by Dazeem a -1
-  Attack Chill token. All Chill tokens are removed at the end of that hero's
-  action. Chill tokens are hero-specific, counted per hero, added and removed
-  one tap per token (no "clear all"). Power cards give more Chill, use
-  Immobilize (general), and place the Ice Wall token on a path between two
-  map spaces (a marker placed on the Map and removed). It's built on its own,
-  not together with Boreas's Bear Trap, which sits on a space instead
-  (decided 2026-10-17). Needs Chill tokens and an Ice Wall marker
-  (hero-specific), plus Immobilize.
-  **Chill done:** scoped in `intent/13_chill-tokens.md`, built in v0.13.0.
-  A frost-cyan "+1 Chill" counted chip (0-5), added through the "+" picker
-  on Dazeem's enemies only, and a snowflake icon with the count in the Map's
-  status panel. Never cleared or netted against +1 Attack automatically.
-  **Ice Wall done:** scoped in `intent/16_ice-wall.md`, built in v0.16.0.
-  A frost-cyan brick-wall marker dragged freely onto the Map's board art
-  from a holder under the respawn area in Dazeem's team column, and back
-  to remove it. It doesn't snap to paths, rotate, enforce adjacency or
-  leave the board on its own.
-- **Dolgolae (Yomp):** *Square Meal* (+2 Attack vs enemies at full HP) is
-  checked at the table: current HP and level are in the app, base HP is on the
-  card. No "full HP" indicator for now. Power cards confuse and gain +1 Attack
-  tokens. Needs +1 Attack and Confuse tokens.
-- **Felix (Duelist):** *En Garde* (+1 Attack while no other friendly hero is in
-  Felix's space) is visible from the Map's grouping, so nothing is needed. One
-  power card sends Felix and one **enemy** hero to the "To the Pain" Arena: a
-  single isolated space, off the main board graph, where only those two can
-  interact. It ends when one of them is defeated: the defeated hero goes
-  through the normal defeat/respawn flow, and the survivor returns to their
-  own Bit. In the app: a hero-specific Arena panel beside the board (like the
-  respawn areas) holding at most Felix + one enemy, with heroes dragged in and
-  out by hand. No tokens on Felix's cards. Needs the Arena space
-  (hero-specific).
-  **Done:** scoped in `intent/14_to-the-pain-arena.md`, built in v0.14.0.
-  "The Arena", a gold dashed drop zone to the right of the gold piles on the
-  Map, shown once Felix is level 4 and on the board, or while anyone is
-  inside. It takes Felix and one enemy only; heroes are dragged in and out
-  by hand, and a defeated duellist goes to their respawn area as usual.
-- **Kerrick (Wizard):** *Spellbook* (swap the assigned action card with a
-  Wizard power card from hand before revealing it) is handled with the
-  physical cards. One power card confuses. Needs Confuse tokens.
-- **Kunoichi (Assassin):** *Know Your Enemy* gives each unmarked enemy in
-  Kunoichi's space a Death Mark at the end of each Action Phase; Kunoichi gets
-  +2 Attack against marked enemies. Death Mark is hero-specific and on/off per
-  hero (at most one), applied and cleared by hand, including when the marked
-  hero is defeated (rulebook discards it on defeat). No other tokens on
-  Kunoichi's cards. Needs Death Mark (hero-specific).
-  **Done:** scoped in `intent/09_death-mark.md`, built in v0.9.0. A crimson
-  dagger chip, added through the "+" picker on Kunoichi's enemies only, and
-  a dagger icon in the Map's status panel. Never cleared automatically.
-- **Longshanks (Pirate):** *Pirate Booty* (pay 1 gold for +1 Attack this
-  action) uses the existing team gold stepper. Power cards stun, immobilize,
-  and confuse. Stun (discard the hero's assigned action cards) is resolved
-  with the physical cards, so nothing is tracked. Per the rulebook it also
-  removes that hero's +1 Attack tokens, which the player does by hand. Needs
-  Immobilize and Confuse.
-- **Runika (Artificer):** *Master Armiger* gives Runika three Artifacts
-  (Battle Fist, Auto Deflector, Shield Amulet), starting face-up. When an enemy
-  hits Runika, one is flipped face-down. All three flip face-up when Runika
-  Rests or respawns. Face-up Artifacts make Runika's attacks stronger. In the
-  app: three named on/off toggles on Runika's Board card (face-down greyed
-  out), flipped by hand. Text or simple icons for now, since there's no
-  Artifact art in the repo. No tokens on Runika's cards. Needs Artifact
-  toggles (hero-specific).
-  **Done:** scoped in `intent/17_runika-artifacts.md`, built in v0.17.0.
-  Three always-shown icon pills on Runika's card, between the level row
-  and the token row (not in the "+" picker), in violet-blue. A tap flips
-  one, and face-down ones are greyed and dashed. The Map's status panel
-  shows her face-up ones. Each tooltip gives the Artifact's bonus (Battle
-  Fist +1 Attack, Auto Deflector +1 defense vs melee, Shield Amulet +1
-  defense vs magic), which is shown but never applied. Nothing flips
-  automatically.
-- **Sedusa (Gorgon):** *Stony Glare* gives a target enemy in Sedusa's space a
-  Stone token at the end of each Action Phase; a hero with 3+ Stone is
-  immediately defeated. Stone is hero-specific, counted per hero, one tap per
-  token. Defeat at 3 Stone is applied by hand (no warning, no auto-defeat), and
-  Stone is cleared by hand on defeat. Power cards place more Stone and
-  immobilize. Needs Stone tokens (hero-specific) and Immobilize.
-  **Done:** scoped in `intent/12_stone-tokens.md`, built in v0.12.0. A grey
-  "+1 Stone" counted chip (0-3), added through the "+" picker on Sedusa's
-  enemies only, and a snake icon with the count in the Map's status panel.
-  Never defeats a hero or clears automatically.
+## Toward 2.0
 
-### Summary
-
-General (always available):
-
-| Feature | Kind | Used by |
-|---|---|---|
-| +1 Attack | count per hero | Caligar, Cynthia, Baldwin, Dolgolae |
-| Confuse | per hero | Agatha Trunch, Baldwin, Dolgolae, Kerrick, Longshanks |
-| Immobilize | on/off per hero | Boreas, Dazeem, Longshanks, Sedusa |
-
-Hero-specific (only when that hero is in the battle):
-
-| Feature | Kind | Hero |
-|---|---|---|
-| Favored Enemy (done, v0.15.0) | one permanent marker on an enemy | Boreas |
-| Bear Trap (done, v1.0.0) | single marker on a map space | Boreas |
-| Shield (done, v0.11.0) | count per hero | Cyrus |
-| Chill (done, v0.13.0) | count per hero | Dazeem |
-| Ice Wall (done, v0.16.0) | single marker on a path between spaces | Dazeem |
-| "To the Pain" Arena (done, v0.14.0) | isolated space for Felix + one enemy | Felix |
-| Death Mark (done, v0.9.0) | on/off per hero | Kunoichi |
-| Artifacts (x3) (done, v0.17.0) | named on/off toggles on Runika | Runika |
-| Stone (done, v0.12.0) | count per hero | Sedusa |
-
-Need nothing hero-specific: Vladiator, Sterling, Ceralin, Motley, Ken Obi.
-The starting-HP bug fix applies to every hero.
-
-All tokens are added and removed one tap at a time, by hand. The app doesn't
-apply any rule automatically (expiry, defeat, damage absorption).
-
-## Follow-ups
-
-- [x] **The Arena overlaps a long side column on the Map.** Found in
-  intent 16's QA, added 2026-10-18. The Arena's slot (spec 14) hangs out of
-  flow beside the gold bar, into the space under a side column (Player 2's,
-  or Player 1's when Dazeem's Ice Wall holder is on Player 2). At 1280x800,
-  once that column runs long (every hero with two token lines and the
-  respawn area holding 3-4 heroes), the Arena box covers the bottom of its
-  respawn area. Decide where the Arena should go when there's no room
-  under the column.
-  Done in `fix/arena-overlap` (v0.17.1): the Arena and the Ice Wall
-  holder hang in the empty margin outside their owner's team column,
-  the Arena first when both are on one team, with matching column-style
-  labels. Nothing overlaps or scrolls at 1280x800.
-
-- [x] **Drive the token wiring from `BATTLE_TOKENS`.** Do this before Chill.
-  Done (v0.11.1): a new token is now its `BATTLE_TOKENS` row, its stored
-  field and setter, and one line in `page.tsx`'s `setHeroToken` map.
-  Since v0.13.0 (intent 13), a counted token needs no setter or `page.tsx`
-  line: just its row, stored field and ceiling.
-  Added 2026-10-16 from intent 11's `/simplify` review.
-  Each hero-specific token still costs about 25 lines across four files:
-  a setter prop on `BattleBoardScreen`, a gated callback prop on
-  `BattleTeamPanel`, a props object built there, and a named prop on
-  `HeroCard` (plus `HeroCard`'s hand-kept `counted` / `toggles` maps).
-  Instead:
-  - one `tokens` map passed down, keyed by stored field and built by a
-    loop over `BATTLE_TOKENS`; leaving a field out turns its control off
-  - an optional `heroSpecific` id on each `BATTLE_TOKENS` row, linking it
-    to its `HERO_SPECIFIC_TOKENS` rule, so the visibility gating is one
-    loop instead of one `heroSpecificTokenSide` call per token
-  - open-state keys built from the field (`${side}:${heroId}:${field}`)
-  Keep the stored fields, reducer actions and `useBattle` setters as they
-  are (spec 09's plain-fields choice). About 80-120 lines plus test prop
-  updates. After it, Chill and Stone are each a table row plus their
-  stored-state work. Its own `refactor:` PR.
-
-## After 1.0
-
-Polish moved past v1.0.0 (decided 2026-10-18): none of it blocks playing
-with only the cards.
-
-- [ ] **Review every token's display again once all tokens exist.** Do this
-  after the hero-specific tokens are built, Runika's Artifacts last. Added
-  2026-10-11, updated 2026-10-15.
-  **Can start now** (2026-10-18): Artifacts shipped in v0.17.0, so every
-  hero-specific token exists. Bear Trap is a map marker, not a card token.
-  Intent 17's QA found Runika's heaviest card (all eight tokens plus the
-  artifact row) scrolls the Board by 12px at 1280x800, which was accepted
-  for now.
-  Intent 09 already redesigned the Board's token row and settled the state
-  shape, but each later token is still designed on its own. So once they all
-  exist, review them together for one consistent look and layout:
-  - **Board token row and picker** (intent 09): held tokens only, plus a
-    "+" picker, sized for at most 8 tokens per hero. Does it still hold up
-    with Shield, Chill, Stone and Favored Enemy in real games? How often do
-    cards wrap?
-    Intent 13's QA found the seven-token case (+1 Attack, Confuse,
-    Immobilize, Death Mark, Shield, Stone, Chill) fits its chips on two
-    lines, but the "+" wraps alone to a third. Accepted for now since the
-    Board still fits at 1280x800. Intent 15's eight-token case (adding
-    Favored Enemy) puts Favored Enemy and the "+" on that third line; the
-    Board still fits.
-  - **Colors and icons** of every token side by side.
-  - **The Map**, read-only for now: does the status panel still read well,
-    and is editing there worth adding?
-  - **Runika's Artifacts:** where they sit on her card, next to the row.
-    They're on their own line above it for now (intent 17).
-  - **State shape** (spec 09): plain fields per token, plus a small
-    visibility table for hero-specific tokens. Is a fuller token registry
-    worth it by then?
-- [ ] **Coin-flip animation at draft start.** Show the initiative coin flip
-  instead of just stating the result. Parked from intent 10 (draft pick
-  animation), added 2026-10-15.
-- [ ] **Turn-passing animation in the draft.** Animate the turn banner and
-  team panel highlight when the pick passes to the other player. Parked
-  from intent 10, added 2026-10-15.
+- `Triage` **Show the current round number.** Show which round the game is in on the
+  Board and the Map.
+- `Triage` **Show the round each hero was defeated.** Mark a defeated hero with the
+  round it fell, to get an idea of when it will respawn. Builds on the round
+  number.
+- `Triage` **Show the current phase.** Show the phase (Orders, Movement, Action,
+  Cleanup) on the Board and the Map. One control steps through the phases,
+  keeping round, phase and initiative in step.
+- `Triage` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
+  up also raises the hero's HP by one. Today players add it by hand.
+- `Triage` **Show token and Artifact rules in the app, not in a tooltip.** Runika's
+  Artifact bonuses only show on hover, which is easy to miss. Show them, and
+  what every token does, somewhere visible so nobody needs the rulebook.
+- `Triage` **Merge the Battle Board and the Battle Map into one screen.** Players keep
+  switching between them, since each shows half the game. At least keep the
+  Map visible at all times.
+- `Triage` **Review every token's display together.** Every token now exists, but
+  each was designed on its own. Review the Board's token row and picker, colors
+  and icons, the Map's status panel and Runika's Artifacts for one consistent
+  look.
+- `Triage` **A board-game, high-fantasy look.** The app doesn't feel like a board
+  game or like Biternia's medieval world. Give every screen a theme that does.
+- `Triage` **Hide an empty respawn area on the Map.** It takes room even when no
+  hero is defeated. It still has to show at battle start and as a drop target
+  while dragging.
+- `Triage` **Move the gold-pile controls off the Map.** The gold-pile steppers take
+  space under the board. Move them somewhere else so the board can grow.
+- `Triage` **Auto-focus the Map's camera.** Have the camera move on its own to where
+  the action is, instead of only by hand.
+- `Triage` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
+  and the Map, to compare both teams at a glance.
+- `Triage` **Defeat and destruction animations.** Animate a hero's defeat and a
+  Tower's or Bit's destruction.
+- `Triage` **Hero roles in the draft.** Give each hero a role, as in Dota or Heroes
+  of the Storm, to sort the picker and plan a balanced team. The rulebook's
+  hero "Type" (e.g. Mobile Tank) is one possible source.
+- `Triage` **Coin-flip animation at draft start.** Show the initiative coin flip
+  instead of just stating the result.
+- `Triage` **Turn-passing animation in the draft.** Animate the turn banner and team
+  highlight when the pick passes to the other player.
