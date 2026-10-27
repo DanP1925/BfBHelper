@@ -55,10 +55,13 @@ error, manual control where it keeps the table in charge.
 
 ## Toward 2.0
 
+### Implement
+
+- `Implement` **Add the HP bump on level-up automatically.** Per the rulebook,
+  leveling up also raises the hero's HP by one. Today players add it by hand.
+
 ### Spec
 
-- `Spec` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
-  up also raises the hero's HP by one. Today players add it by hand.
 - `Spec` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
   and the Map, to compare both teams at a glance.
 

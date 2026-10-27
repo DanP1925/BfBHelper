@@ -504,6 +504,95 @@ describe("useBattle", () => {
     expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
   });
 
+  describe("setHeroLevel (intent/19)", () => {
+    // HERO_A starts at level 1 with baseHp + 1 = 10 HP.
+    function renderLevels() {
+      return renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+    }
+
+    it("a level-up adds 1 HP and a level-down takes it back off", () => {
+      const { result } = renderLevels();
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 2, hp: 11 });
+      expect(readRawState().p1.heroes[HERO_A.id]).toMatchObject({ level: 2, hp: 11 });
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 1);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 1, hp: 10 });
+    });
+
+    it("a typed jump moves HP by the levels actually moved, after the clamp", () => {
+      const { result } = renderLevels();
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 3);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 3, hp: 12 });
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 9);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 4, hp: 13 });
+    });
+
+    it("a level-up at 15 HP stays at the ceiling", () => {
+      const { result } = renderLevels();
+
+      act(() => {
+        result.current.setHeroHp("p1", HERO_A.id, 15);
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 2, hp: 15 });
+    });
+
+    it("a no-op level write returns the same state", () => {
+      const { result } = renderLevels();
+      const before = result.current.state;
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 1);
+        result.current.setHeroLevel("p1", HERO_A.id, 0);
+        result.current.setHeroLevel("p1", OTHER_HERO.id, 2);
+      });
+      expect(result.current.state).toBe(before);
+    });
+
+    it("a defeated hero stays at 0 HP in its respawn area", () => {
+      const { result } = renderLevels();
+
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+        result.current.setHeroHp("p1", HERO_A.id, 0);
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 2, hp: 0 });
+      expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 1);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 1, hp: 0 });
+    });
+
+    it("a level-down at 1 HP leaves the hero alive on its space", () => {
+      const { result } = renderLevels();
+      const spaceId = MAP_SPACE_IDS[0];
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+        result.current.setHeroPosition("p1", HERO_A.id, spaceId);
+        result.current.setHeroHp("p1", HERO_A.id, 1);
+        result.current.setHeroLevel("p1", HERO_A.id, 1);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 1, hp: 1 });
+      expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(spaceId);
+    });
+  });
+
   describe("the Arena (intent/14)", () => {
     // Felix (p1) against Cyrus (p2).
     function renderDuel() {

@@ -86,9 +86,11 @@ function setHeroField<K extends keyof HeroBattleState>(
 
 /**
  * Pure reducer over the only stored/dispatched battle state. Every branch
- * is a clamp-and-replace on one field — no mutator ever reads or changes a
- * second field (no gold-on-level-up, no HP-from-level, no Tower-to-Bit
- * chip damage), matching intent's player-driven-only scope. Returns the
+ * is a clamp-and-replace on one field — no action ever reads or changes a
+ * second field (no gold-on-level-up, no Tower-to-Bit chip damage),
+ * matching intent's player-driven-only scope. The HP-from-level bump
+ * (intent/19) is composed in useBattle.setHeroLevel from SET_HERO_LEVEL
+ * and SET_HERO_HP, like the defeat move, not here. Returns the
  * same state reference (no-op) whenever the clamped value already matches
  * the current one, or the targeted hero id doesn't exist on that side —
  * mirrors draftReducer's no-op convention.

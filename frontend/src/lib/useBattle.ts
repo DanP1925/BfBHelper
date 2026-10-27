@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { hpAfterLevelChange } from "./battle/levelUp";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
 import type {
@@ -147,10 +148,20 @@ export function useBattle(
     });
   }, []);
 
+  // A level change also moves HP by the levels actually moved, after the
+  // level clamp (intent/19) — the same two-action composition as the
+  // defeat move above. It dispatches the reducer's SET_HERO_HP, not
+  // setHeroHp, so it never moves a hero to the respawn area.
   const setHeroLevel = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
-    setState((prev) =>
-      prev === null ? prev : battleReducer(prev, { type: "SET_HERO_LEVEL", side, heroId, value }),
-    );
+    setState((prev) => {
+      if (prev === null) return prev;
+      const before = prev[side].heroes[heroId];
+      const afterLevel = battleReducer(prev, { type: "SET_HERO_LEVEL", side, heroId, value });
+      if (afterLevel === prev || !before) return afterLevel;
+      const levelDelta = afterLevel[side].heroes[heroId].level - before.level;
+      const hp = hpAfterLevelChange(before.hp, levelDelta);
+      return battleReducer(afterLevel, { type: "SET_HERO_HP", side, heroId, value: hp });
+    });
   }, []);
 
   const setHeroCountedToken = useCallback(

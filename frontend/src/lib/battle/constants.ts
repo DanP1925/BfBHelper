@@ -13,8 +13,8 @@ export const TOWER_SLOTS = ["top", "middle", "bottom"] as const;
 export type TowerSlot = (typeof TOWER_SLOTS)[number];
 
 /** Flat HP ceiling for every hero, regardless of base HP or level
- * (intent/03) — level and HP stay independently adjustable; this ceiling
- * doesn't recalculate off either. */
+ * (intent/03). It doesn't recalculate off level (intent/19 keeps it flat),
+ * though a level change now moves HP by one per level. */
 export const HERO_HP_CEILING = 15;
 
 /** Per-hero ceiling for each counted token (intents 06, 11, 12, 13). The
