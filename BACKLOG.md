@@ -63,8 +63,11 @@ error, manual control where it keeps the table in charge.
 - `Triage` **Show the current phase.** Show the phase (Orders, Movement, Action,
   Cleanup) on the Board and the Map. One control steps through the phases,
   keeping round, phase and initiative in step.
-- `Triage` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
+- `Intent` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
   up also raises the hero's HP by one. Today players add it by hand.
+- `Triage` **Take gold on level-up automatically.** Leveling up costs the hero's
+  current level plus one in gold, which players now take off by hand. Split out of
+  intent 19 for its own edge cases, like a team that can't afford it.
 - `Triage` **Show token and Artifact rules in the app, not in a tooltip.** Runika's
   Artifact bonuses only show on hover, which is easy to miss. Show them, and
   what every token does, somewhere visible so nobody needs the rulebook.
