@@ -59,6 +59,8 @@ error, manual control where it keeps the table in charge.
 
 - `Intent` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
   up also raises the hero's HP by one. Today players add it by hand.
+- `Intent` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
+  and the Map, to compare both teams at a glance.
 
 ### Triage
 
@@ -92,8 +94,6 @@ error, manual control where it keeps the table in charge.
   space under the board. Move them somewhere else so the board can grow.
 - `Triage` **Auto-focus the Map's camera.** Have the camera move on its own to where
   the action is, instead of only by hand.
-- `Triage` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
-  and the Map, to compare both teams at a glance.
 - `Triage` **Defeat and destruction animations.** Animate a hero's defeat and a
   Tower's or Bit's destruction.
 - `Triage` **Hero roles in the draft.** Give each hero a role, as in Dota or Heroes
