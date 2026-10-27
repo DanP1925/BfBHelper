@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Hero, PlayerId } from "../../lib/draft/types";
 import { ARTIFACT_OWNER } from "../../lib/battle/constants";
 import { createInitialHeroState } from "../../lib/battle/reducer";
+import { teamLevel } from "../../lib/battle/selectors";
 import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, HeroBattleState } from "../../lib/battle/types";
 import { ARTIFACTS, artifactSummary } from "../artifacts";
@@ -23,7 +24,7 @@ type MapTeamStatusPanelProps = {
 
 /**
  * Read-only glance-level summary sitting above a side's `RespawnAreaStrip`
- * — so a quick HP/gold check doesn't always need a trip to the Battle
+ * — so a quick HP/level check doesn't always need a trip to the Battle
  * Board. No props beyond what `BattleMapScreen` already receives; purely
  * a rendering addition, no new data plumbing. Both Heroes and Structures
  * get the same small bespoke row (name/label + HP, dimmed at 0) — per
@@ -37,15 +38,17 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
     { label: TOWER_LABEL.bottom, hp: team.structures.bottom },
     { label: "Bit", hp: team.structures.bit },
   ];
+  const level = teamLevel(team);
 
   return (
     <div className={styles.panel}>
       <div className={styles.header} style={{ borderBottomColor: `var(--color-${side})` }}>
         <div className={styles.headerLabel}>{label}</div>
-        <div className={styles.goldBadge}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
-          <img src="/structures/gold.png" alt="" className={styles.goldIcon} draggable={false} />
-          <span>{team.gold}</span>
+        {/* Team level (intent/20), in place of the team's gold: gold stays
+            on the Board, where it's changed. */}
+        <div className={styles.level} role="img" aria-label={`${label} team level ${level}`}>
+          <span className={styles.levelLabel}>Lv</span>
+          {level}
         </div>
       </div>
 

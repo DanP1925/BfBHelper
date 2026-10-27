@@ -125,6 +125,41 @@ describe("BattleMapScreen", () => {
     expect(screen.getByAltText("Sterling")).toBeInTheDocument();
   });
 
+  it("shows each team's level in the status panel header, in place of its gold", () => {
+    const base = makeBattleState();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{
+          ...base,
+          p1: {
+            ...base.p1,
+            gold: 7,
+            heroes: {
+              ...base.p1.heroes,
+              boreas: { ...base.p1.heroes.boreas, level: 3 },
+              // Defeated (0 HP), but a hero keeps their level (intent/20).
+              caligar: { ...base.p1.heroes.caligar, level: 2 },
+            },
+          },
+        }}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    const p1Level = screen.getByRole("img", { name: "Player 1 team level 3" });
+    expect(screen.getByRole("img", { name: "Player 2 team level 0" })).toBeInTheDocument();
+    // The header holds the label and the level only: no team gold (intent/20).
+    expect(p1Level.parentElement).toHaveTextContent(/^Player 1Lv3$/);
+  });
+
   it("shows a hero's +1 Attack tokens in the status panel only above 0", () => {
     const base = makeBattleState();
     render(

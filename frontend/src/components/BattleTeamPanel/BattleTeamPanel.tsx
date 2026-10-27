@@ -6,6 +6,7 @@ import {
   TOWER_STARTING_HP,
 } from "../../lib/battle/constants";
 import { createInitialHeroState } from "../../lib/battle/reducer";
+import { teamLevel } from "../../lib/battle/selectors";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type {
   ArtifactField,
@@ -104,19 +105,28 @@ export function BattleTeamPanel({
   openTokenKey,
   onOpenTokenKeyChange,
 }: BattleTeamPanelProps) {
+  const level = teamLevel(team);
   return (
     <div className={styles.panel}>
       <div className={styles.header} style={{ borderBottomColor: `var(--color-${side})` }}>
         <div className={styles.headerLabel}>{label}</div>
-        <div className={styles.goldBadge}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
-          <img src="/structures/gold.png" alt="" className={styles.goldIcon} />
-          <NumberStepper
-            value={team.gold}
-            min={0}
-            onChange={onGoldChange}
-            label={`${label} gold`}
-          />
+        <div className={styles.headerRight}>
+          {/* Team level (intent/20): read-only, worked out from the hero
+              levels below. Just "Lv": the header says whose it is. */}
+          <div className={styles.levelBadge} role="img" aria-label={`${label} team level ${level}`}>
+            <span className={styles.levelLabel}>Lv</span>
+            <span className={styles.levelValue}>{level}</span>
+          </div>
+          <div className={styles.goldBadge}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
+            <img src="/structures/gold.png" alt="" className={styles.goldIcon} />
+            <NumberStepper
+              value={team.gold}
+              min={0}
+              onChange={onGoldChange}
+              label={`${label} gold`}
+            />
+          </div>
         </div>
       </div>
 

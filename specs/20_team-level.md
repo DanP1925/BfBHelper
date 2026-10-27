@@ -1,7 +1,6 @@
 # Spec 20: Team Level
 
-> **DRAFT.** Architecture for intent 20's scope. Build-out has not started
-> yet. See [../intent/20_team-level.md](../intent/20_team-level.md) for the
+> **BUILT.** Architecture for intent 20's scope, all built in one PR. See [../intent/20_team-level.md](../intent/20_team-level.md) for the
 > product-level problem, scope, and behavior this spec exists to satisfy.
 
 ## Architecture Overview
@@ -92,9 +91,10 @@ screens, so neither adds height. The Board panels and the Map's board
 area stay exactly as tall as today at 1280x800.
 
 - **Visible text is "Lv" and the number** (intent's Scope): no "Team",
-  no "/12". Each badge's `aria-label` is
+  no "/12". Each badge is a `role="img"` element (as `IceWallMarker` and
+  `BearTrapMarker` are) whose `aria-label` is
   `` `${label} team level ${value}` `` (e.g. "Player 1 team level 3"), so
-  a screen reader still hears whose level it is and that it's the team's,
+  a screen reader hears whose level it is and that it's the team's,
   which the header's position conveys visually.
 - **Board, `BattleTeamPanel`:** a read-only pill to the left of the gold
   stepper. The header's right side becomes a small flex group (level,
@@ -110,11 +110,9 @@ area stay exactly as tall as today at 1280x800.
   number, unboxed, to match the panel's plain text. Those classes are
   swapped in `MapTeamStatusPanel.module.css`. The component's doc comment
   ("a quick HP/gold check") becomes an HP/level check.
-- **One component or two small blocks?** The Board's version is a pill
-  and the Map's is plain text, so they share only the label and the
-  `aria-label`. Writing the markup inline in each panel is simpler than a
-  shared component with a variant prop. Decide at build time (Open
-  Items).
+- **Inline markup in each panel, no shared component** (Open Items). The
+  Board's version is a pill and the Map's is plain text, so they share
+  only the label and the `aria-label`.
 - **Not shown** on `WinScreen`, `ResultsScreen` or any Draft screen
   (intent's Out of Scope).
 
@@ -154,7 +152,14 @@ infra.
   and gold.~~
   **Decided:** moot. The Map's gold is gone, so its header holds only
   the label and the level.
-- Check the Board header at 1280x800 with "Player 2", a team level of
+- ~~Check the Board header at 1280x800 with "Player 2", a team level of
   12 and a three-digit gold total (gold has no ceiling): label, level
-  pill and gold stepper should stay on one line.
-- Shared `TeamLevel` component or inline markup in each panel (Layout).
+  pill and gold stepper should stay on one line.~~
+  **Decided:** fits. With every hero at level 4 and Player 2 at 120
+  gold, both headers stay on one line at 1280x800 and 2560x1440, and
+  neither screen overflows.
+- ~~Shared `TeamLevel` component or inline markup in each panel
+  (Layout).~~
+  **Decided:** inline. The Board's pill and the Map's plain text share
+  only the label and the `aria-label`, so a shared component would be
+  mostly a variant prop.

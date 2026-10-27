@@ -25,6 +25,38 @@
   color: var(--color-text);
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Team level (intent/20): read-only, the same pill shape as the gold. */
+.levelBadge {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+.levelLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.levelValue {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text);
+}
+
 .goldBadge {
   display: flex;
   align-items: center;
