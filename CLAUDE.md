@@ -54,10 +54,14 @@
 - `BACKLOG.md` items are at most 3 sentences: what and why. Open questions, code
   pointers, rulebook quotes and QA findings go in the item's intent once it's
   scoped. The intro and version notes at the top can be longer.
-  Each item carries a stage label, defined at the top of `BACKLOG.md`: update it
-  when an item's intent, spec or PR lands, or when its PR merges. In "Toward 2.0",
+  Each item carries a stage label, defined at the top of `BACKLOG.md`. In "Toward 2.0",
   items are grouped under one `### <Stage>` subheading per label in use, earliest
   stage first (`Triage` at the top, `Done` at the bottom): when a label changes, move the item to its new group.
+- Feature branches never edit `BACKLOG.md`: parallel agents moving items between
+  stage groups conflict every time. Instead, when an item's intent, spec or PR
+  lands, or its PR merges (or a new item is wanted), end the reply with a line
+  like `BACKLOG: <item> → Implement`. The main session applies these in batches
+  in a dedicated `docs: update backlog stages` PR, off `main`, when the user asks.
 
 ## Testing
 - Formatting is Prettier (`frontend/.prettierrc.json`, width 100): run

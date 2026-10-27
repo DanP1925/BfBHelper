@@ -94,8 +94,9 @@ Optional arguments:
 
 9. **Capture deferred ideas.** When the user parks something ("an idea
    for later", "we'll revisit once X exists"), record it under the
-   intent's Out of Scope with its trigger, and offer to add a matching
-   unchecked item to `BACKLOG.md` so it isn't lost.
+   intent's Out of Scope with its trigger, and offer a matching `Triage`
+   item for `BACKLOG.md` so it isn't lost. Don't write it there: give it
+   as a `BACKLOG: new Triage item: …` line for the backlog sync PR.
 
 10. **Stop when the frontier is empty.** Summarize every decision made in
     the session, grouped sensibly (not just a flat list in question
@@ -124,9 +125,9 @@ they are.
 Do **not** create or update the spec (or any other file) as part of
 this skill's normal behavior, even if technical questions come up along
 the way — only do that if the user explicitly asks for it in the
-session, as a one-off, separate from this skill's job. The one
-exception is the `BACKLOG.md` follow-up from step 9, once the user
-accepts it.
+session, as a one-off, separate from this skill's job. `BACKLOG.md`
+changes are never made here: report them as `BACKLOG:` lines (step 9,
+plus the item moving to `Intent` when a new intent is written).
 
 After writing, tell the user what changed in the intent in a couple of
 sentences — don't restate the full summary again.
