@@ -55,6 +55,13 @@ error, manual control where it keeps the table in charge.
 
 ## Toward 2.0
 
+### Intent
+
+- `Intent` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
+  up also raises the hero's HP by one. Today players add it by hand.
+
+### Triage
+
 - `Triage` **Show the current round number.** Show which round the game is in on the
   Board and the Map.
 - `Triage` **Show the round each hero was defeated.** Mark a defeated hero with the
@@ -63,8 +70,6 @@ error, manual control where it keeps the table in charge.
 - `Triage` **Show the current phase.** Show the phase (Orders, Movement, Action,
   Cleanup) on the Board and the Map. One control steps through the phases,
   keeping round, phase and initiative in step.
-- `Intent` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
-  up also raises the hero's HP by one. Today players add it by hand.
 - `Triage` **Take gold on level-up automatically.** Leveling up costs the hero's
   current level plus one in gold, which players now take off by hand. Split out of
   intent 19 for its own edge cases, like a team that can't afford it.
