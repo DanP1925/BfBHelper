@@ -18,7 +18,9 @@ This phase covers only:
   level 1, ends at 7 HP, level 2.
 - **Level down, HP down** (decided 2026-10-28). Lowering a level by 1
   takes 1 HP off, so undoing a misclicked level-up leaves HP where it
-  started. HP never goes below 0 this way.
+  started. It never takes a living hero below 1 HP (decided 2026-10-28):
+  lowering a level is a correction, not damage, so it never defeats a
+  hero.
 - **One step, one HP.** Each step of the level control moves one level
   and one HP. Taking a hero from level 1 to 3 adds 2 HP.
 - **No bump for a defeated hero** (decided 2026-10-28). At 0 HP, a level

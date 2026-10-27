@@ -57,7 +57,7 @@ error, manual control where it keeps the table in charge.
 
 ### Intent
 
-- `Intent` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
+- `Spec` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
   up also raises the hero's HP by one. Today players add it by hand.
 
 ### Triage
