@@ -23,7 +23,7 @@ highest-numbered intent with no matching spec.
 - Rule details (tokens, statuses, HP, turn order) come from the rulebook
   at `reference/battle-for-biternia_rules_web.pdf` in the main checkout. It's
   local-only, so from a worktree use `$(git rev-parse --git-common-dir)/../reference/`.
-  For a precise question, use the `rules-lawyer` agent. If the rulebook
+  For a precise question, use the `/check-rules` skill. If the rulebook
   contradicts the intent, flag it to the user rather than silently picking
   a side.
 
