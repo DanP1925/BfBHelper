@@ -28,7 +28,9 @@ import { IceWallMarker } from "../../IceWallMarker/IceWallMarker";
 import { MapTeamStatusPanel } from "../../MapTeamStatusPanel/MapTeamStatusPanel";
 import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
+import { PhaseControl } from "../../PhaseControl/PhaseControl";
 import { RespawnAreaStrip } from "../../RespawnAreaStrip/RespawnAreaStrip";
+import { RoundBadge } from "../../RoundBadge/RoundBadge";
 import { ViewToggle, type BattleView } from "../../ViewToggle/ViewToggle";
 import { MapSpace } from "./MapSpace";
 import styles from "./BattleMapScreen.module.css";
@@ -50,6 +52,10 @@ type BattleMapScreenProps = {
   onEndBattle: () => void;
   onSwitchView: (target: BattleView) => void;
   onPassInitiative: () => void;
+  /** One phase forward or back (intent/21); a round change also passes
+   * initiative, in useBattle. */
+  onAdvancePhase: () => void;
+  onStepPhaseBack: () => void;
   /** Owned by the caller so it survives this screen unmounting on a
    * Board ⇄ Map view toggle. */
   camera: MapCamera;
@@ -87,6 +93,8 @@ export function BattleMapScreen({
   onEndBattle,
   onSwitchView,
   onPassInitiative,
+  onAdvancePhase,
+  onStepPhaseBack,
   camera,
   onCameraChange,
 }: BattleMapScreenProps) {
@@ -262,6 +270,15 @@ export function BattleMapScreen({
     <div className={styles.screen} {...spaceDragTracking}>
       <div className={styles.topBar}>
         <ViewToggle active="map" onSwitchView={onSwitchView} />
+        <div className={styles.topBarRound}>
+          <RoundBadge round={battleState.round} />
+          <PhaseControl
+            round={battleState.round}
+            phase={battleState.phase}
+            onAdvance={onAdvancePhase}
+            onStepBack={onStepPhaseBack}
+          />
+        </div>
         <div className={styles.topBarActions}>
           <InitiativeBadge holder={battleState.initiative} onPass={onPassInitiative} />
           <OverflowMenu items={menuItems} />

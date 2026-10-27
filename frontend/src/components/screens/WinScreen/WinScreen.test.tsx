@@ -76,6 +76,19 @@ describe("WinScreen", () => {
     expect(screen.getByText("Winner")).toBeInTheDocument();
   });
 
+  it("shows the round the game ended in (intent/21)", () => {
+    render(
+      <WinScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={{ ...makeBattleState(), round: 7, phase: "action" }}
+        winner="p1"
+        onNewDraft={() => {}}
+      />,
+    );
+    expect(screen.getByText("in Round 7")).toBeInTheDocument();
+  });
+
   it("shows no token controls on the cards (intents 06-13)", () => {
     const base = makeBattleState();
     render(

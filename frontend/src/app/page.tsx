@@ -138,6 +138,8 @@ export default function Home() {
           }}
           onSwitchView={switchView}
           onPassInitiative={battle.passInitiative}
+          onAdvancePhase={battle.advancePhase}
+          onStepPhaseBack={battle.stepPhaseBack}
         />
       );
     }
@@ -160,6 +162,8 @@ export default function Home() {
           }}
           onSwitchView={switchView}
           onPassInitiative={battle.passInitiative}
+          onAdvancePhase={battle.advancePhase}
+          onStepPhaseBack={battle.stepPhaseBack}
           camera={mapCamera}
           onCameraChange={setMapCamera}
         />

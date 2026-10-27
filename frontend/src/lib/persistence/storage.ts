@@ -11,6 +11,8 @@ import { getPicksRequiredForStep, STEP_SEQUENCE } from "../draft/sequence";
 import {
   ARTIFACT_FIELDS,
   ARTIFACTS_FACE_UP,
+  BATTLE_PHASES,
+  BATTLE_STARTING_ROUND,
   BIT_STARTING_HP,
   HERO_COUNTED_TOKEN_CEILINGS,
   HERO_HP_CEILING,
@@ -43,6 +45,7 @@ import {
   type PersistedBattleStateV13,
   type PersistedBattleStateV14,
   type PersistedBattleStateV15,
+  type PersistedBattleStateV16,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -236,6 +239,21 @@ function upgradeV14ToV15(data: unknown): PersistedBattleStateV15 | null {
   };
 }
 
+/** Schema 15 → 16: a top-level `round: 1` and `phase: "orders"` (intent/21:
+ * "upgrades in place to Round 1, Orders"; players correct it with the
+ * phase control). Everything else passes through unchanged; the
+ * current-shape validator checks it afterward. */
+function upgradeV15ToV16(data: unknown): PersistedBattleStateV16 | null {
+  if (typeof data !== "object" || data === null) return null;
+  return {
+    ...(data as PersistedBattleStateV15),
+    schemaVersion: 16,
+    round: BATTLE_STARTING_ROUND,
+    phase: BATTLE_PHASES[0],
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -256,6 +274,7 @@ const battleMigrations: MigrationSteps = {
   12: upgradeV12ToV13,
   13: upgradeV13ToV14,
   14: upgradeV14ToV15,
+  15: upgradeV15ToV16,
 };
 
 function isBrowser(): boolean {
@@ -459,7 +478,18 @@ function isValidBearTrap(value: unknown): boolean {
   return value === null || isMapSpaceIdLike(value);
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV15 {
+/** A whole round from 1 up (intent/21). No ceiling: no rule caps the
+ * number of rounds. `isNumberInRange` accepts fractions, so this checks
+ * `Number.isInteger` itself. */
+function isValidRound(value: unknown): boolean {
+  return Number.isInteger(value) && (value as number) >= BATTLE_STARTING_ROUND;
+}
+
+function isValidPhase(value: unknown): boolean {
+  return (BATTLE_PHASES as readonly unknown[]).includes(value);
+}
+
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV16 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -478,6 +508,8 @@ function isValidPersistedBattleState(data: unknown): data is PersistedBattleStat
 
   if (!isValidIceWall(candidate.iceWall)) return false;
   if (!isValidBearTrap(candidate.bearTrap)) return false;
+  if (!isValidRound(candidate.round)) return false;
+  if (!isValidPhase(candidate.phase)) return false;
 
   return true;
 }
@@ -640,7 +672,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV15 = {
+  const payload: PersistedBattleStateV16 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -648,6 +680,8 @@ export function saveBattleState(state: BattleState): void {
     initiative: state.initiative,
     iceWall: state.iceWall,
     bearTrap: state.bearTrap,
+    round: state.round,
+    phase: state.phase,
     updatedAt: new Date().toISOString(),
   };
 
@@ -671,13 +705,15 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 15,
+    schemaVersion: 16,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,
     initiative: data.initiative,
     iceWall: data.iceWall,
     bearTrap: data.bearTrap,
+    round: data.round,
+    phase: data.phase,
   };
 }
 

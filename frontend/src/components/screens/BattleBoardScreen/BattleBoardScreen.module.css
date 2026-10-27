@@ -44,3 +44,15 @@
   align-items: center;
   gap: 12px;
 }
+
+/* The round and phase (intent/21), centered in the space between
+ * ViewToggle and the initiative badge, in the same place as on the Map. */
+.topBarRound {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+}

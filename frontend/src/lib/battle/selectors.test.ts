@@ -15,13 +15,15 @@ function team(bitHp: number): BattleTeamState {
 
 function state(p1BitHp: number, p2BitHp: number): BattleState {
   return {
-    schemaVersion: 15,
+    schemaVersion: 16,
     p1: team(p1BitHp),
     p2: team(p2BitHp),
     goldPiles: {} as BattleState["goldPiles"],
     initiative: "p1",
     iceWall: null,
     bearTrap: null,
+    round: 1,
+    phase: "orders",
   };
 }
 

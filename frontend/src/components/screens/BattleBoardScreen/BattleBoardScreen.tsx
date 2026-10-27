@@ -15,6 +15,8 @@ import { BattleTeamPanel, type TeamTokenSetters } from "../../BattleTeamPanel/Ba
 import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
+import { PhaseControl } from "../../PhaseControl/PhaseControl";
+import { RoundBadge } from "../../RoundBadge/RoundBadge";
 import { ViewToggle, type BattleView } from "../../ViewToggle/ViewToggle";
 import styles from "./BattleBoardScreen.module.css";
 
@@ -37,6 +39,10 @@ type BattleBoardScreenProps = {
   onEndBattle: () => void;
   onSwitchView: (target: BattleView) => void;
   onPassInitiative: () => void;
+  /** One phase forward or back (intent/21); a round change also passes
+   * initiative, in useBattle. */
+  onAdvancePhase: () => void;
+  onStepPhaseBack: () => void;
 };
 
 /** useBattle's one setter for every counted token and one for every on/off
@@ -86,6 +92,8 @@ export function BattleBoardScreen({
   onEndBattle,
   onSwitchView,
   onPassInitiative,
+  onAdvancePhase,
+  onStepPhaseBack,
 }: BattleBoardScreenProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   // At most one token chip open across both panels (intent/06). UI state
@@ -111,6 +119,15 @@ export function BattleBoardScreen({
     <div className={styles.screen}>
       <div className={styles.topBar}>
         <ViewToggle active="battle" onSwitchView={onSwitchView} />
+        <div className={styles.topBarRound}>
+          <RoundBadge round={battleState.round} />
+          <PhaseControl
+            round={battleState.round}
+            phase={battleState.phase}
+            onAdvance={onAdvancePhase}
+            onStepBack={onStepPhaseBack}
+          />
+        </div>
         <div className={styles.topBarActions}>
           <InitiativeBadge holder={battleState.initiative} onPass={onPassInitiative} />
           <OverflowMenu items={menuItems} />

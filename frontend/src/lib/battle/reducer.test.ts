@@ -91,9 +91,13 @@ describe("createInitialBattleState", () => {
     expect(state.p2.heroPositions).toEqual({ [HERO_B.id]: null });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 15", () => {
+  it("starts at Round 1, Orders (intent/21)", () => {
+    expect(baseState()).toMatchObject({ round: 1, phase: "orders" });
+  });
+
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 16", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(15);
+    expect(state.schemaVersion).toBe(16);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -756,6 +760,51 @@ describe("battleReducer", () => {
       expect(next.p1).toBe(state.p1);
       expect(next.p2).toBe(state.p2);
       expect(next.goldPiles).toBe(state.goldPiles);
+    });
+
+    it("leaves the round and phase alone (intent/21: the badge is a correction)", () => {
+      const state = { ...baseState(), round: 3, phase: "cleanup" } as const;
+      expect(battleReducer(state, { type: "PASS_INITIATIVE" })).toMatchObject({
+        round: 3,
+        phase: "cleanup",
+      });
+    });
+  });
+
+  // Intent/21. The initiative pass on a round change is composed in
+  // useBattle, so here a step moves only the round and phase.
+  describe("ADVANCE_PHASE / STEP_PHASE_BACK", () => {
+    it("changes nothing but the round and phase, initiative included", () => {
+      const state = { ...baseState(), phase: "cleanup" } as const;
+      for (const type of ["ADVANCE_PHASE", "STEP_PHASE_BACK"] as const) {
+        const next = battleReducer(state, { type });
+        expect({ ...next, round: state.round, phase: state.phase }).toEqual(state);
+        expect(next.initiative).toBe(state.initiative);
+        expect(next.p1).toBe(state.p1);
+        expect(next.p2).toBe(state.p2);
+        expect(next.goldPiles).toBe(state.goldPiles);
+      }
+    });
+
+    it("ADVANCE_PHASE moves from Cleanup to the next round's Orders", () => {
+      const state = { ...baseState(), round: 3, phase: "cleanup" } as const;
+      expect(battleReducer(state, { type: "ADVANCE_PHASE" })).toMatchObject({
+        round: 4,
+        phase: "orders",
+      });
+    });
+
+    it("STEP_PHASE_BACK moves from Orders to the previous round's Cleanup", () => {
+      const state = { ...baseState(), round: 4, phase: "orders" } as const;
+      expect(battleReducer(state, { type: "STEP_PHASE_BACK" })).toMatchObject({
+        round: 3,
+        phase: "cleanup",
+      });
+    });
+
+    it("STEP_PHASE_BACK at Round 1, Orders returns the same state", () => {
+      const state = baseState();
+      expect(battleReducer(state, { type: "STEP_PHASE_BACK" })).toBe(state);
     });
   });
 });

@@ -90,6 +90,7 @@ export function WinScreen({ p1Heroes, p2Heroes, battleState, winner, onNewDraft 
         <div className={styles.titleBlock}>
           <div className={styles.eyebrow}>Battle for Biternia</div>
           <div className={styles.title}>{heading}</div>
+          <div className={styles.round}>in Round {battleState.round}</div>
         </div>
 
         <div className={styles.teams}>

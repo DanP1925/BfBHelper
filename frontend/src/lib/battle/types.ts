@@ -1,7 +1,10 @@
 import type { HeroId, PlayerId } from "../draft/types";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 import type { ARENA_POSITION } from "../map/constants";
-import type { ARTIFACT_FIELDS, ON_OFF_TOKEN_FIELDS } from "./constants";
+import type { ARTIFACT_FIELDS, BATTLE_PHASES, ON_OFF_TOKEN_FIELDS } from "./constants";
+
+/** The four phases of a game round, in order (rulebook p. 7). */
+export type BattlePhase = (typeof BATTLE_PHASES)[number];
 
 /** Where a hero is (intents 04 and 14): a board space, the Arena
  * (intent/14, off the board's spaces), or `null` for its team's respawn
@@ -103,7 +106,7 @@ export type BattleTeamState = {
 export type IceWallPosition = { xPct: number; yPct: number };
 
 export type BattleState = {
-  schemaVersion: 15;
+  schemaVersion: 16;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,
@@ -121,4 +124,10 @@ export type BattleState = {
    * enemy is dropped on its space, on Boreas's defeat, a level change or
    * a new round. */
   bearTrap: MapSpaceId | null;
+  /** The current round (intent/21), from 1. Changes only with the phase:
+   * Cleanup → Orders adds 1, and stepping back from Orders takes 1 off. */
+  round: number;
+  /** Where in the round the game is (intent/21). Changed only by
+   * ADVANCE_PHASE and STEP_PHASE_BACK, never by any other action. */
+  phase: BattlePhase;
 };

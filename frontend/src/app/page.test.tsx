@@ -177,6 +177,22 @@ describe("Home", () => {
     expect(screen.getByRole("button", { name: /^Initiative: Player 2\./ })).toBeInTheDocument();
   });
 
+  it("stepping past Cleanup on the Board starts Round 2 and passes initiative, on the Map too (intent/21)", () => {
+    saveBattleState(seedDoneDraft());
+    saveView("battle");
+
+    render(<Home />);
+    for (let i = 0; i < 4; i++) {
+      fireEvent.click(screen.getByRole("button", { name: /^Forward to/ }));
+    }
+    expect(screen.getByText("Round").parentElement).toHaveTextContent("Round2");
+    expect(screen.getByRole("button", { name: /^Initiative: Player 2\./ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Map" }));
+    expect(screen.getByText("Round").parentElement).toHaveTextContent("Round2");
+    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Orders");
+  });
+
   it("shows only the '+' on a hero with no tokens", () => {
     saveBattleState(seedDoneDraft());
     saveView("battle");
