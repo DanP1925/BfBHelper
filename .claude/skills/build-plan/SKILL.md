@@ -1,20 +1,26 @@
 ---
 name: build-plan
-description: Write plan/NN_feature-name.md, the living Build-phase checklist for a BfbHelper feature, from its intent and spec. It covers PR structure, an architecture file tree, numbered milestones (M1, M2, …) and tests/QA, matching plans 01-05. Use when the user asks to plan the build or implementation of an intent/spec, or invokes /build-plan NN. Also use to check items off or update a plan as work lands.
+description: Write the Build-phase plan for a BfbHelper feature from its intent and spec, as the plan-mode plan only (no file in the repo or on disk). It covers PR structure, an architecture file tree, numbered milestones (M1, M2, …) and tests/QA, matching plans 01-18. Use when the user asks to plan the build or implementation of an intent/spec, or invokes /build-plan NN.
 ---
 
 # Build Plan
 
-Turn `specs/NN_*.md` into `plan/NN_*.md`: a checklist that's written before
-implementation starts and checked off in the PR(s) that do the work. Plans
-03–05 are the style reference: read the most recent one in full first.
+Turn `specs/NN_*.md` into a build checklist that's written before
+implementation starts. Plans 03–05 in `plan/` are the style reference: read
+the most recent one in full first.
 
-Argument: the feature number (e.g. `/build-plan 06`). If it's omitted, use the
-highest-numbered spec with no matching plan.
+**No plan file.** From feature 19 on, plans aren't written to `plan/` or
+anywhere else on disk, committed or not: the intent and spec carry the
+lasting value. The plan lives only in the session. `plan/01–18` stay in the
+repo as history; don't edit them or add new ones.
 
-**In Plan Mode:** the plan-mode file *is* this document's content, not a
-meta-plan about writing it. Exiting plan mode then writes it to
-`plan/NN_*.md`.
+Argument: the feature number (e.g. `/build-plan 20`). If it's omitted, use
+the highest-numbered spec whose feature isn't built yet (check `BACKLOG.md`).
+
+**Plan Mode:** write the plan as the plan-mode file's content (enter Plan
+Mode first if you aren't in it). That file *is* the plan, not a meta-plan
+about writing one. Once approved, track the milestones in the session's task
+list while building.
 
 ## 1. Inputs
 
@@ -31,27 +37,20 @@ meta-plan about writing it. Exiting plan mode then writes it to
 
 State it in Context, with the reason:
 
-- **One PR** for a small feature (a few files, one state change). The plan
-  ships in the same PR as the code, like 05.
-- **Several PRs** for anything bigger. The plan ships first as its own
-  `docs:` PR, and the milestones are grouped under `### PR B — …`,
-  `### PR C — …` headings, like 04: data/state layer first, then a thin
-  end-to-end tracer slice, then widen to the full spec.
+- **One PR** for a small feature (a few files, one state change), like 05.
+- **Several PRs** for anything bigger. The milestones are grouped under
+  `### PR A — …`, `### PR B — …` headings, like 04: a thin end-to-end
+  tracer slice first, then widen to the full spec.
 - When milestones touch truly independent files, say so. That's what
   makes parallel subagent builds safe. Split on file/import independence,
   not on task size.
 
-## 3. Write the doc
-
-File: `plan/NN_<same-name-as-intent>.md`:
+## 3. Write the plan
 
 ```markdown
 # Plan NN: <Feature Name>
 
-> **Living checklist.** This is the Build-phase plan for the feature scoped
-> in [../intent/NN_x.md](../intent/NN_x.md) and [../specs/NN_x.md](../specs/NN_x.md).
-> Check items off in the PR(s) that do the work, same convention as
-> [NN-1_y.md](NN-1_y.md).
+Build plan for the feature scoped in intent/NN_x.md and specs/NN_x.md.
 
 ## Context
 (What's merged so far: intent/spec PR numbers, canvas state. What this
@@ -85,15 +84,12 @@ Milestones:
     look at as sub-bullets, including "an existing save upgrades in place"
     when there's a migration
 - **Last item of the intent-closing PR:**
-  `npm version minor --no-git-tag-version` (→ 0.X.0), plus checking off
+  `npm version minor --no-git-tag-version` (→ 1.X.0), plus checking off
   the item in `BACKLOG.md`. Earlier PRs of a multi-PR plan each bump
   patch (`/ship` handles that).
 
-## 4. Keeping it alive
+## 4. While building
 
-- In each build PR, check off the milestones that PR completes, in that
-  same PR. When reality diverged from the plan or spec, note how in the
-  item (e.g. "32px tall, not 38px; spec updated to match") and update the
-  spec too.
-- Ship a new plan with `/ship` (`docs: add plan NN for <feature>` when it
-  ships on its own). The next step is building milestone M1.
+- When reality diverges from the plan, update the spec in the build PR:
+  the spec is the committed record, the plan isn't.
+- The next step after approval is building milestone M1.

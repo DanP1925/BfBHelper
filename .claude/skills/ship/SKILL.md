@@ -33,21 +33,22 @@ major bump only when the user calls for it):
 | Situation | Bump |
 |---|---|
 | `docs:` / `chore:` / `ci:` / `test:` only | none |
-| Completes an intent (the last PR of a `plan/NN_*.md` checklist) | **minor** |
+| Completes an intent (the last PR of its build plan) | **minor** |
 | `fix:` / `perf:` / `refactor:` / `style:` / polish touching `frontend/` | **patch** |
 | `feat:` that doesn't finish its intent | **patch** |
 | Anything touching `frontend/` with a bump-requiring type | must bump (the `Version check` workflow fails otherwise) |
 
-To decide whether a PR "completes an intent", read the feature's
-`plan/NN_*.md`: are all its boxes checked once this PR merges? If unsure,
-ask. Don't guess a minor.
+To decide whether a PR "completes an intent", check it against the
+feature's build plan if it's in the session (or `plan/NN_*.md` for 01–18),
+else against its intent and spec: is anything left to build once this PR
+merges? If unsure, ask. Don't guess a minor.
 
 Bump with `cd frontend && npm version patch --no-git-tag-version` (or
 `minor`). That updates `package.json` and `package-lock.json` together.
 Never tag. The `Tag release` workflow tags after merge.
 
-If the PR finishes an intent, also check the box in `BACKLOG.md` and in the
-plan file in this PR, unless the user wants that as a separate `docs:` PR.
+If the PR finishes an intent, also check the box in `BACKLOG.md` in this PR,
+unless the user wants that as a separate `docs:` PR.
 
 ## 3. Verify before committing
 
