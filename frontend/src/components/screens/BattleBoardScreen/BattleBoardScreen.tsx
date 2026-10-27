@@ -16,7 +16,6 @@ import { ConfirmDialog } from "../../ConfirmDialog/ConfirmDialog";
 import { InitiativeBadge } from "../../InitiativeBadge/InitiativeBadge";
 import { OverflowMenu } from "../../OverflowMenu/OverflowMenu";
 import { PhaseControl } from "../../PhaseControl/PhaseControl";
-import { RoundBadge } from "../../RoundBadge/RoundBadge";
 import { ViewToggle, type BattleView } from "../../ViewToggle/ViewToggle";
 import styles from "./BattleBoardScreen.module.css";
 
@@ -119,15 +118,12 @@ export function BattleBoardScreen({
     <div className={styles.screen}>
       <div className={styles.topBar}>
         <ViewToggle active="battle" onSwitchView={onSwitchView} />
-        <div className={styles.topBarRound}>
-          <RoundBadge round={battleState.round} />
-          <PhaseControl
-            round={battleState.round}
-            phase={battleState.phase}
-            onAdvance={onAdvancePhase}
-            onStepBack={onStepPhaseBack}
-          />
-        </div>
+        <PhaseControl
+          round={battleState.round}
+          phase={battleState.phase}
+          onAdvance={onAdvancePhase}
+          onStepBack={onStepPhaseBack}
+        />
         <div className={styles.topBarActions}>
           <InitiativeBadge holder={battleState.initiative} onPass={onPassInitiative} />
           <OverflowMenu items={menuItems} />

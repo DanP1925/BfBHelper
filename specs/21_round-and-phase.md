@@ -21,10 +21,10 @@
 - **One new pure rules module, `lib/battle/phase.ts`,** holds the phase
   order and the next/previous step, like `iceWall.ts` and `levelUp.ts`
   hold theirs.
-- **Two new components, a read-only `RoundBadge` and a `PhaseControl`,**
-  go side by side in the top bar that `BattleBoardScreen` and
-  `BattleMapScreen` already share, between `ViewToggle` and the
-  initiative badge's group.
+- **One new component, `PhaseControl`,** renders a read-only round pill
+  and the phase stepper side by side in the top bar that
+  `BattleBoardScreen` and `BattleMapScreen` already share, between
+  `ViewToggle` and the initiative badge's group.
 - **What doesn't change:** `InitiativeBadge` and `passInitiative` (still a
   manual correction, intent's Scope), every other reducer action, the
   draft schema, `ResultsScreen`, the Draft screens, and the team panels
@@ -152,17 +152,9 @@ as a composed case, next to the defeat move and the level-up HP.
 | R1 Orders | back | R1 Orders (no-op) | unchanged |
 
 ## Layout
-- **`RoundBadge`** (new, `frontend/src/components/RoundBadge/`, with a
-  `.module.css` and a test file like `InitiativeBadge`):
-  ```ts
-  type RoundBadgeProps = { round: number };
-  ```
-  - A pill reading "ROUND 3": a small uppercase label and the number.
-  - Read-only: a plain element with no buttons, since the round only
-    changes through the phase steps (intent's Scope).
-  - It has `aria-live="polite"`, so a new round is announced.
-- **`PhaseControl`** (new, `frontend/src/components/PhaseControl/`, same
-  file set):
+- **`PhaseControl`** (new, `frontend/src/components/PhaseControl/`, with a
+  `.module.css` and a test file like `InitiativeBadge`). It renders two
+  pills in one centered group, so each screen renders one element:
   ```ts
   type PhaseControlProps = {
     round: number;
@@ -171,7 +163,11 @@ as a composed case, next to the defeat move and the level-up HP.
     onStepBack: () => void;
   };
   ```
-  - A pill holding a back button (‹), **all four phases in a row**
+  - **The round pill** reads "ROUND 3": a small uppercase label (HeroCard's
+    `levelLabel` style) and the number. It's read-only, since the round
+    only changes through the phase steps (intent's Scope), and has
+    `aria-live="polite"`, so a new round is announced.
+  - **The phase pill** holds a back button (‹), **all four phases in a row**
     (Orders, Movement, Action, Cleanup), and a forward button (›). The
     current phase is highlighted and the others are muted. The arrows
     move the highlight one phase at a time.
@@ -181,20 +177,21 @@ as a composed case, next to the defeat move and the level-up HP.
   - The arrows are real `<button type="button">`s whose `aria-label`s
     name where they go ("Back to Round 3, Action", "Forward to Round 4,
     Orders (passes initiative)"), so a screen reader hears that a step
-    starts a new round. The same text goes in their `title`. That's why
-    the component takes `round` too.
+    starts a new round. The same text goes in their `title`. Whether a
+    step crosses a round comes from `phase.ts`'s `crossesRound`, the same
+    rule `useBattle` uses to pass initiative.
   - The back button is `disabled` at Round 1, Orders.
   - The phase names live in the component as `PHASE_LABELS`, keyed by
     `BattlePhase`, like `InitiativeBadge`'s `PLAYER_LABELS`.
   - **No phase summary** (decided on the canvas, the intent's name-only
     option). A reminder of what each phase involves is left to the
     "Show token and Artifact rules in the app" backlog item.
-  - Both components are stateless: they re-render from their props.
+  - Stateless: it re-renders from its props.
 - **Placement: the center of the shared top bar.** Both screens'
   `.topBar` is a `space-between` flex row with `ViewToggle` on the left
   and `.topBarActions` (initiative badge + ⋯ menu) on the right. The
-  middle is empty today, so `RoundBadge` and then `PhaseControl` go
-  there, in a centered flex group, in the same place on both screens.
+  middle is empty today, so `PhaseControl`'s centered group goes there,
+  in the same place on both screens.
   Switching Board ⇄ Map doesn't move them (as with the badge, spec 05).
 - **Height at 1280x800.** Both pills are 32px tall like the initiative
   badge and the ⋯ button, so the top bar doesn't grow. The Board's team
@@ -279,8 +276,8 @@ infra.
     `phase` clears the payload.
   - `PhaseControl.test.tsx`: all four phases render with
     `aria-current="step"` on the current one only, the back button is
-    disabled at Round 1, Orders, and the arrows call their callbacks.
-  - `RoundBadge.test.tsx`: shows the round, with no buttons.
+    disabled at Round 1, Orders, the arrows call their callbacks, and the
+    round shows with no buttons of its own.
   - `WinScreen.test.tsx`: the round line.
   - A new `e2e/round-and-phase.spec.ts`: step through a round on the
     Board, see Round 2 and the initiative pass on the Map, step back, and

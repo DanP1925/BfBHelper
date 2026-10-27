@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { hpAfterLevelChange } from "./battle/levelUp";
+import { crossesRound } from "./battle/phase";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
 import type {
@@ -71,7 +72,8 @@ export type UseBattleResult = {
  * same flip both hands initiative on and hands it back. */
 function stepPhase(prev: BattleState, type: "ADVANCE_PHASE" | "STEP_PHASE_BACK"): BattleState {
   const afterStep = battleReducer(prev, { type });
-  if (afterStep === prev || afterStep.round === prev.round) return afterStep;
+  // A no-op step (the same reference) never crosses a round.
+  if (!crossesRound(prev, afterStep)) return afterStep;
   return battleReducer(afterStep, { type: "PASS_INITIATIVE" });
 }
 

@@ -1,21 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
-
-async function startBattle(page: Page): Promise<{ winner: string; loser: string }> {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Start Draft" }).click();
-
-  const subtitle = await page.getByText(/^Initiative: Player [12]$/).textContent();
-  const winner = subtitle?.endsWith("1") ? "Player 1" : "Player 2";
-  const loser = winner === "Player 1" ? "Player 2" : "Player 1";
-
-  const pickButton = page.getByRole("button", { name: /^Pick / });
-  for (let i = 0; i < 8; i++) {
-    await pickButton.first().click();
-  }
-  await expect(page.getByText("Draft Complete")).toBeVisible();
-  await page.getByRole("button", { name: "Start Battle →" }).click();
-  return { winner, loser };
-}
+import { test, expect } from "@playwright/test";
+import { startBattle } from "./helpers";
 
 test("the phase steps through a round, a new round passes initiative, and it survives a Board/Map switch and reload", async ({
   page,
