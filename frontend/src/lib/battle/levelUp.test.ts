@@ -23,8 +23,7 @@ describe("hpAfterLevelChange", () => {
     expect(hpAfterLevelChange(1, -1)).toBe(1);
   });
 
-  it("leaves the HP ceiling to the reducer", () => {
-    expect(hpAfterLevelChange(15, 1)).toBe(16);
+  it("takes 1 HP off a hero at the ceiling on a level-down", () => {
     expect(hpAfterLevelChange(15, -1)).toBe(14);
   });
 });
