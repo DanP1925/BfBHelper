@@ -46,8 +46,9 @@ Bump with `cd frontend && npm version patch --no-git-tag-version` (or
 `minor`). That updates `package.json` and `package-lock.json` together.
 Never tag. The `Tag release` workflow tags after merge.
 
-If the PR finishes an intent, also check the box in `BACKLOG.md` in this PR,
-unless the user wants that as a separate `docs:` PR.
+Don't edit `BACKLOG.md` in this PR (see CLAUDE.md). After opening it, end
+the reply with the stage change for the backlog sync PR, e.g.
+`BACKLOG: <item> → Implement`.
 
 ## 3. Verify before committing
 

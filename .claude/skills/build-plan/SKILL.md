@@ -84,9 +84,9 @@ Milestones:
     look at as sub-bullets, including "an existing save upgrades in place"
     when there's a migration
 - **Last item of the intent-closing PR:**
-  `npm version minor --no-git-tag-version` (→ 1.X.0), plus checking off
-  the item in `BACKLOG.md`. Earlier PRs of a multi-PR plan each bump
-  patch (`/ship` handles that).
+  `npm version minor --no-git-tag-version` (→ 1.X.0). Earlier PRs of a
+  multi-PR plan each bump patch (`/ship` handles that). The `BACKLOG.md`
+  stage change goes in the separate backlog sync PR, not this one.
 
 ## 4. While building
 
