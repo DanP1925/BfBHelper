@@ -12,8 +12,8 @@ findings so the main session can decide what to fix.
 
 - `intent/NN_<name>.md`: what and why. This is the authority on scope.
 - `specs/NN_<name>.md`: how (architecture, data model, components, UI Design Reference).
-- `plan/NN_<name>.md`: the build checklist, checked off as work lands. It may not exist
-  for features that haven't started building.
+- `plan/NN_<name>.md`: the build checklist, checked off as work lands. Only features
+  01–18 have one; from 19 on, plans aren't written to disk, so skip the plan checks.
 - `BACKLOG.md`: may link the intent and say what was done or deferred.
 - Code in `frontend/src/` (components, `lib/`, `data/`) and tests next to it and in
   `frontend/e2e/`.

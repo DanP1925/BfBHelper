@@ -48,9 +48,9 @@
   `reference/battle-for-biternia_rules_web.pdf` in the main checkout. It's copyrighted,
   so `reference/` is excluded via `.git/info/exclude` and never committed. A fresh clone
   needs it copied in by hand, plus a `/reference/` line in that exclude file.
-- `plan/` holds one `NN_feature-name.md` per feature too, same numbering as its
-  intent/spec. It's a living build checklist for the Build phase — written before
-  implementation starts and checked off incrementally in the PR(s) that do that work.
+- `plan/` holds the build checklists for features 01–18, kept as history. From
+  feature 19 on, build plans aren't written to disk: `/build-plan` produces the
+  plan-mode plan only, and the intent and spec are the committed record.
 - `BACKLOG.md` items are at most 3 sentences: what and why. Open questions, code
   pointers, rulebook quotes and QA findings go in the item's intent once it's
   scoped. The intro and version notes at the top can be longer.
