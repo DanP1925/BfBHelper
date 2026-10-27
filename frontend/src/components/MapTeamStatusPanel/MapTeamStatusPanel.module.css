@@ -22,16 +22,22 @@
   font-weight: 600;
 }
 
-.goldBadge {
+/* Team level (intent/20): plain text, like the rest of this panel. */
+.level {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  align-items: baseline;
+  gap: 4px;
   font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
-.goldIcon {
-  width: 17px;
-  height: 17px;
+.levelLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
 .section {
