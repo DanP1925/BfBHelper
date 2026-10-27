@@ -61,17 +61,18 @@ error, manual control where it keeps the table in charge.
   up also raises the hero's HP by one. Today players add it by hand.
 - `Intent` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
   and the Map, to compare both teams at a glance.
+- `Intent` **Show the current round and phase.** Show the round and phase (Orders,
+  Movement, Action, Cleanup) on the Board and the Map. One control steps through the
+  phases, keeping round, phase and initiative in step.
 
 ### Triage
 
-- `Triage` **Show the current round number.** Show which round the game is in on the
-  Board and the Map.
 - `Triage` **Show the round each hero was defeated.** Mark a defeated hero with the
   round it fell, to get an idea of when it will respawn. Builds on the round
   number.
-- `Triage` **Show the current phase.** Show the phase (Orders, Movement, Action,
-  Cleanup) on the Board and the Map. One control steps through the phases,
-  keeping round, phase and initiative in step.
+- `Triage` **Automate steps when a phase starts.** Starting Cleanup could give each
+  team its 2 gold, which players now add by hand. Split out of intent 21, since
+  stepping back to an earlier phase would have to undo it.
 - `Triage` **Take gold on level-up automatically.** Leveling up costs the hero's
   current level plus one in gold, which players now take off by hand. Split out of
   intent 19 for its own edge cases, like a team that can't afford it.
