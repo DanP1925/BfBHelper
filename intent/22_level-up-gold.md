@@ -22,6 +22,11 @@ This phase covers only:
   1 takes its cost from that team's gold, on its own. The cost is the
   hero's current level plus one: 2 gold for level 1 to 2, 3 for 2 to 3,
   4 for 3 to 4.
+- **Ken Obi pays one less** (decided 2026-10-28). His trait, "Become the
+  Master", makes each of his level-ups cost one less gold: 1, 2 and 3.
+  Everything else here uses his price: the cost shown, the can't-afford
+  check and the refund on a level-down. He's the only hero with a
+  discount.
 - **Can't afford it, can't level up** (decided 2026-10-28). When the team
   has less gold than the next level costs, the level's + is unavailable,
   as it already is at level 4. Level and gold stay as they are. If the
@@ -53,7 +58,8 @@ up by 1. Her next cost now reads 3, and the player raises her again: gold
 is 0 and she's at level 3. Her next cost reads 4, and her + is
 unavailable, since the team has no gold left. The player meant to level
 a different hero, so they lower Ceralin back to 2: the team gets 3 gold
-back.
+back. On Player 2's side, Ken Obi at level 1 shows a next cost of 1,
+and the team's last gold coin is enough to raise him to level 2.
 
 ## Rules (from the rulebook)
 - The cost to level up a hero is their current level plus one; e.g. level
@@ -64,6 +70,8 @@ back.
   gold, paying for each level individually (p. 12).
 - In Cleanup, each team gains 2 gold, then players may pay gold to level
   up any number of heroes (p. 12).
+- Ken Obi's trait, "Become the Master": it costs one less gold for him
+  to level up; at level 4 he gains +1 Attack (his hero card).
 - Level 4 is the maximum; a hero reaching a new level picks a new power
   card, and the Ultimate only at level 4 (p. 12).
 
@@ -94,6 +102,9 @@ alongside the physical cards.
 - **Each team's +2 gold when Cleanup starts.** Already its own
   `BACKLOG.md` item ("Automate steps when a phase starts").
 - **Picking the new power card** on a level-up.
+- **Ken Obi's +1 Attack at level 4** (decided 2026-10-28). It's a combat
+  bonus, not gold, and stays a +1 Attack token placed by hand. Parked as
+  its own `BACKLOG.md` item.
 - **3-4 player variant**, deferred along with intents 01-21.
 
 ## Session Lifecycle
