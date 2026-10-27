@@ -155,9 +155,9 @@ export function useBattle(
   const setHeroLevel = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
     setState((prev) => {
       if (prev === null) return prev;
-      const before = prev[side].heroes[heroId];
       const afterLevel = battleReducer(prev, { type: "SET_HERO_LEVEL", side, heroId, value });
-      if (afterLevel === prev || !before) return afterLevel;
+      if (afterLevel === prev) return prev;
+      const before = prev[side].heroes[heroId];
       const levelDelta = afterLevel[side].heroes[heroId].level - before.level;
       const hp = hpAfterLevelChange(before.hp, levelDelta);
       return battleReducer(afterLevel, { type: "SET_HERO_HP", side, heroId, value: hp });
