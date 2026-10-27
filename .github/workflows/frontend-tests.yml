@@ -23,6 +23,12 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Browsers and their system deps come preinstalled in this image, so no
+    # apt step can stall the job. Keep the tag in step with @playwright/test.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --user 1001
     defaults:
       run:
         working-directory: frontend
@@ -34,13 +40,4 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
-      - run: npx playwright install --with-deps chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-      - run: npx playwright install-deps chromium
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
       - run: npm run test:e2e
