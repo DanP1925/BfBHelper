@@ -32,12 +32,10 @@
   color: var(--color-text);
 }
 
+/* The hero cards' "Lv" label, sized to this panel. */
 .levelLabel {
+  composes: levelLabel from "../HeroCard/HeroCard.module.css";
   font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-muted);
 }
 
 .section {
