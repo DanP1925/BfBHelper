@@ -56,8 +56,8 @@
   scoped. The intro and version notes at the top can be longer.
   Each item carries a stage label, defined at the top of `BACKLOG.md`: update it
   when an item's intent, spec or PR lands, or when its PR merges. In "Toward 2.0",
-  items are grouped under one `### <Stage>` subheading per label in use, furthest
-  stage first: when a label changes, move the item to its new group.
+  items are grouped under one `### <Stage>` subheading per label in use, earliest
+  stage first (`Triage` at the top, `Done` at the bottom): when a label changes, move the item to its new group.
 
 ## Testing
 - Formatting is Prettier (`frontend/.prettierrc.json`, width 100): run
