@@ -39,9 +39,8 @@ major bump only when the user calls for it):
 | Anything touching `frontend/` with a bump-requiring type | must bump (the `Version check` workflow fails otherwise) |
 
 To decide whether a PR "completes an intent", check it against the
-feature's build plan if it's in the session (or `plan/NN_*.md` for 01–18),
-else against its intent and spec: is anything left to build once this PR
-merges? If unsure, ask. Don't guess a minor.
+feature's build plan in the session: are all its milestones done once this
+PR merges? If unsure, ask. Don't guess a minor.
 
 Bump with `cd frontend && npm version patch --no-git-tag-version` (or
 `minor`). That updates `package.json` and `package-lock.json` together.
