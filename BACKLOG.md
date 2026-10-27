@@ -46,12 +46,12 @@ error, manual control where it keeps the table in charge.
 
 ## Bugs
 
-- `Implement` **The wrong team's Tower disappeared on the Map.** Player 2's Tower
+- `Done` **The wrong team's Tower disappeared on the Map.** Player 2's Tower
   was brought to 0 HP, but a Player 1 Tower seemed to disappear from the Map. The
   app had Player 1 on the red base, while the table plays Player 1 as blue.
-- `Implement` **Swap Player 1's and Player 2's colors.** Player 1 is now blue
+- `Done` **Swap Player 1's and Player 2's colors.** Player 1 is now blue
   (top-left, forest) and Player 2 red (bottom-right, desert), on the Draft, Board,
-  Map and structure icons. Same PR as the Tower bug above.
+  Map and structure icons. Fixed together with the Tower bug above (v1.0.1).
 
 ## Toward 2.0
 
