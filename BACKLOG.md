@@ -100,16 +100,13 @@ error, manual control where it keeps the table in charge.
   which makes it easy to set a wrong level. Show it read-only and change it only
   through the steppers.
 
-### Intent
-
-- `Intent` **Show the current round and phase.** Show the round and phase (Orders,
-  Movement, Action, Cleanup) on the Board and the Map. One control steps through the
-  phases, keeping round, phase and initiative in step.
-
 ### Spec
 
 - `Spec` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
   and the Map, to compare both teams at a glance.
+- `Spec` **Show the current round and phase.** Show the round and phase (Orders,
+  Movement, Action, Cleanup) on the Board and the Map. One control steps through the
+  phases, keeping round, phase and initiative in step.
 
 ### Done
 

@@ -5,8 +5,7 @@ Every round of Battle for Biternia runs through four phases (Orders,
 Movement, Action, Cleanup), and the app doesn't track which round or phase
 the game is in. Players keep it in their heads. The step that's easiest to
 forget is at the end of Cleanup, where initiative has to be passed by hand
-(intent 05's badge). Players who don't know what a phase involves have to
-look it up in the rulebook.
+(intent 05's badge).
 
 Intent 05 left the round counter and phase tracking out of scope, since no
 rule depends on the round number. For the v2.0 goal, playing without the
@@ -19,11 +18,11 @@ This phase covers only:
   Battle Board and the Battle Map both show the current round and phase,
   e.g. Round 3, Movement. This also covers the `BACKLOG.md` item "Show the
   current round number".
-- **A one-line summary per phase, if it fits** (decided 2026-10-28). Each
-  phase shows a short line about what happens in it, e.g. Cleanup: +2 gold
-  each, level up, discard and draw to 8, pass initiative. If it doesn't fit
-  on the 13.3" laptop, only the phase name is shown. That call is settled
-  in the spec/design.
+- **Phase names only, all four shown** (decided 2026-10-28 on the
+  canvas). The four phases sit in a row with the current one
+  highlighted, so the next phase is always in view. No summary of what
+  happens in each phase: that's left to the "Show token and Artifact
+  rules in the app" `BACKLOG.md` item.
 - **One control steps forward through the phases** (decided 2026-10-28),
   usable on both screens. Orders, Movement, Action, Cleanup, then the next
   round's Orders. Moving from Cleanup to Orders adds 1 to the round and
@@ -43,9 +42,9 @@ This phase covers only:
   in, e.g. Player 1 wins in Round 7.
 
 ## Proposed Outcome
-Player 2 holds initiative in Round 3. The Board shows Round 3, Cleanup and
-a reminder of the Cleanup steps. The players take their gold, level up and
-draw, then advance the phase: the app shows Round 4, Orders, and
+Player 2 holds initiative in Round 3. The Board shows Round 3, with
+Cleanup highlighted among the four phases. The players take their gold,
+level up and draw, then advance the phase: the app shows Round 4, Orders, and
 initiative passes to Player 1. One of them advanced too early, so they
 step back: Round 3, Cleanup again, and initiative is back with Player 2.
 
