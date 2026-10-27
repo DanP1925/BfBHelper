@@ -4,7 +4,21 @@ import type { BattlePhase } from "./types";
 /** Where the game is in its rounds (intent/21). */
 export type RoundPosition = { round: number; phase: BattlePhase };
 
+/** Where every battle starts: Round 1, Orders. Deployment is setup, not a
+ * phase (intent/21). Old saves upgrade to it too. */
+export const BATTLE_START: RoundPosition = {
+  round: BATTLE_STARTING_ROUND,
+  phase: BATTLE_PHASES[0],
+};
+
 const LAST_PHASE_INDEX = BATTLE_PHASES.length - 1;
+
+/** Whether a step from `from` to `to` crosses a round, which passes
+ * initiative (intent/21). The one place that rule lives: useBattle passes
+ * on it, and PhaseControl announces it. */
+export function crossesRound(from: RoundPosition, to: RoundPosition): boolean {
+  return from.round !== to.round;
+}
 
 /** The next phase (intent/21): Cleanup moves on to the next round's
  * Orders. */

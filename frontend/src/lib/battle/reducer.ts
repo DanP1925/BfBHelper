@@ -11,14 +11,12 @@ import {
 } from "./bounds";
 import {
   ARTIFACTS_FACE_UP,
-  BATTLE_PHASES,
-  BATTLE_STARTING_ROUND,
   BIT_STARTING_HP,
   HERO_STARTING_LEVEL,
   TEAM_STARTING_GOLD,
   TOWER_STARTING_HP,
 } from "./constants";
-import { nextPosition, previousPosition, type RoundPosition } from "./phase";
+import { BATTLE_START, nextPosition, previousPosition, type RoundPosition } from "./phase";
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 import type {
@@ -298,7 +296,6 @@ export function createInitialBattleState(
     initiative,
     iceWall: null,
     bearTrap: null,
-    round: BATTLE_STARTING_ROUND,
-    phase: BATTLE_PHASES[0],
+    ...BATTLE_START,
   };
 }

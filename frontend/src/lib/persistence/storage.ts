@@ -22,6 +22,7 @@ import {
   TOWER_STARTING_HP,
 } from "../battle/constants";
 import { ARENA_POSITION, GOLD_PILE_STARTING_COUNT } from "../map/constants";
+import { BATTLE_START } from "../battle/phase";
 import type { BattleState, BattleTeamState } from "../battle/types";
 import {
   BATTLE_STATE_STORAGE_KEY,
@@ -209,50 +210,43 @@ function upgradeV10ToV11(data: unknown): PersistedBattleStateV11 | null {
  * "upgrades in place", with no hero holding it). */
 const upgradeV11ToV12 = addHeroFieldsStep<PersistedBattleStateV12>(12, { favoredEnemy: false });
 
-/** Schema 12 → 13: a top-level `iceWall: null` (intent/16: "upgrades in
- * place", with the wall in its holder). Everything else passes through
- * unchanged; the current-shape validator checks it afterward. */
-function upgradeV12ToV13(data: unknown): PersistedBattleStateV13 | null {
-  if (typeof data !== "object" || data === null) return null;
-  return {
-    ...(data as PersistedBattleStateV12),
-    schemaVersion: 13,
-    iceWall: null,
-    updatedAt: new Date().toISOString(),
+/**
+ * Builds a migration step to `schemaVersion` that adds `defaults` at the
+ * top level, for new battle-wide fields (`addHeroFieldsStep`'s twin).
+ * Everything else passes through unchanged; the current-shape validator
+ * checks it afterward.
+ */
+function addTopLevelFieldsStep<T>(
+  schemaVersion: number,
+  defaults: Record<string, unknown>,
+): (data: unknown) => T | null {
+  return (data) => {
+    if (typeof data !== "object" || data === null) return null;
+    return {
+      ...data,
+      ...defaults,
+      schemaVersion,
+      updatedAt: new Date().toISOString(),
+    } as T;
   };
 }
+
+/** Schema 12 → 13: a top-level `iceWall: null` (intent/16: "upgrades in
+ * place", with the wall in its holder). */
+const upgradeV12ToV13 = addTopLevelFieldsStep<PersistedBattleStateV13>(13, { iceWall: null });
 
 /** Schema 13 → 14: every hero gets Runika's three Artifacts face-up
  * (intent/17: "upgrades in place, with all three face-up"). */
 const upgradeV13ToV14 = addHeroFieldsStep<PersistedBattleStateV14>(14, ARTIFACTS_FACE_UP);
 
 /** Schema 14 → 15: a top-level `bearTrap: null` (intent/18: "upgrades in
- * place", with the trap in its holder). Everything else passes through
- * unchanged; the current-shape validator checks it afterward. */
-function upgradeV14ToV15(data: unknown): PersistedBattleStateV15 | null {
-  if (typeof data !== "object" || data === null) return null;
-  return {
-    ...(data as PersistedBattleStateV14),
-    schemaVersion: 15,
-    bearTrap: null,
-    updatedAt: new Date().toISOString(),
-  };
-}
+ * place", with the trap in its holder). */
+const upgradeV14ToV15 = addTopLevelFieldsStep<PersistedBattleStateV15>(15, { bearTrap: null });
 
-/** Schema 15 → 16: a top-level `round: 1` and `phase: "orders"` (intent/21:
- * "upgrades in place to Round 1, Orders"; players correct it with the
- * phase control). Everything else passes through unchanged; the
- * current-shape validator checks it afterward. */
-function upgradeV15ToV16(data: unknown): PersistedBattleStateV16 | null {
-  if (typeof data !== "object" || data === null) return null;
-  return {
-    ...(data as PersistedBattleStateV15),
-    schemaVersion: 16,
-    round: BATTLE_STARTING_ROUND,
-    phase: BATTLE_PHASES[0],
-    updatedAt: new Date().toISOString(),
-  };
-}
+/** Schema 15 → 16: a top-level `round` and `phase` at Round 1, Orders
+ * (intent/21: "upgrades in place"; players correct it with the phase
+ * control). */
+const upgradeV15ToV16 = addTopLevelFieldsStep<PersistedBattleStateV16>(16, BATTLE_START);
 
 /**
  * Same idea as `migrations` above, for the battle-state payload.

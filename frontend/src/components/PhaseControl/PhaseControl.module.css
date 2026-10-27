@@ -1,15 +1,49 @@
+/* Centered in the space between ViewToggle and the initiative badge, in the
+ * same place on the Board and the Map (intent/21). */
+.group {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+}
+
 /* Same 32px height as InitiativeBadge, so the top bar doesn't grow and the
- * Map's board area keeps its height on the 13.3" laptop (intent/21). */
-.control {
+ * Map's board area keeps its height on the 13.3" laptop. */
+.pill {
   box-sizing: border-box;
   height: 32px;
   display: inline-flex;
   align-items: center;
-  padding: 0 2px;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: var(--color-panel-bg);
   flex-shrink: 0;
+}
+
+.round {
+  gap: 7px;
+  padding: 0 14px;
+}
+
+.roundLabel {
+  composes: levelLabel from "../HeroCard/HeroCard.module.css";
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+}
+
+.roundValue {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.phaseControl {
+  padding: 0 2px;
 }
 
 .arrow {
