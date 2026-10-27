@@ -31,23 +31,25 @@
   gap: 8px;
 }
 
-/* Team level (intent/20): read-only, the same pill shape as the gold. */
-.levelBadge {
+/* The header's pill shape, shared by the team level and the gold. */
+.pill {
   display: flex;
-  align-items: baseline;
-  gap: 5px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 999px;
+}
+
+/* Team level (intent/20): read-only. */
+.levelBadge {
+  composes: pill;
+  align-items: baseline;
+  gap: 5px;
   padding: 6px 12px;
 }
 
+/* The same "Lv" label as the hero cards' level meters. */
 .levelLabel {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-muted);
+  composes: levelLabel from "../HeroCard/HeroCard.module.css";
 }
 
 .levelValue {
@@ -58,12 +60,9 @@
 }
 
 .goldBadge {
-  display: flex;
+  composes: pill;
   align-items: center;
   gap: 6px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
   padding: 4px 12px 4px 4px;
 }
 
@@ -73,12 +72,6 @@
   object-fit: contain;
   image-rendering: pixelated;
   display: block;
-}
-
-.goldText {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-gold);
 }
 
 .heroGrid {
