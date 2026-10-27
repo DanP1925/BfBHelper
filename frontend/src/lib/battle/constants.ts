@@ -12,6 +12,13 @@ export const TOWER_SLOTS = ["top", "middle", "bottom"] as const;
 
 export type TowerSlot = (typeof TOWER_SLOTS)[number];
 
+/** The four phases of a game round, in order (rulebook p. 7, intent/21). */
+export const BATTLE_PHASES = ["orders", "movement", "action", "cleanup"] as const;
+
+/** A battle starts at Round 1, Orders: deployment is setup, not a phase
+ * (intent/21). */
+export const BATTLE_STARTING_ROUND = 1;
+
 /** Flat HP ceiling for every hero, regardless of base HP or level
  * (intent/03). It doesn't recalculate off level (intent/19 keeps it flat),
  * though a level change now moves HP by one per level. */

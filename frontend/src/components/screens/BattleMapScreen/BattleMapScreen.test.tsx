@@ -31,10 +31,12 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 15,
+    schemaVersion: 16,
     initiative: "p1",
     iceWall: null,
     bearTrap: null,
+    round: 1,
+    phase: "orders",
     p1: {
       gold: 0,
       heroes: {
@@ -73,11 +75,14 @@ function makeBattleState(overrides?: Partial<BattleState>): BattleState {
  * the initiative badge's own behavior is covered by InitiativeBadge.test
  * and page.test. The Ice Wall's tests (`renderWall`) pass their own
  * `setIceWall` and, where they need it, a camera; the Bear Trap's
- * (`renderTrap`) their own `setBearTrap`. */
+ * (`renderTrap`) their own `setBearTrap`. The round-and-phase tests pass
+ * their own phase callbacks. */
 const fixedProps = {
   camera: INITIAL_MAP_CAMERA,
   onCameraChange: () => {},
   onPassInitiative: () => {},
+  onAdvancePhase: () => {},
+  onStepPhaseBack: () => {},
   setIceWall: () => {},
   setBearTrap: () => {},
 };
@@ -103,6 +108,35 @@ describe("BattleMapScreen", () => {
     // hero's name as plain text, so a deployed hero's name is on the page
     // twice; its MapToken (an <img alt={hero.name}>) renders exactly once.
     expect(screen.getByAltText("Boreas")).toBeInTheDocument();
+  });
+
+  it("shows the round and phase in the top bar, and the arrows call the phase props (intent/21)", () => {
+    const onAdvancePhase = vi.fn();
+    const onStepPhaseBack = vi.fn();
+    render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={makeBattleState({ round: 3, phase: "movement" })}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+        onAdvancePhase={onAdvancePhase}
+        onStepPhaseBack={onStepPhaseBack}
+      />,
+    );
+
+    expect(screen.getByText("Round").parentElement).toHaveTextContent("Round3");
+    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Movement");
+
+    fireEvent.click(screen.getByRole("button", { name: "Forward to Round 3, Action" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to Round 3, Orders" }));
+    expect(onAdvancePhase).toHaveBeenCalledOnce();
+    expect(onStepPhaseBack).toHaveBeenCalledOnce();
   });
 
   it("renders an undeployed/defeated hero in its side's respawn area", () => {
@@ -729,10 +763,12 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 15,
+      schemaVersion: 16,
       initiative: "p1",
       iceWall: null,
       bearTrap: null,
+      round: 1,
+      phase: "orders",
       p1: {
         gold: 0,
         heroes: Object.fromEntries(

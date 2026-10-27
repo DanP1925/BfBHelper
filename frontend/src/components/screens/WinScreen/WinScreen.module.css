@@ -41,6 +41,14 @@
   margin-top: 6px;
 }
 
+/* The round the game ended in (intent/21). */
+.round {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-muted-strong);
+  margin-top: 4px;
+}
+
 .teams {
   width: 100%;
   max-width: 1180px;

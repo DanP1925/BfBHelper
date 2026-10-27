@@ -1,6 +1,7 @@
 import type { HeroId, PlayerId } from "../draft/types";
 import type {
   ArtifactField,
+  BattlePhase,
   BattleTeamState,
   HeroBattleState,
   IceWallPosition,
@@ -34,7 +35,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 15 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 16 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -271,10 +272,19 @@ export type PersistedBattleStateV14 = Omit<
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 15
  * (intent/18: a top-level `bearTrap`, the space it's on or `null` while
- * it's in its holder). */
+ * it's in its holder) — now only the migration source shape
+ * `battleMigrations[15]` upgrades from. */
 export type PersistedBattleStateV15 = Omit<PersistedBattleStateV14, "schemaVersion"> & {
   schemaVersion: 15;
   bearTrap: MapSpaceId | null;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 16
+ * (intent/21: top-level `round`, from 1, and `phase`). */
+export type PersistedBattleStateV16 = Omit<PersistedBattleStateV15, "schemaVersion"> & {
+  schemaVersion: 16;
+  round: number;
+  phase: BattlePhase;
 };
 
 /** Which screen is showing once a draft is done. Only a non-`"results"`

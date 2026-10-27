@@ -94,6 +94,74 @@ describe("useBattle", () => {
     expect(result.current.state?.initiative).toBe("p1");
   });
 
+  describe("advancePhase / stepPhaseBack (intent/21)", () => {
+    function steps(result: { current: ReturnType<typeof useBattle> }, n: number) {
+      for (let i = 0; i < n; i++) {
+        act(() => {
+          result.current.advancePhase();
+        });
+      }
+    }
+
+    it("steps through a round without touching initiative", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+      steps(result, 3);
+      expect(result.current.state).toMatchObject({
+        round: 1,
+        phase: "cleanup",
+        initiative: "p1",
+      });
+    });
+
+    it("Cleanup → Orders starts the next round and passes initiative, and persists it", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+      steps(result, 4);
+      expect(result.current.state).toMatchObject({ round: 2, phase: "orders", initiative: "p2" });
+      expect(readRawState()).toMatchObject({ round: 2, phase: "orders", initiative: "p2" });
+    });
+
+    it("stepping back across a round takes it off and passes initiative back", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      steps(result, 4);
+
+      act(() => {
+        result.current.stepPhaseBack();
+      });
+      expect(result.current.state).toMatchObject({
+        round: 1,
+        phase: "cleanup",
+        initiative: "p1",
+      });
+
+      act(() => {
+        result.current.stepPhaseBack();
+      });
+      expect(result.current.state).toMatchObject({ round: 1, phase: "action", initiative: "p1" });
+    });
+
+    it("a step back at Round 1, Orders keeps the same state", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      const before = result.current.state;
+
+      act(() => {
+        result.current.stepPhaseBack();
+      });
+      expect(result.current.state).toBe(before);
+    });
+
+    it("passInitiative leaves the round and phase alone", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      steps(result, 2);
+
+      act(() => {
+        result.current.passInitiative();
+      });
+      expect(result.current.state).toMatchObject({ round: 1, phase: "action", initiative: "p2" });
+    });
+  });
+
   it("a persisted battle keeps its own initiative, not the coin-flip winner", () => {
     saveBattleState({ ...createInitialBattleState([HERO_A], [HERO_B], "p1"), initiative: "p2" });
 

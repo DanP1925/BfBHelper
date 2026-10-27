@@ -11,11 +11,14 @@ import {
 } from "./bounds";
 import {
   ARTIFACTS_FACE_UP,
+  BATTLE_PHASES,
+  BATTLE_STARTING_ROUND,
   BIT_STARTING_HP,
   HERO_STARTING_LEVEL,
   TEAM_STARTING_GOLD,
   TOWER_STARTING_HP,
 } from "./constants";
+import { nextPosition, previousPosition, type RoundPosition } from "./phase";
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
 import type {
@@ -60,7 +63,9 @@ export type BattleAction =
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
   | { type: "SET_ICE_WALL"; position: IceWallPosition | null }
   | { type: "SET_BEAR_TRAP"; spaceId: MapSpaceId | null }
-  | { type: "PASS_INITIATIVE" };
+  | { type: "PASS_INITIATIVE" }
+  | { type: "ADVANCE_PHASE" }
+  | { type: "STEP_PHASE_BACK" };
 
 function structureCeiling(slot: keyof StructuresState): number {
   return slot === "bit" ? BIT_STARTING_HP : TOWER_STARTING_HP;
@@ -84,13 +89,23 @@ function setHeroField<K extends keyof HeroBattleState>(
   };
 }
 
+/** Moves the round and phase together, as one position. Same state
+ * reference when there's nowhere to go (`null`). */
+function setRoundPosition(state: BattleState, next: RoundPosition | null): BattleState {
+  if (next === null) return state;
+  return { ...state, round: next.round, phase: next.phase };
+}
+
 /**
  * Pure reducer over the only stored/dispatched battle state. Every branch
  * is a clamp-and-replace on one field — no action ever reads or changes a
  * second field (no gold-on-level-up, no Tower-to-Bit chip damage),
  * matching intent's player-driven-only scope. The HP-from-level bump
  * (intent/19) is composed in useBattle.setHeroLevel from SET_HERO_LEVEL
- * and SET_HERO_HP, like the defeat move, not here. Returns the
+ * and SET_HERO_HP, like the defeat move, not here. The round and phase
+ * move together as one position, and the initiative pass when a step
+ * crosses a round (intent/21) is composed in useBattle.advancePhase and
+ * stepPhaseBack from the phase action and PASS_INITIATIVE. Returns the
  * same state reference (no-op) whenever the clamped value already matches
  * the current one, or the targeted hero id doesn't exist on that side —
  * mirrors draftReducer's no-op convention.
@@ -206,6 +221,16 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
     case "PASS_INITIATIVE":
       return { ...state, initiative: otherPlayer(state.initiative) };
 
+    // One phase at a time (intent/21). Nothing else changes on a step: no
+    // gold, levels, tokens, Ice Wall or Bear Trap, and not initiative,
+    // which useBattle passes when the round changes. STEP_PHASE_BACK at
+    // Round 1, Orders is a no-op.
+    case "ADVANCE_PHASE":
+      return setRoundPosition(state, nextPosition(state));
+
+    case "STEP_PHASE_BACK":
+      return setRoundPosition(state, previousPosition(state));
+
     default:
       return state;
   }
@@ -259,19 +284,21 @@ function createInitialTeamState(heroes: Hero[]): BattleTeamState {
  * starts full. `initiative` is the draft's coin-flip winner, who keeps the
  * marker for deployment and Round 1 (rulebook). The Ice Wall and the Bear
  * Trap start in their holders, whether or not Dazeem or Boreas was
- * drafted. */
+ * drafted. The battle starts at Round 1, Orders (intent/21). */
 export function createInitialBattleState(
   p1Heroes: Hero[],
   p2Heroes: Hero[],
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 15,
+    schemaVersion: 16,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),
     initiative,
     iceWall: null,
     bearTrap: null,
+    round: BATTLE_STARTING_ROUND,
+    phase: BATTLE_PHASES[0],
   };
 }
