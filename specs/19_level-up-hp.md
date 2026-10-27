@@ -1,7 +1,6 @@
 # Spec 19: Level-Up HP
 
-> **DRAFT.** Architecture for intent 19's scope. Build-out has not started
-> yet. See [../intent/19_level-up-hp.md](../intent/19_level-up-hp.md) for
+> **BUILT.** Architecture for intent 19's scope, all built in one PR. See [../intent/19_level-up-hp.md](../intent/19_level-up-hp.md) for
 > the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
