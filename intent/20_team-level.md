@@ -22,18 +22,23 @@ This phase covers only:
 - **Defeated heroes still count.** A hero keeps their level when
   defeated, so their level-ups stay in the total.
 - **Shown on the Battle Board and the Battle Map** (decided 2026-10-28),
-  one number per team. Where it sits and how it looks are settled in the
-  spec/design.
+  one number per team, in each team's header. Where it sits and how it
+  looks are settled in the spec/design.
+- **On the Map, it replaces team gold** (decided 2026-10-28, on the
+  canvas). The Map's team header shows the team level and no longer
+  shows the team's gold. Gold stays on the Board, where it's changed.
+  The neutral gold piles on the Map don't change.
 - **Just the two numbers** (decided 2026-10-28). No marker for the
   leading team and no gap shown. With values from 0 to 12, the eye can
-  compare them.
+  compare them. The maximum (12) isn't shown either, and the label is
+  just "Lv": being in the team header already says it's the team's.
 
 ## Proposed Outcome
 At the start of a battle, both teams show a team level of 0. In Cleanup,
 Player 1 raises Ceralin from level 1 to 2 and another hero from 1 to 3:
 Player 1's team level reads 3 on the Board. A player switches to the Map
-mid-round and sees 3 against Player 2's 1, with no trip back to the
-Board.
+mid-round and sees 3 against Player 2's 1 in the team headers, with no
+trip back to the Board.
 
 ## Rules (from the rulebook)
 - Heroes start at level 1 (p. 6), and level 4 is the maximum (p. 12).
@@ -47,8 +52,8 @@ alongside the physical cards.
 
 ## Affected Systems
 - **Battle Board.** Shows each team's level.
-- **Battle Map.** Shows each team's level. Its team status panel shows
-  no levels today.
+- **Battle Map.** Its team status panel shows each team's level in place
+  of the team's gold. It shows no levels today.
 - **Battle state.** Read only. No new stored state, and the saved battle
   shape doesn't change.
 
