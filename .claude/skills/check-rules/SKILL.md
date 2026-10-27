@@ -87,7 +87,8 @@ if the caller asked only one. Implementing it always needs the full set:
 
 For each question:
 
-1. **Answer**: one or two sentences, direct.
+1. **Answer**: one or two sentences, direct. If a point is unsettled, say "unsettled"
+   here and don't pick a side; the Answer must never contradict section 5.
 2. **Rules bullets**: paste-ready for an intent's `## Rules (from the rulebook and X's
    card)` section, one fact per bullet with an inline source, e.g.
    `- The box has **1 Bear Trap** (p. 3).` or
