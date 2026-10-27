@@ -55,22 +55,6 @@ error, manual control where it keeps the table in charge.
 
 ## Toward 2.0
 
-### Implement
-
-- `Implement` **Add the HP bump on level-up automatically.** Per the rulebook,
-  leveling up also raises the hero's HP by one. Today players add it by hand.
-
-### Spec
-
-- `Spec` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
-  and the Map, to compare both teams at a glance.
-
-### Intent
-
-- `Intent` **Show the current round and phase.** Show the round and phase (Orders,
-  Movement, Action, Cleanup) on the Board and the Map. One control steps through the
-  phases, keeping round, phase and initiative in step.
-
 ### Triage
 
 - `Triage` **Show the round each hero was defeated.** Mark a defeated hero with the
@@ -110,3 +94,24 @@ error, manual control where it keeps the table in charge.
   instead of just stating the result.
 - `Triage` **Turn-passing animation in the draft.** Animate the turn banner and team
   highlight when the pick passes to the other player.
+- `Triage` **Level 4 animation.** Animate a hero reaching level 4, the max level,
+  so the moment stands out on the Board.
+- `Triage` **Make the level read-only.** The level's number field can be typed in,
+  which makes it easy to set a wrong level. Show it read-only and change it only
+  through the steppers.
+
+### Intent
+
+- `Intent` **Show the current round and phase.** Show the round and phase (Orders,
+  Movement, Action, Cleanup) on the Board and the Map. One control steps through the
+  phases, keeping round, phase and initiative in step.
+
+### Spec
+
+- `Spec` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
+  and the Map, to compare both teams at a glance.
+
+### Done
+
+- `Done` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
+  up also raises the hero's HP by one. The app now adds it on level-up (v1.1.0).
