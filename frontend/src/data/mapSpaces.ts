@@ -54,51 +54,25 @@ export type MapSpaceDef =
  * coordinates (0-100) of each space's center on the board art
  * (`/map/board.jpg`), measured against the full-resolution source.
  *
- * The p2 Tower/Bit `heroXPct`/`heroYPct` values are derived from their
- * confirmed p1 counterparts via the board's 180°-rotational symmetry
+ * Player 1 is the blue base (top-left, forest) and Player 2 the red base
+ * (bottom-right, desert). Each side's Top Tower sits on the lane through
+ * the NE gold pile, its Bottom Tower on the lane through the SW one.
+ *
+ * The p1 Tower/Bit `heroXPct`/`heroYPct` values are derived from their
+ * confirmed p2 counterparts via the board's 180°-rotational symmetry
  * (`(x, y) -> (100 - x, 100 - y)`), not independently confirmed against
- * the source art — the p2 (forest) tiles have much lower visual contrast
- * than p1's (desert), so direct measurement wasn't reliable. Nudge these
+ * the source art — the p1 (forest) tiles have much lower visual contrast
+ * than p2's (desert), so direct measurement wasn't reliable. Nudge these
  * if they look off in-game.
  */
 export const MAP_SPACES = [
-  { id: "p1-bit", kind: "bit", side: "p1", xPct: 87.7, yPct: 88.3, heroXPct: 83.5, heroYPct: 81.5 },
-  { id: "p2-bit", kind: "bit", side: "p2", xPct: 12, yPct: 11, heroXPct: 16.5, heroYPct: 18.5 },
+  { id: "p1-bit", kind: "bit", side: "p1", xPct: 12, yPct: 11, heroXPct: 16.5, heroYPct: 18.5 },
+  { id: "p2-bit", kind: "bit", side: "p2", xPct: 87.7, yPct: 88.3, heroXPct: 83.5, heroYPct: 81.5 },
 
   {
     id: "p1-tower-top",
     kind: "tower",
     side: "p1",
-    slot: "top",
-    xPct: 86.7,
-    yPct: 69.3,
-    heroXPct: 84,
-    heroYPct: 60,
-  },
-  {
-    id: "p1-tower-middle",
-    kind: "tower",
-    side: "p1",
-    slot: "middle",
-    xPct: 71.7,
-    yPct: 73.1,
-    heroXPct: 65,
-    heroYPct: 68,
-  },
-  {
-    id: "p1-tower-bottom",
-    kind: "tower",
-    side: "p1",
-    slot: "bottom",
-    xPct: 68.9,
-    yPct: 86.1,
-    heroXPct: 60.7,
-    heroYPct: 83.2,
-  },
-  {
-    id: "p2-tower-top",
-    kind: "tower",
-    side: "p2",
     slot: "top",
     xPct: 31.3,
     yPct: 12.5,
@@ -106,9 +80,19 @@ export const MAP_SPACES = [
     heroYPct: 16.8,
   },
   {
-    id: "p2-tower-bottom",
+    id: "p1-tower-middle",
     kind: "tower",
-    side: "p2",
+    side: "p1",
+    slot: "middle",
+    xPct: 27,
+    yPct: 26.7,
+    heroXPct: 35,
+    heroYPct: 32,
+  },
+  {
+    id: "p1-tower-bottom",
+    kind: "tower",
+    side: "p1",
     slot: "bottom",
     xPct: 13,
     yPct: 30,
@@ -116,20 +100,40 @@ export const MAP_SPACES = [
     heroYPct: 40,
   },
   {
+    id: "p2-tower-top",
+    kind: "tower",
+    side: "p2",
+    slot: "top",
+    xPct: 86.7,
+    yPct: 69.3,
+    heroXPct: 84,
+    heroYPct: 60,
+  },
+  {
     id: "p2-tower-middle",
     kind: "tower",
     side: "p2",
     slot: "middle",
-    xPct: 27,
-    yPct: 26.7,
-    heroXPct: 35,
-    heroYPct: 32,
+    xPct: 71.7,
+    yPct: 73.1,
+    heroXPct: 65,
+    heroYPct: 68,
+  },
+  {
+    id: "p2-tower-bottom",
+    kind: "tower",
+    side: "p2",
+    slot: "bottom",
+    xPct: 68.9,
+    yPct: 86.1,
+    heroXPct: 60.7,
+    heroYPct: 83.2,
   },
 
-  { id: "p1-plain-1", kind: "plain", side: "p1", xPct: 70.5, yPct: 41.5 },
-  { id: "p1-plain-2", kind: "plain", side: "p1", xPct: 41.5, yPct: 72 },
-  { id: "p2-plain-1", kind: "plain", side: "p2", xPct: 58, yPct: 27 },
-  { id: "p2-plain-2", kind: "plain", side: "p2", xPct: 28, yPct: 57.5 },
+  { id: "p1-plain-1", kind: "plain", side: "p1", xPct: 58, yPct: 27 },
+  { id: "p1-plain-2", kind: "plain", side: "p1", xPct: 28, yPct: 57.5 },
+  { id: "p2-plain-1", kind: "plain", side: "p2", xPct: 70.5, yPct: 41.5 },
+  { id: "p2-plain-2", kind: "plain", side: "p2", xPct: 41.5, yPct: 72 },
 
   { id: "gold-ne", kind: "gold", xPct: 82.7, yPct: 16.3 },
   { id: "gold-mid", kind: "gold", xPct: 50, yPct: 50 },

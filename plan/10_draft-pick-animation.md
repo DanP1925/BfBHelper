@@ -195,7 +195,7 @@ frontend/e2e/
       green. Manual QA at 1280x800 (`/qa-screens`, plus a screen recording
       or stepped screenshots for motion):
       - each pick: the card fades in place, then the gap closes, and the
-        slot flashes red for Player 1 or teal for Player 2
+        slot flashes teal for Player 1 or red for Player 2
       - the pool's size change on a smaller pool glides with no jump (M7)
       - rapid taps (M8) and the flash at the panel edge (M9)
       - with OS reduce motion on, picks are instant as today

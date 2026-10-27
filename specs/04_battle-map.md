@@ -145,10 +145,12 @@
   entry. This wasn't apparent until well into build: the dial itself
   reads as "where the structure is," but the board art draws a distinct
   nearby square as the actual spot troops stand at it, confirmed against
-  screenshots of the physical board. p1's 4 tiles (2 Towers + bottom
-  Tower + Bit) are measured directly off the full-resolution source,
-  cross-checked against the dial's own already-confirmed position; p2's
-  4 are derived from p1's via the board's 180°-rotational symmetry
+  screenshots of the physical board. Player 1 is the blue base (top-left,
+  forest) and Player 2 the red base (bottom-right, desert); until the
+  2026-10-28 color swap it was the other way round. p2's 4 desert tiles
+  (3 Towers + Bit) are measured directly off the full-resolution source,
+  cross-checked against the dial's own already-confirmed position; p1's
+  4 are derived from p2's via the board's 180°-rotational symmetry
   (`(x, y) -> (100 - x, 100 - y)`) rather than independently measured —
   the forest-biome art has much lower contrast for these tiles than
   the desert biome, making direct measurement unreliable there. See
@@ -510,13 +512,13 @@ during build-out.
 No change from v1-v3 — same static Vercel deployment, no new infra.
 
 ## Open Items for Implementation (not yet decided)
-- **p2's 4 Tower/Bit hero-tile coordinates** (`heroXPct`/`heroYPct`) are
-  derived from p1's measured tiles via the board's 180°-rotational
+- **p1's 4 Tower/Bit hero-tile coordinates** (`heroXPct`/`heroYPct`) are
+  derived from p2's measured tiles via the board's 180°-rotational
   symmetry, not independently confirmed against the source art — see
   Data Model above. The forest-biome art makes these tiles much lower-
-  contrast than p1's desert-biome ones, so direct measurement wasn't
-  reliable the way it was for p1. Revisit if any look visibly off against
-  real gameplay screenshots of the p2 side.
+  contrast than p2's desert-biome ones, so direct measurement wasn't
+  reliable the way it was for p2. Revisit if any look visibly off against
+  real gameplay screenshots of the p1 side.
 - **Touch/pointer support**, for both drag-and-drop and the zoom/pan
   control: native HTML5 drag-and-drop doesn't work on touchscreens
   without extra polyfill work, and the zoom/pan wrapper above only

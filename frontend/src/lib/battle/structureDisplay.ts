@@ -5,7 +5,7 @@ import type { TowerSlot } from "./constants";
  * Board/. Shared by every surface that renders a Tower/Bit icon
  * (`BattleTeamPanel`, `MapSpace`, `MapTeamStatusPanel`) so the
  * side->color convention lives in one place. */
-const SIDE_ICON_SUFFIX: Record<PlayerId, string> = { p1: "red", p2: "blue" };
+const SIDE_ICON_SUFFIX: Record<PlayerId, string> = { p1: "blue", p2: "red" };
 
 export function structureIcon(kind: "tower" | "bit", side: PlayerId): string {
   return `/structures/${kind}-${SIDE_ICON_SUFFIX[side]}.png`;

@@ -653,7 +653,9 @@ describe("BattleMapScreen", () => {
     // "bottom" is destroyed (hp 0, see makeBattleState) and MapSpace hides
     // a destroyed structure's icon entirely, so only the other 2 (top,
     // middle) should render on the board.
-    expect(boardLayer?.querySelectorAll('img[src="/structures/tower-red.png"]').length).toBe(2);
+    expect(boardLayer?.querySelectorAll('img[src="/structures/tower-blue.png"]').length).toBe(2);
+    // The other side's (p2, red) Towers are untouched.
+    expect(boardLayer?.querySelectorAll('img[src="/structures/tower-red.png"]').length).toBe(3);
   });
 
   it("doesn't render an emptied gold pile's on-board marker", () => {
