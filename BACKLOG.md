@@ -46,12 +46,12 @@ error, manual control where it keeps the table in charge.
 
 ## Bugs
 
-- `Triage` **The wrong team's Tower disappeared on the Map.** Player 2's Tower was
-  brought to 0 HP, but a Player 1 Tower disappeared from the Map. Reproduce it
-  first: the Map code reads each Tower's own HP, so the Board's steppers or the
-  Top/Middle/Bottom labels are the suspects.
-- `Triage` **Swap Player 1's and Player 2's colors.** Player 1 is red and Player 2
-  is blue today. Swap them everywhere: Draft, Board, Map and structure icons.
+- `Implement` **The wrong team's Tower disappeared on the Map.** Player 2's Tower
+  was brought to 0 HP, but a Player 1 Tower seemed to disappear from the Map. The
+  app had Player 1 on the red base, while the table plays Player 1 as blue.
+- `Implement` **Swap Player 1's and Player 2's colors.** Player 1 is now blue
+  (top-left, forest) and Player 2 red (bottom-right, desert), on the Draft, Board,
+  Map and structure icons. Same PR as the Tower bug above.
 
 ## Toward 2.0
 

@@ -306,7 +306,7 @@ https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
   label size in muted text with a 3px gold left bar, and the box fills
   the 142px margin box.
 - **Occupants** are the ordinary Map tokens in their team rings, with
-  names below: Felix (P2 teal) and Agatha Trunch (P1 red). Their old board
+  names below: Felix (P2) and Agatha Trunch (P1). Their old board
   spaces are empty, and their status-panel lines don't change.
 - **An "Arena" tweak** switches the artboard between **Duel** (the two
   inside, the default) and **Empty** (Felix at level 4, nobody in, both

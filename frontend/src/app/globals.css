@@ -2,8 +2,8 @@
   --color-bg: #181310;
   --color-text: #f3ead9;
   --color-gold: #c9a24b;
-  --color-p1: #c1665a;
-  --color-p2: #4f9aa0;
+  --color-p1: #4f9aa0;
+  --color-p2: #c1665a;
 
   --color-panel-bg: #241d17;
   --color-border: #3a2f22;
@@ -21,17 +21,17 @@
   --color-confuse: #c06ad0;
   --color-immobilize: #8fb4e0;
   /* Kunoichi's Death Mark (intent/09): a raspberry crimson, so it reads
-   * apart from --color-hp, --color-p1 and --color-confuse. */
+   * apart from --color-hp, --color-p2 and --color-confuse. */
   --color-death-mark: #d04a7a;
   /* Cyrus's Shield (intent/11): the rulebook token's leaf green, lighter
-   * and yellower than --color-p2 and apart from --color-gold. */
+   * and yellower than --color-p1 and apart from --color-gold. */
   --color-shield: #84c25e;
   /* Sedusa's Stone (intent/12): the rulebook token's stone grey, cooler and
    * lighter than --color-muted and less saturated than --color-immobilize. */
   --color-stone: #a3adb8;
   /* Dazeem's Chill (intent/13): the rulebook token's blue as a frost cyan,
    * brighter and greener than --color-immobilize (often on the same hero)
-   * and lighter than --color-p2. */
+   * and lighter than --color-p1. */
   --color-chill: #5ccfe6;
   /* Boreas's Favored Enemy (intent/15): the rulebook token's green as an
    * emerald, bluer than --color-shield and greener than --color-chill, both

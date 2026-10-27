@@ -339,7 +339,7 @@ moments: https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
     most from one column to the right, and Cynthia up from the next
     row.
   - At the same time, Player 1's second slot fades in with Cyrus and
-    flashes Player 1's red: a 3px ring and a soft glow that peak early,
+    flashes Player 1's color: a 3px ring and a soft glow that peak early,
     then fade out (600ms).
   - It holds on the settled board, then a quick fade hides the loop's
     reset.

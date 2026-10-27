@@ -26,7 +26,7 @@ This phase covers only two moments, both in the draft:
     shrinks.
   - **The hero reappears in its slot** in the current player's team
     panel, fading in with a brief flash in that team's color (Player 1
-    red, Player 2 teal). The flash is what shows everyone which side got
+    teal, Player 2 red, since the 2026-10-28 color swap). The flash is what shows everyone which side got
     the hero.
 - **The versus finale, on the Draft Results screen.** After the 8th
   hero appears in its slot, the Draft Results screen's entrance is the "teams about to
