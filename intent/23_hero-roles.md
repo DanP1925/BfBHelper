@@ -30,7 +30,8 @@ This phase covers only:
 - **Each option shows how many are left** (decided 2026-10-28). The
   count is the number of unpicked heroes in that role, so players see
   at a glance what's left to draft. An option with 0 left can't be
-  selected.
+  selected. If the selected role runs out mid-turn, the filter falls
+  back to All (decided 2026-10-28, in spec 23).
 - **Back to All when the turn passes** (decided 2026-10-28). The filter
   starts on All, and goes back to All whenever the turn passes to the
   other player. On a shared device, the next player then never starts
