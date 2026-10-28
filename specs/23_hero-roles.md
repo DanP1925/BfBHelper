@@ -1,7 +1,7 @@
 # Spec 23: Hero Roles
 
-> **DRAFT.** Architecture for intent 23's scope. Build-out has not started
-> yet. See [../intent/23_hero-roles.md](../intent/23_hero-roles.md) for the
+> **BUILT.** Architecture for intent 23's scope, all built in one PR. See
+> [../intent/23_hero-roles.md](../intent/23_hero-roles.md) for the
 > product-level problem, scope, and behavior this spec exists to satisfy.
 
 ## Architecture Overview
@@ -158,14 +158,19 @@ Cases, following the intent's Proposed Outcome:
   `useFitGrid` sizes the cards to the space it's given, so the filter's
   row shrinks the pool area rather than adding a page scroll. With all
   19 heroes the pool may drop to a smaller card or scroll sooner, as it
-  already does below `MIN_CARD_WIDTH`. Check in the browser (Open Items).
-  A filtered pool has fewer cards, so they grow up to `MAX_CARD_WIDTH`.
+  already does below `MIN_CARD_WIDTH`. Checked in the browser (Open
+  Items): the cards keep their size. A filtered pool has fewer cards, so
+  they grow up to `MAX_CARD_WIDTH`.
 - **The pick animation (intent 10).** `useDraftPickAnimation` keeps
   receiving the full `pool`, not the filtered one: it uses it to tell
   whether a pick committed. Its FLIP glide only moves cards it measured
-  at the tap, so when the turn passes and the filter goes back to All,
-  the cards that were hidden appear in place without a glide, while the
-  visible ones glide as before. Check that this reads well (Open Items).
+  at the tap. When a pick brings back cards the filter hid (the turn
+  passes and the filter goes back to All), gliding the few measured ones
+  would drag them, at their larger filtered size, across the new cards.
+  So `glide` fades every pool card in at its new layout instead
+  (opacity 0 → 1, `POOL_GLIDE_MS` after `PICK_FADE_MS`, like the glide).
+  The picked card's fade-out and the slot reveal are unchanged, and a
+  pick that brings nothing back glides as before.
 
 ## UI Design Reference
 On the same canvas as intents 01-22 ("BfbHelper — App Flow"):
@@ -204,13 +209,24 @@ infra.
   the pool, the counts, the selected and empty states), and get sign-off
   before building the UI.~~ **Decided:** drawn in version 106 on the
   "Draft" and "Draft — Mid-Selection" artboards, signed off 2026-10-28.
-- Check in the browser at 1280x800 and 2560x1440 that the filter row
+- ~~Check in the browser at 1280x800 and 2560x1440 that the filter row
   doesn't add a page scroll, and how much it shrinks the 19-hero pool's
-  cards.
-- Check that the pick animation reads well when the filter goes back to
+  cards.~~ **Decided:** no page scroll at either size, with All, a
+  filtered role or a role at 0. At 1280x800 the 19 cards stay 121x168,
+  the same as before: the row only moves the grid down, and the pool
+  scrolled before and still does. Support's 3 cards grow to 167px wide
+  (height-bound), and Damage's 8 fit without scrolling. At 2560x1440
+  cards reach their 260px cap. There the grid is narrower than its
+  column and centred, so the left-aligned filter starts about 85px left
+  of the cards; left as it is.
+- ~~Check that the pick animation reads well when the filter goes back to
   All as the turn passes, with hidden cards appearing un-animated. If it
-  doesn't, the fallback is to fade them in.
-- Tests:
+  doesn't, the fallback is to fade them in.~~ **Decided:** it didn't. The
+  remaining filtered cards glided over the new ones for about 300ms. Built
+  with the fallback, widened to the whole pool (see Layout), signed off
+  2026-10-28.
+- Tests (built as listed, plus a `useDraftPickAnimation` test for the
+  fade-in, and the `role` added to six `Hero` test fixtures):
   - `roles.test.ts`: `countRemainingByRole` and `filterPoolByRole`,
     including order kept and "all" returning the pool, and that the
     roster's counts are 8 / 8 / 3.

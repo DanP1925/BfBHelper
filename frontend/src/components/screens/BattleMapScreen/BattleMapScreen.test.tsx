@@ -23,6 +23,7 @@ function makeHero(id: Hero["id"], name: string): Hero {
     portrait: `/portraits/${id}.png`,
     battleToken: `/heroes-tokens/${id}.png`,
     baseHp: 10,
+    role: "damage",
   };
 }
 

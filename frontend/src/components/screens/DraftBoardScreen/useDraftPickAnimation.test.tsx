@@ -175,6 +175,28 @@ describe("useDraftPickAnimation", () => {
     }
   });
 
+  it("fades the whole pool in, without gliding, when the pick brings filtered-out cards back (intent/23)", () => {
+    stubMatchMedia(false);
+    const api = makeApi();
+    // The role filter shows only [a, b]; picking a passes the turn, and the
+    // filter going back to All brings c and d, never drawn at the tap.
+    const view = render(<Harness pool={[a, b]} slots={[]} currentTurnPlayer="p1" api={api} />);
+    api.beforePick(a.id);
+    view.rerender(<Harness pool={[b, c, d]} slots={[a.id]} currentTurnPlayer="p1" api={api} />);
+    flushFrames();
+
+    for (const hero of [b, c, d]) {
+      const [fade] = poolCardAnimations(hero.id);
+      expect(fade.keyframes).toEqual([{ opacity: 0 }, { opacity: 1 }]);
+      expect(fade.options).toMatchObject({
+        duration: POOL_GLIDE_MS,
+        delay: PICK_FADE_MS,
+        fill: "backwards",
+      });
+    }
+    expect(slotReveal()).toBeDefined();
+  });
+
   it("fades the slot in with a flash in the picking team's color", () => {
     pick(b, { side: "p2" });
     flushFrames();

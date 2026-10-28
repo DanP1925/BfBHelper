@@ -109,6 +109,24 @@ function glide(running: Running, root: HTMLElement, rects: PendingPick["rects"])
     before: rects.get(card.dataset.poolHero!),
     after: card.getBoundingClientRect(),
   }));
+  // Cards the filter hid at the tap now show (the turn passed and the role
+  // filter went back to All, intent/23). Gliding only the measured few would
+  // drag them, at their old filtered size, across the new ones, so the
+  // whole pool fades in at its new layout instead.
+  if (moves.some(({ before }) => !before)) {
+    for (const { card } of moves) {
+      track(
+        running,
+        card.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration: POOL_GLIDE_MS,
+          delay: PICK_FADE_MS,
+          easing: "ease-out",
+          fill: "backwards",
+        }),
+      );
+    }
+    return;
+  }
   for (const { card, before, after } of moves) {
     if (!before || after.width === 0) continue;
     const dx = before.left - after.left;

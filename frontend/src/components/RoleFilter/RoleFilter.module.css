@@ -1,0 +1,51 @@
+.filter {
+  align-self: flex-start;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+}
+
+.option {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-muted-strong);
+  background: transparent;
+  cursor: pointer;
+}
+
+.option:not(:disabled):not([aria-pressed="true"]):hover {
+  color: var(--color-text);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.option[aria-pressed="true"] {
+  background: var(--color-gold);
+  color: var(--color-bg);
+  cursor: default;
+}
+
+.option:disabled {
+  color: var(--color-slot-empty-label);
+  cursor: default;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.count {
+  font-size: 12px;
+}
