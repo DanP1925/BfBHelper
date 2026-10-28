@@ -57,12 +57,9 @@ error, manual control where it keeps the table in charge.
 
 ### Triage
 
-- `Triage` **Show the round each hero was defeated.** Mark a defeated hero with the
-  round it fell, to get an idea of when it will respawn. Builds on the round
-  number.
-- `Triage` **Automate steps when a phase starts.** Starting Cleanup could give each
-  team its 2 gold, which players now add by hand. Split out of intent 21, since
-  stepping back to an earlier phase would have to undo it.
+- `Triage` **Automate the other steps when a phase starts.** Cleanup's 2 gold per
+  team is now automatic (intent 25), but a phase's other rulebook steps are still
+  done by hand. Each one has to be undone when the phase control steps back.
 - `Triage` **Show token and Artifact rules in the app, not in a tooltip.** Runika's
   Artifact bonuses only show on hover, which is easy to miss. Show them, and
   what every token does, somewhere visible so nobody needs the rulebook.
@@ -84,22 +81,12 @@ error, manual control where it keeps the table in charge.
   the action is, instead of only by hand.
 - `Triage` **Defeat and destruction animations.** Animate a hero's defeat and a
   Tower's or Bit's destruction.
-- `Triage` **Hero roles in the draft.** Give each hero a role, as in Dota or Heroes
-  of the Storm, to sort the picker and plan a balanced team. The rulebook's
-  hero "Type" (e.g. Mobile Tank) is one possible source.
 - `Triage` **Coin-flip animation at draft start.** Show the initiative coin flip
   instead of just stating the result.
 - `Triage` **Turn-passing animation in the draft.** Animate the turn banner and team
   highlight when the pick passes to the other player.
 - `Triage` **Level 4 animation.** Animate a hero reaching level 4, the max level,
   so the moment stands out on the Board.
-
-### Spec
-
-- `Spec` **Take gold on level-up automatically.** Leveling up costs the hero's
-  current level plus one in gold, which players now take off by hand. The app will
-  take it (and refund it on a level-down), and the level becomes read-only so it
-  only changes one paid step at a time.
 
 ### Done
 
@@ -110,3 +97,14 @@ error, manual control where it keeps the table in charge.
 - `Done` **Show the current round and phase.** Show the round and phase (Orders,
   Movement, Action, Cleanup) on the Board and the Map. One control steps through the
   phases, keeping round, phase and initiative in step (v1.3.0).
+- `Done` **Take gold on level-up automatically.** Leveling up takes the hero's
+  current level plus one in gold, refunded on a level-down. The level is read-only,
+  changing one paid step at a time (v1.4.0).
+- `Done` **Hero roles in the draft.** Each hero has one role (Damage, Utility or
+  Support), and the draft pool can be filtered by role to plan a balanced team
+  (v1.5.0).
+- `Done` **Give each team its Cleanup gold.** Starting Cleanup adds each team's 2
+  gold, and stepping back out of it takes the gold back (v1.6.0).
+- `Done` **Show each defeated hero's respawn window.** A defeated hero shows the
+  rounds in which its card can come back, estimated from the deck. It replaced the
+  idea of showing the round it fell (v1.7.0).
