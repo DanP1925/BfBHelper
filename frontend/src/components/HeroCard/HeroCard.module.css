@@ -189,7 +189,8 @@
 
 /* Reactive to `hp === 0` (intent/03) — clears automatically the instant
    HP is raised above 0 again, since it's purely a function of the live
-   value, not a separate tracked flag. */
+   value, not a separate tracked flag. The defeat animation (intent/27)
+   ends on this exact filter (`DEFEATED_FILTER`). */
 .tokenDefeated {
   filter: grayscale(1) brightness(0.6);
 }

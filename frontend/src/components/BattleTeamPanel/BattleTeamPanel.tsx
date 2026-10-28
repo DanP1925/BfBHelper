@@ -194,7 +194,6 @@ export function BattleTeamPanel({
               icon={structureIcon("tower", side)}
               onHpChange={(value) => onStructureHpChange(slot, value)}
               max={TOWER_STARTING_HP}
-              reactiveStyling
             />
           ))}
           <StructureSlot

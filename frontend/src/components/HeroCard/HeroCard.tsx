@@ -17,6 +17,7 @@ import { levelUpCost } from "../../lib/battle/levelUp";
 import { formatRespawnWindow } from "../../lib/battle/respawn";
 import { ARTIFACTS, artifactSummary } from "../artifacts";
 import { ArtifactToggle } from "../ArtifactToggle/ArtifactToggle";
+import { useDefeatAnimation } from "../../lib/useDefeatAnimation";
 import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import { TokenChip } from "../TokenChip/TokenChip";
@@ -184,11 +185,18 @@ export function HeroCard(props: HeroCardProps) {
   const { hero, variant, onClick } = props;
   const altText = `${hero.name}, ${hero.className}`;
   const battleCardRef = useRef<HTMLDivElement>(null);
+  const portraitRef = useRef<HTMLImageElement>(null);
   // Called before the variant branches so the hook order never changes.
   useLevelFourBurst(
     battleCardRef,
     variant === "battle" ? props.level : undefined,
     variant === "battle" && props.onLevelChange ? props.side : undefined,
+  );
+  useDefeatAnimation(
+    portraitRef,
+    variant === "battle" ? props.hp : undefined,
+    variant === "battle" && props.onHpChange !== undefined,
+    "hero",
   );
 
   if (variant === "pool") {
@@ -242,6 +250,7 @@ export function HeroCard(props: HeroCardProps) {
         <div className={styles.battleTokenWrapper}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
           <img
+            ref={portraitRef}
             src={hero.battleToken}
             alt=""
             className={
