@@ -33,8 +33,8 @@ function clamp(value: number, min: number, max: number): number {
  * The one control every editable battle value (gold, hero HP/level,
  * structure HP) is built from: a "-" button, a numeric input that's
  * directly editable unless `readOnly`, and a "+" button. With `readOnly`
- * the value is a plain `<output>` in the input's box, so the row keeps
- * its size and the value keeps its accessible name. The input never blocks a
+ * the value is a plain, narrower `<output>` that keeps its accessible
+ * name. The input never blocks a
  * keystroke — a value is only clamped (and rounded to the nearest
  * integer) once it's committed (blur/Enter), so typing e.g. "99" into a
  * max-15 field settles at 15, and "7.5" settles at 8, instead of either
