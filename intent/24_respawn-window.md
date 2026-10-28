@@ -21,8 +21,9 @@ This phase covers only:
   each hero was defeated", which asked for the round it fell; the window
   is what players wanted that round for.
 - **The estimate** (decided 2026-10-28):
-  - Cards ahead of the hero's card = 4 + team level − living heroes. The
-    team level is intent 20's, and still counts the fallen hero's levels.
+  - Cards ahead of the hero's card = 4 + the sum of the heroes' levels −
+    living heroes. The sum is intent 20's team level + 4 (the team level
+    counts level-ups), and still counts the fallen hero's levels.
   - Each Cleanup draws between 3 cards (slowest) and 8 cards (fastest).
     The slowest draw is one per living hero.
   - The hero's card is the one after the cards ahead. It's drawn after
@@ -39,8 +40,8 @@ This phase covers only:
   the Battle Map. Where it sits and how it looks are settled in the
   spec/design.
 - **Set automatically, then fixed** (decided 2026-10-28). The window is
-  computed when a hero's HP is set to 0, from that moment's round, team
-  level and living heroes. Later level-ups, defeats, respawns or round
+  computed when a hero's HP is set to 0, from that moment's round, hero
+  levels and living heroes. Later level-ups, defeats, respawns or round
   steps don't change it.
 - **Cleared on respawn** (decided 2026-10-28). The window goes away when
   the hero's HP goes above 0, whether it respawned or a mistaken 0 was
@@ -50,12 +51,12 @@ This phase covers only:
   as it is. The table knows where its cards are.
 
 ## Proposed Outcome
-Player 1's team is at levels 1, 2, 2 and 3, a team level of 8. In Round 3,
+Player 1's team is at levels 1, 2, 2 and 3, adding up to 8. In Round 3,
 Ceralin falls to 0 HP. Three heroes are still standing, so 4 + 8 − 3 = 9
 cards are ahead of her card, and hers is the 10th. At 8 cards a Cleanup
 it's drawn in the second, Round 4. At 3 a Cleanup it's drawn in the
-fourth, Round 6. Her card on the Board and her token in the Map's respawn
-area show Round 4–6. In Round 5's Cleanup, Player 1 draws her card, raises
+fourth, Round 6. Her card on the Board and her row in the Map's team
+panel show Round 4–6. In Round 5's Cleanup, Player 1 draws her card, raises
 her HP and drags her onto the board: the window disappears.
 
 ## Rules (from the rulebook)
@@ -71,9 +72,9 @@ her HP and drags her onto the board: the window disappears.
   with a friendly Tower or the Elemental Bit, ready for the next round
   (p. 12).
 
-So the cards cycling through the deck are 12 + team level − 8 in hand.
-The ones on living heroes are discarded after the fallen hero's card,
-which leaves 4 + team level − living heroes ahead of it. A new power card
+So the cards cycling through the deck are 12 + the sum of hero levels − 8
+in hand. The ones on living heroes are discarded after the fallen hero's
+card, which leaves 4 + the sum of levels − living heroes ahead of it. A new power card
 from a later level-up goes into the hand, behind the hero's card, so the
 count doesn't change after the defeat.
 
