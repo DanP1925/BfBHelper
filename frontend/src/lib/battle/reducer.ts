@@ -103,7 +103,8 @@ function setRoundPosition(state: BattleState, next: RoundPosition | null): Battl
  * SET_HERO_LEVEL, SET_HERO_HP and SET_GOLD, like the defeat move, not here. The round and phase
  * move together as one position, and the initiative pass when a step
  * crosses a round (intent/21) is composed in useBattle.advancePhase and
- * stepPhaseBack from the phase action and PASS_INITIATIVE. Returns the
+ * stepPhaseBack from the phase action and PASS_INITIATIVE, as is each team's
+ * Cleanup gold (intent/25), from SET_GOLD. Returns the
  * same state reference (no-op) whenever the clamped value already matches
  * the current one, or the targeted hero id doesn't exist on that side —
  * mirrors draftReducer's no-op convention.
@@ -220,7 +221,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
       return { ...state, initiative: otherPlayer(state.initiative) };
 
     // One phase at a time (intent/21). Nothing else changes on a step: no
-    // gold, levels, tokens, Ice Wall or Bear Trap, and not initiative,
+    // gold (useBattle adds Cleanup's, intent/25), levels, tokens, Ice Wall or Bear Trap, and not initiative,
     // which useBattle passes when the round changes. STEP_PHASE_BACK at
     // Round 1, Orders is a no-op.
     case "ADVANCE_PHASE":

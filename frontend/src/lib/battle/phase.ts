@@ -1,4 +1,4 @@
-import { BATTLE_PHASES, BATTLE_STARTING_ROUND } from "./constants";
+import { BATTLE_PHASES, BATTLE_STARTING_ROUND, CLEANUP_GOLD } from "./constants";
 import type { BattlePhase } from "./types";
 
 /** Where the game is in its rounds (intent/21). */
@@ -18,6 +18,17 @@ const LAST_PHASE_INDEX = BATTLE_PHASES.length - 1;
  * on it, and PhaseControl announces it. */
 export function crossesRound(from: RoundPosition, to: RoundPosition): boolean {
   return from.round !== to.round;
+}
+
+/** The gold each team gains or gives back on a step from `from` to `to`
+ * (intent/25): +2 entering Cleanup from Action, −2 stepping back from
+ * Cleanup to Action, else 0. Stepping back from Orders into the previous
+ * round's Cleanup pays nothing: the gold was paid on the way in. */
+export function cleanupGoldChange(from: RoundPosition, to: RoundPosition): number {
+  if (from.round !== to.round) return 0;
+  if (from.phase === "action" && to.phase === "cleanup") return CLEANUP_GOLD;
+  if (from.phase === "cleanup" && to.phase === "action") return -CLEANUP_GOLD;
+  return 0;
 }
 
 /** The next phase (intent/21): Cleanup moves on to the next round's

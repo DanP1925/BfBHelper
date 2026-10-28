@@ -1,5 +1,8 @@
-import type { HeroId } from "../draft/types";
+import type { HeroId, PlayerId } from "../draft/types";
 import type { CountedTokenField, HeroBattleState } from "./types";
+
+/** Both teams, P1 first. */
+export const SIDES: readonly PlayerId[] = ["p1", "p2"];
 
 /** Starting battle-state constants for the Battle Board (intent/02) — all
  * static, since no damage/leveling/gold tracking exists until intent 03. */
@@ -18,6 +21,10 @@ export const BATTLE_PHASES = ["orders", "movement", "action", "cleanup"] as cons
 /** A battle starts at Round 1, Orders: deployment is setup, not a phase
  * (intent/21). */
 export const BATTLE_STARTING_ROUND = 1;
+
+/** The gold each team gains at the start of Cleanup (rulebook p. 12,
+ * intent/25). */
+export const CLEANUP_GOLD = 2;
 
 /** Flat HP ceiling for every hero, regardless of base HP or level
  * (intent/03). It doesn't recalculate off level (intent/19 keeps it flat),

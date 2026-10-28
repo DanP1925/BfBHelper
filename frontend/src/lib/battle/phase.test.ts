@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextPosition, previousPosition, type RoundPosition } from "./phase";
+import { cleanupGoldChange, nextPosition, previousPosition, type RoundPosition } from "./phase";
 
 // Spec 21's step table.
 describe("nextPosition", () => {
@@ -54,5 +54,19 @@ describe("previousPosition", () => {
         expect(previousPosition(nextPosition(from))).toEqual(from);
       }
     }
+  });
+});
+
+// Spec 25's step table.
+describe("cleanupGoldChange", () => {
+  it.each<[string, RoundPosition, RoundPosition, number]>([
+    ["Movement → Action", { round: 1, phase: "movement" }, { round: 1, phase: "action" }, 0],
+    ["Action → Cleanup", { round: 1, phase: "action" }, { round: 1, phase: "cleanup" }, 2],
+    ["Cleanup → Orders", { round: 1, phase: "cleanup" }, { round: 2, phase: "orders" }, 0],
+    ["Orders → Cleanup, back", { round: 2, phase: "orders" }, { round: 1, phase: "cleanup" }, 0],
+    ["Cleanup → Action, back", { round: 1, phase: "cleanup" }, { round: 1, phase: "action" }, -2],
+    ["a no-op at Round 1, Orders", { round: 1, phase: "orders" }, { round: 1, phase: "orders" }, 0],
+  ])("%s", (_, from, to, gold) => {
+    expect(cleanupGoldChange(from, to)).toBe(gold);
   });
 });
