@@ -22,6 +22,15 @@ export async function dragTo(page: Page, source: Locator, target: Locator) {
   await dragElementTo(page, source, box.x + box.width / 2, box.y + box.height / 2);
 }
 
+/** Types a team's gold on the Battle Board, e.g. before a level-up, which
+ * costs gold (intent/22). `team` is "Player 1" or "Player 2". */
+export async function setTeamGold(page: Page, team: string, gold: number) {
+  const input = page.getByRole("spinbutton", { name: `${team} gold`, exact: true });
+  await input.fill(String(gold));
+  await input.press("Enter");
+  await expect(input).toHaveValue(String(gold));
+}
+
 /** Starts a battle through the real flow: Start Draft, the deterministic
  * 8-pick completion, Start Battle. Returns the coin-flip winner (who starts
  * with initiative) and the other player, as "Player 1" / "Player 2". */

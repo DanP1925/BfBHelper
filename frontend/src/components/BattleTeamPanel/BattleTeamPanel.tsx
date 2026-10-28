@@ -5,6 +5,7 @@ import {
   TOWER_SLOTS,
   TOWER_STARTING_HP,
 } from "../../lib/battle/constants";
+import { canAffordLevelUp } from "../../lib/battle/levelUp";
 import { createInitialHeroState } from "../../lib/battle/reducer";
 import { teamLevel } from "../../lib/battle/selectors";
 import { structureIcon, TOWER_LABEL } from "../../lib/battle/structureDisplay";
@@ -149,6 +150,7 @@ export function BattleTeamPanel({
               level={heroState.level}
               onHpChange={(value) => onHeroHpChange(hero.id, value)}
               onLevelChange={(value) => onHeroLevelChange(hero.id, value)}
+              canAffordLevelUp={canAffordLevelUp(hero.id, team.gold, heroState.level)}
               tokenPicker={{
                 expanded: openTokenKey === pickerKey,
                 onExpandedChange: (open) => onOpenTokenKeyChange(open ? pickerKey : null),

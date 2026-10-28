@@ -86,4 +86,34 @@ describe("NumberStepper", () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(input.value).toBe("5");
   });
+
+  it("with readOnly, shows the value as text that only − and + change", () => {
+    const onChange = vi.fn();
+    render(
+      <NumberStepper value={2} min={1} max={4} onChange={onChange} label="Felix level" readOnly />,
+    );
+
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+    expect(screen.getByRole("status", { name: "Felix level" })).toHaveTextContent("2");
+
+    fireEvent.click(screen.getByRole("button", { name: "Increase Felix level" }));
+    expect(onChange).toHaveBeenCalledWith(3);
+    fireEvent.click(screen.getByRole("button", { name: "Decrease Felix level" }));
+    expect(onChange).toHaveBeenCalledWith(1);
+  });
+
+  it("with increaseDisabled, disables only +", () => {
+    render(
+      <NumberStepper
+        value={2}
+        min={1}
+        max={4}
+        onChange={vi.fn()}
+        label="Felix level"
+        increaseDisabled
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Increase Felix level" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Decrease Felix level" })).not.toBeDisabled();
+  });
 });

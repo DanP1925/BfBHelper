@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { setTeamGold } from "./helpers";
 
 test("each team's level follows its heroes' level-ups on the Board and the Map, and survives a reload", async ({
   page,
@@ -26,7 +27,8 @@ test("each team's level follows its heroes' level-ups on the Board and the Map, 
   await expect(page.getByRole("img", { name: "Player 1 team level 0" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Player 2 team level 0" })).toBeVisible();
 
-  // Two level-ups for Felix: his team's level is 2.
+  // Two level-ups for Felix (2 + 3 gold, intent/22): his team's level is 2.
+  await setTeamGold(page, felixTeam, 5);
   const increaseFelixLevel = page.getByRole("button", { name: "Increase Felix level" });
   await increaseFelixLevel.click();
   await increaseFelixLevel.click();

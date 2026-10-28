@@ -243,6 +243,23 @@
   color: var(--color-muted);
 }
 
+/* The next level-up's price (intent/22): the team gold badge's coin and the
+   number, in gold. Only rendered when the team can afford it. */
+.levelCost {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+.levelCostIcon {
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
 .levelPips {
   display: flex;
   gap: 2px;

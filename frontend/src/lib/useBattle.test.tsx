@@ -38,6 +38,15 @@ const OTHER_HERO: Hero = {
   baseHp: 9,
 };
 
+const KEN_OBI: Hero = {
+  id: "ken-obi",
+  name: "Ken Obi",
+  className: "Apprentice",
+  portrait: "/heroes/ken-obi.png",
+  battleToken: "/heroes-tokens/ken-obi.png",
+  baseHp: 9,
+};
+
 function readRawState() {
   const raw = window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY);
   if (raw === null) throw new Error("expected a persisted battle state");
@@ -573,9 +582,14 @@ describe("useBattle", () => {
   });
 
   describe("setHeroLevel (intent/19)", () => {
-    // HERO_A starts at level 1 with baseHp + 1 = 10 HP.
+    // HERO_A starts at level 1 with baseHp + 1 = 10 HP. Enough gold for
+    // every level-up (intent/22), so only HP is under test here.
     function renderLevels() {
-      return renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      const hook = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      act(() => {
+        hook.result.current.setGold("p1", 20);
+      });
+      return hook;
     }
 
     it("a level-up adds 1 HP and a level-down takes it back off", () => {
@@ -658,6 +672,95 @@ describe("useBattle", () => {
       });
       expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 1, hp: 1 });
       expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(spaceId);
+    });
+  });
+
+  describe("setHeroLevel (intent/22)", () => {
+    // HERO_A (Baldwin) pays level + 1; KEN_OBI pays one less.
+    function renderGold(gold: number) {
+      const hook = renderHook(() => useBattle([HERO_A, KEN_OBI], [HERO_B], "p1"));
+      act(() => {
+        hook.result.current.setGold("p1", gold);
+      });
+      return hook;
+    }
+
+    it("a level-up pays its price and a level-down refunds it", () => {
+      const { result } = renderGold(5);
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(result.current.state?.p1.gold).toBe(3);
+      expect(readRawState().p1.gold).toBe(3);
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 3);
+      });
+      expect(result.current.state?.p1.gold).toBe(0);
+      expect(result.current.state?.p1.heroes[HERO_A.id].level).toBe(3);
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(result.current.state?.p1.gold).toBe(3);
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 2, hp: 11 });
+    });
+
+    it("an unaffordable level-up changes nothing and saves nothing", () => {
+      const { result } = renderGold(1);
+      const before = result.current.state;
+      const savedBefore = window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY);
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(result.current.state).toBe(before);
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBe(savedBefore);
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 1, hp: 10 });
+    });
+
+    it("a defeated hero pays too and stays at 0 HP", () => {
+      const { result } = renderGold(2);
+
+      act(() => {
+        result.current.setHeroHp("p1", HERO_A.id, 0);
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(result.current.state?.p1.gold).toBe(0);
+      expect(result.current.state?.p1.heroes[HERO_A.id]).toMatchObject({ level: 2, hp: 0 });
+    });
+
+    it("a jump pays for each level moved, after the clamp", () => {
+      const { result } = renderGold(9);
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 9);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id].level).toBe(4);
+      expect(result.current.state?.p1.gold).toBe(0);
+    });
+
+    it("Ken Obi pays one less per level, and gets the same back", () => {
+      const { result } = renderGold(1);
+
+      act(() => {
+        result.current.setHeroLevel("p1", KEN_OBI.id, 2);
+      });
+      expect(result.current.state?.p1.heroes[KEN_OBI.id].level).toBe(2);
+      expect(result.current.state?.p1.gold).toBe(0);
+
+      act(() => {
+        result.current.setGold("p1", 5);
+        result.current.setHeroLevel("p1", KEN_OBI.id, 3);
+        result.current.setHeroLevel("p1", KEN_OBI.id, 4);
+      });
+      expect(result.current.state?.p1.gold).toBe(0);
+
+      act(() => {
+        result.current.setHeroLevel("p1", KEN_OBI.id, 3);
+      });
+      expect(result.current.state?.p1.gold).toBe(3);
     });
   });
 

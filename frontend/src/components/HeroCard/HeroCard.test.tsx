@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { getHeroById } from "../../data/heroes";
 import type { CountedTokenField } from "../../lib/battle/types";
+import type { HeroId } from "../../lib/draft/types";
 import { HeroCard } from "./HeroCard";
 
 const boreas = getHeroById("boreas");
@@ -411,5 +412,51 @@ describe("HeroCard Artifacts (intent/17)", () => {
     const picker = screen.getByRole("group", { name: "Add a token to Runika" });
     expect(within(picker).queryByText(/Battle Fist|Auto Deflector|Shield Amulet/)).toBeNull();
     expect(artifactGroup()!.contains(picker)).toBe(false);
+  });
+});
+
+describe("HeroCard level-up gold (intent/22)", () => {
+  function renderLevel(heroId: HeroId, level: number, canAffordLevelUp?: boolean) {
+    render(
+      <HeroCard
+        hero={getHeroById(heroId)}
+        variant="battle"
+        hp={8}
+        level={level}
+        onLevelChange={vi.fn()}
+        canAffordLevelUp={canAffordLevelUp}
+      />,
+    );
+  }
+  const cost = () => screen.queryByRole("img", { name: /next level costs/ });
+
+  it("shows the level as text, not a typed input", () => {
+    renderLevel("ceralin", 2, true);
+    expect(screen.queryByRole("spinbutton", { name: "Ceralin level" })).toBeNull();
+    expect(screen.getByRole("status", { name: "Ceralin level" })).toHaveTextContent("2");
+  });
+
+  it("shows the next level's price when the team can afford it", () => {
+    renderLevel("ceralin", 2, true);
+    expect(cost()).toHaveAccessibleName("Ceralin's next level costs 3 gold");
+    expect(cost()).toHaveTextContent("3");
+    expect(screen.getByRole("button", { name: "Increase Ceralin level" })).not.toBeDisabled();
+  });
+
+  it("shows Ken Obi's discounted price", () => {
+    renderLevel("ken-obi", 1, true);
+    expect(cost()).toHaveAccessibleName("Ken Obi's next level costs 1 gold");
+  });
+
+  it("hides the price and disables + when the team can't afford it", () => {
+    renderLevel("ceralin", 2, false);
+    expect(cost()).toBeNull();
+    expect(screen.getByRole("button", { name: "Increase Ceralin level" })).toBeDisabled();
+  });
+
+  it("hides the price at level 4", () => {
+    renderLevel("ceralin", 4, false);
+    expect(cost()).toBeNull();
+    expect(screen.getByRole("button", { name: "Increase Ceralin level" })).toBeDisabled();
   });
 });

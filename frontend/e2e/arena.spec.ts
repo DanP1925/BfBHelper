@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { dragTo } from "./helpers";
+import { dragTo, setTeamGold } from "./helpers";
 
 /** A hero's draggable token, wherever it is on the Map. */
 const token = (page: Page, name: string) =>
@@ -53,6 +53,8 @@ test("the Arena opens at Felix's level 4, takes only Felix and one enemy, and su
   // Level 4 on the Board isn't enough while Felix is still in his respawn
   // area; deploying him opens the Arena.
   await page.getByRole("button", { name: "Board" }).click();
+  // Levels 2 to 4 cost 2 + 3 + 4 gold (intent/22).
+  await setTeamGold(page, felixAreaName!.startsWith("Player 1") ? "Player 1" : "Player 2", 9);
   for (let i = 0; i < 3; i++) {
     await page.getByRole("button", { name: "Increase Felix level" }).click();
   }
