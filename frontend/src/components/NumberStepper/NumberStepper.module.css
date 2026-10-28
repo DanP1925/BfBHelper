@@ -54,10 +54,13 @@
   margin: 0;
 }
 
-/* The read-only value (intent/22) keeps the input's box, so the row
-   doesn't shift, but drops its field look: it can't be typed in. */
+/* The read-only value (intent/22) drops the field look and the room a
+   typed input needs: it can't be typed in, so it's only as wide as one
+   digit (the level tops out at 4). */
 .readOnly {
   display: inline-block;
+  width: 2ch;
+  padding: 2px 0;
   border-color: transparent;
   background: none;
 }
