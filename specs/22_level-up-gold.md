@@ -176,10 +176,10 @@ Cases, per intent's Scope and Proposed Outcome:
   - **The next cost** shows in the level row, after the stepper: the
     gold icon (`/structures/gold.png`, the one the team gold badge uses)
     and `levelUpCost(hero.id, level)`, so Ken Obi shows his discounted
-    price. At level 4 it's not rendered (intent's
-    Scope). Its accessible name is e.g. "Next level costs 3 gold". When
-    the team can't afford it, it's dimmed to match the disabled +, so
-    the cost reads as the reason (intent's Scope: no separate message).
+    price. It's rendered only when `canAffordLevelUp` is true: an
+    unaffordable level-up, like level 4, shows no cost and a disabled +
+    (intent's Scope, decided on the canvas). Its accessible name is e.g.
+    "Next level costs 3 gold".
   - The read-only branch (pips and "n/4", used outside the Board) shows
     no cost.
 - **`BattleTeamPanel`** computes `canAffordLevelUp(hero.id, team.gold, hero.level)`
@@ -198,11 +198,20 @@ Cases, per intent's Scope and Proposed Outcome:
 On the same canvas as intents 01-21 ("BfbHelper — App Flow"):
 https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
 
-**Not drawn yet for this feature.** The "Battle Board" artboard's hero
-cards show the level stepper with a typed input and no cost. The read-only
-level, the next-cost element and the dimmed unaffordable state should be
-drawn there and signed off before they're built (Open Items). Until then,
-the Layout section above is the direction.
+Drawn in version 104, on the **"Battle Board"** artboard's hero cards:
+
+- **The level row** reads "Lv", the four pips, the level as plain text
+  ("2/4", no input box, same width as before), then − and +.
+- **The next cost** sits right after +: a 12px gold coin (the team gold
+  badge's icon) and the price in the gold color, 10px bold, e.g. "2".
+  It's shown only when the team can afford it. Otherwise, and at level
+  4, there's nothing after +, and + is disabled with the usual faded
+  look.
+- **Its prototype pays and refunds.** + takes the price from the team's
+  gold (and adds intent 19's HP), − gives it back. It opens with
+  Player 1 at 2 gold, so Kunoichi (level 2, cost 3) shows no cost while
+  the others show 2, and Player 2 at 1 gold, so none of its heroes do.
+  Ken Obi's discount is in its logic, but he isn't on either drawn team.
 
 This is a prototype for visual direction only, the same caveat as earlier
 intents' references. If a revised canvas supersedes these choices, it
@@ -213,9 +222,10 @@ No change from earlier intents: same static Vercel deployment, no new
 infra.
 
 ## Open Items for Implementation
-- Draw the read-only level, the next cost and its unaffordable state on
+- ~~Draw the read-only level, the next cost and its unaffordable state on
   the canvas's "Battle Board" artboard, and get sign-off before building
-  the UI.
+  the UI.~~ **Decided:** drawn in version 104 and signed off 2026-10-28.
+  An unaffordable cost is hidden rather than dimmed.
 - Check in the browser at 1280x800 that the level row doesn't wrap or
   grow the hero card with the cost added.
 - Tests:
@@ -232,8 +242,8 @@ infra.
   - `NumberStepper` tests: `readOnly` renders no `spinbutton` and keeps
     the label, `increaseDisabled` disables only +.
   - `HeroCard` / `BattleTeamPanel` tests: the cost shows and matches the
-    level (and Ken Obi's discount), is hidden at level 4, and + is disabled when the team can't
-    afford it.
+    level (and Ken Obi's discount), and is hidden at level 4 and when the
+    team can't afford it, with + disabled.
   - e2e: a new `level-up-gold.spec.ts` following the intent's Proposed
     Outcome, including a reload. The existing `level-up-hp.spec.ts`,
     `arena.spec.ts` and `team-level.spec.ts` level heroes up from 0 gold

@@ -40,9 +40,10 @@ This phase covers only:
 - **No phase limit** (decided 2026-10-28). The level control works in any
   phase, as it does today, so mid-round corrections stay possible. Intent
   21's Cleanup reminder covers when to level up.
-- **The next cost is shown** (decided 2026-10-28). Each hero shows what
-  their next level-up costs, so nobody needs the rulebook. A hero at
-  level 4 shows no cost. Where it sits and how it looks are settled in the
+- **The next cost is shown when affordable** (decided 2026-10-28, on the
+  canvas). Each hero shows what their next level-up costs, so nobody
+  needs the rulebook. When the team can't afford it, or the hero is at
+  level 4, no cost is shown and the + is unavailable. Where it sits and how it looks are settled in the
   spec/design.
 - **The level is read-only** (decided 2026-10-28; was its own
   `BACKLOG.md` item). The level can no longer be typed in. It changes only
@@ -55,8 +56,8 @@ This phase covers only:
 In Cleanup, Player 1 has 5 gold. Ceralin, at level 1, shows a next cost
 of 2. The player raises her to level 2: gold drops to 3 and her HP goes
 up by 1. Her next cost now reads 3, and the player raises her again: gold
-is 0 and she's at level 3. Her next cost reads 4, and her + is
-unavailable, since the team has no gold left. The player meant to level
+is 0 and she's at level 3. Her + is now unavailable and shows no cost,
+since the team has no gold left. The player meant to level
 a different hero, so they lower Ceralin back to 2: the team gets 3 gold
 back. On Player 2's side, Ken Obi at level 1 shows a next cost of 1,
 and the team's last gold coin is enough to raise him to level 2.
@@ -86,7 +87,8 @@ alongside the physical cards.
   gold, on top of the HP from intent 19. No new stored state: the saved
   battle shape doesn't change.
 - **Battle Board.** The hero card's level control: read-only number, +
-  unavailable when unaffordable, and the next cost shown. Team gold
+  unavailable and no cost shown when unaffordable, else the next cost
+  shown. Team gold
   updates as levels change. The team level from intent 20 follows the
   hero levels as before.
 
