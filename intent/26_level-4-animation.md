@@ -3,8 +3,8 @@
 ## Problem
 Level 4 is a hero's maximum level and the point where they pick their
 Ultimate. It's the biggest step in a hero's growth, but in the app it looks
-like any other level-up: the last level pip fills in and the next-cost
-label disappears. On a shared screen, players who didn't tap the + can
+like any other level-up: the level number changes to 4, the + turns
+unavailable and the next-cost label disappears. On a shared screen, players who didn't tap the + can
 miss that a hero just maxed out.
 
 This is a v2.0 item: polish that makes a key moment of the game visible at
@@ -24,7 +24,7 @@ This phase covers only:
   and reloading with a hero already at level 4 shows the card as it is,
   with no burst.
 - **A burst only** (decided 2026-10-28). Once it ends, the card looks as it
-  does today: full level pips, no next cost. There's no lasting "maxed"
+  does today: level 4, the + unavailable, no next cost. There's no lasting "maxed"
   look.
 - **No text cue** (decided 2026-10-28). The burst doesn't say "Pick your
   Ultimate" or anything else. Picking the Ultimate stays at the table.
@@ -43,11 +43,11 @@ This phase covers only:
 ## Proposed Outcome
 In Cleanup, Player 1 pays 4 gold to raise Ceralin from level 3 to 4. Her
 card plays a short burst that everyone at the table notices, and then
-looks as it always has at level 4: full pips, no cost. The player meant to
-level Ken Obi instead, so they lower Ceralin back to 3, which plays
-nothing. Later they raise her to 4 again, and the burst plays again. On
-another screen with "reduce motion" on, the same level-up just fills the
-last pip.
+looks as it always has at level 4: the number 4, the + unavailable, no
+cost. The player meant to level Ken Obi instead, so they lower Ceralin
+back to 3, which plays nothing. Later they raise her to 4 again, and the
+burst plays again. On another screen with "reduce motion" on, the same
+level-up just changes the number to 4.
 
 ## Rules (from the rulebook)
 - Level 4 is the maximum; a hero reaching a new level picks a new power
