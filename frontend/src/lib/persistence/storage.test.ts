@@ -78,14 +78,15 @@ const p2InitiativeDraft: DraftState = {
  * 8, intent/11; `stoneTokens` before schema 9, intent/12; `chillTokens`
  * before schema 10, intent/13; `favoredEnemy` before schema 12,
  * intent/15; the Artifact flags, ARTIFACT_FIELDS, before schema 14,
- * intent/17). */
+ * intent/17). `respawnWindow` is always dropped: no save before schema 17
+ * (intent/24) has it. */
 function withoutHeroFields(team: BattleState["p1"], ...fields: (keyof HeroBattleState)[]) {
   return {
     ...team,
     heroes: Object.fromEntries(
       Object.entries(team.heroes).map(([id, hero]) => {
         const legacy: Partial<HeroBattleState> = { ...hero };
-        for (const field of fields) delete legacy[field];
+        for (const field of [...fields, "respawnWindow" as const]) delete legacy[field];
         return [id, legacy];
       }),
     ),
@@ -404,7 +405,7 @@ describe("saveBattleState / loadBattleState", () => {
     expect(loadBattleState()).toEqual(state);
   });
 
-  describe("schema-1 -> 16 migration (intents 04 + 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-1 -> 17 migration (intents 04 + 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     beforeEach(() => {
       saveDraft(p2InitiativeDraft);
     });
@@ -441,7 +442,7 @@ describe("saveBattleState / loadBattleState", () => {
       const loaded = loadBattleState();
 
       expect(loaded).not.toBeNull();
-      expect(loaded?.schemaVersion).toBe(16);
+      expect(loaded?.schemaVersion).toBe(17);
       expect(loaded?.initiative).toBe("p2");
       expect(loaded?.iceWall).toBeNull();
       expect(loaded?.bearTrap).toBeNull();
@@ -468,7 +469,7 @@ describe("saveBattleState / loadBattleState", () => {
       );
     });
 
-    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 16 on disk", () => {
+    it("saving the migrated result (the real load -> save flow useBattle drives) persists schema 17 on disk", () => {
       persistRawSchema1(
         { "agatha-trunch": { hp: 10, level: 1 } },
         { baldwin: { hp: 9, level: 1 } },
@@ -480,7 +481,7 @@ describe("saveBattleState / loadBattleState", () => {
 
       const raw = window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY);
       const parsed = JSON.parse(raw as string);
-      expect(parsed.schemaVersion).toBe(16);
+      expect(parsed.schemaVersion).toBe(17);
       expect(parsed.initiative).toBe("p2");
       expect(parsed.iceWall).toBeNull();
       expect(parsed.bearTrap).toBeNull();
@@ -495,10 +496,11 @@ describe("saveBattleState / loadBattleState", () => {
       expect(parsed.p1.heroes["agatha-trunch"].stoneTokens).toBe(0);
       expect(parsed.p1.heroes["agatha-trunch"].chillTokens).toBe(0);
       expect(parsed.p1.heroes["agatha-trunch"].favoredEnemy).toBe(false);
+      expect(parsed.p1.heroes["agatha-trunch"].respawnWindow).toBeNull();
     });
   });
 
-  describe("schema-2 -> 16 migration (intents 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-2 -> 17 migration (intents 05 + 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema2(state: BattleState) {
       const { initiative: _omitted, ...rest } = withoutIceWall(state);
       void _omitted;
@@ -556,9 +558,9 @@ describe("saveBattleState / loadBattleState", () => {
       // v6 -> v7, v7 -> v8, v8 -> v9, v9 -> v10, v11 -> v12 and v13 -> v14
       // steps add back to the stripped schema-2 payload (v10 -> v11 only
       // bumps the version), iceWall: null, which v12 -> v13 adds,
-      // bearTrap: null, which v14 -> v15 adds, and Round 1, Orders, which
-      // v15 -> v16 adds.
-      expect(loadBattleState()).toEqual({ ...midBattle, schemaVersion: 16, initiative: "p2" });
+      // bearTrap: null, which v14 -> v15 adds, Round 1, Orders, which
+      // v15 -> v16 adds, and respawnWindow: null, which v16 -> v17 adds.
+      expect(loadBattleState()).toEqual({ ...midBattle, schemaVersion: 17, initiative: "p2" });
     });
 
     it("returns null and clears the key when there's no valid draft to default from", () => {
@@ -577,7 +579,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-3 -> 16 migration (intents 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-3 -> 17 migration (intents 06 + 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema3(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -667,7 +669,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-4 -> 16 migration (intents 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-4 -> 17 migration (intents 07 + 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema4(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -762,7 +764,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-5 -> 16 migration (intents 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-5 -> 17 migration (intents 08 + 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema5(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -856,7 +858,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-6 -> 16 migration (intents 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-6 -> 17 migration (intents 09 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema6(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -950,7 +952,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-7 -> 16 migration (intents 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-7 -> 17 migration (intents 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema7(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -1043,7 +1045,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-8 -> 16 migration (intents 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-8 -> 17 migration (intents 12 + 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema8(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -1136,7 +1138,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-9 -> 16 migration (intents 13 + 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-9 -> 17 migration (intents 13 + 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema9(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -1204,7 +1206,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-10 -> 16 migration (intents 14 + 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-10 -> 17 migration (intents 14 + 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema10(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -1250,7 +1252,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-11 -> 16 migration (intents 15 + 16 + 17 + 18 + 21)", () => {
+  describe("schema-11 -> 17 migration (intents 15 + 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema11(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -1288,6 +1290,7 @@ describe("saveBattleState / loadBattleState", () => {
               battleFistFaceUp: true,
               autoDeflectorFaceUp: true,
               shieldAmuletFaceUp: true,
+              respawnWindow: null,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: ARENA_POSITION },
@@ -1306,7 +1309,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-12 -> 16 migration (intents 16 + 17 + 18 + 21)", () => {
+  describe("schema-12 -> 17 migration (intents 16 + 17 + 18 + 21 + 24)", () => {
     function persistRawSchema12(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -1346,6 +1349,7 @@ describe("saveBattleState / loadBattleState", () => {
               battleFistFaceUp: true,
               autoDeflectorFaceUp: true,
               shieldAmuletFaceUp: true,
+              respawnWindow: null,
             },
           },
           heroPositions: { ...sampleBattleState.p1.heroPositions, [p1HeroId]: ARENA_POSITION },
@@ -1369,7 +1373,7 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-13 -> 16 migration (intents 17 + 18 + 21)", () => {
+  describe("schema-13 -> 17 migration (intents 17 + 18 + 21 + 24)", () => {
     function persistRawSchema13(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
@@ -1426,12 +1430,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-14 -> 16 migration (intents 18 + 21)", () => {
+  describe("schema-14 -> 17 migration (intents 18 + 21 + 24)", () => {
     function persistRawSchema14(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...withoutBearTrap(state),
+          p1: withoutHeroFields(state.p1),
+          p2: withoutHeroFields(state.p2),
           schemaVersion: 14,
           updatedAt: new Date().toISOString(),
         }),
@@ -1481,12 +1487,14 @@ describe("saveBattleState / loadBattleState", () => {
     });
   });
 
-  describe("schema-15 -> 16 migration (intent/21)", () => {
+  describe("schema-15 -> 17 migration (intents 21 + 24)", () => {
     function persistRawSchema15(state: BattleState) {
       window.localStorage.setItem(
         BATTLE_STATE_STORAGE_KEY,
         JSON.stringify({
           ...withoutRoundAndPhase(state),
+          p1: withoutHeroFields(state.p1),
+          p2: withoutHeroFields(state.p2),
           schemaVersion: 15,
           updatedAt: new Date().toISOString(),
         }),
@@ -1513,6 +1521,92 @@ describe("saveBattleState / loadBattleState", () => {
 
     it("still rejects a schema-15 payload whose other fields are invalid", () => {
       persistRawSchema15({ ...sampleBattleState, bearTrap: "not-a-space" as never });
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("schema-16 -> 17 migration (intent/24)", () => {
+    function persistRawSchema16(state: BattleState) {
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({
+          ...state,
+          p1: withoutHeroFields(state.p1),
+          p2: withoutHeroFields(state.p2),
+          schemaVersion: 16,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+    }
+
+    it("upgrades in place with no respawn window, a defeated hero's 0 HP and everything else kept", () => {
+      const p1HeroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
+      const midBattle: BattleState = {
+        ...sampleBattleState,
+        round: 5,
+        phase: "action",
+        p1: {
+          ...sampleBattleState.p1,
+          heroes: {
+            ...sampleBattleState.p1.heroes,
+            [p1HeroId]: { ...sampleBattleState.p1.heroes[p1HeroId], hp: 0 },
+          },
+        },
+      };
+      persistRawSchema16(midBattle);
+
+      const loaded = loadBattleState();
+      expect(loaded).toEqual(midBattle);
+      expect(loaded?.p1.heroes[p1HeroId].respawnWindow).toBeNull();
+    });
+
+    it("still rejects a schema-16 payload whose other fields are invalid", () => {
+      persistRawSchema16({ ...sampleBattleState, round: 0 });
+
+      expect(loadBattleState()).toBeNull();
+      expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("respawn window validation (intent/24)", () => {
+    function withWindow(respawnWindow: unknown): BattleState {
+      const heroId = Object.keys(sampleBattleState.p1.heroes)[0] as HeroId;
+      const hero = sampleBattleState.p1.heroes[heroId];
+      return {
+        ...sampleBattleState,
+        p1: {
+          ...sampleBattleState.p1,
+          heroes: { ...sampleBattleState.p1.heroes, [heroId]: { ...hero, hp: 0, respawnWindow } },
+        },
+      } as BattleState;
+    }
+
+    it.each([
+      ["a range", { from: 4, to: 6 }],
+      ["a single round", { from: 4, to: 4 }],
+      ["open-ended", { from: 7, to: null }],
+    ])("round-trips %s", (_label, respawnWindow) => {
+      const state = withWindow(respawnWindow);
+      saveBattleState(state);
+
+      expect(loadBattleState()).toEqual(state);
+    });
+
+    it.each([
+      ["missing", undefined],
+      ["from 0", { from: 0, to: 2 }],
+      ["a fractional from", { from: 1.5, to: 2 }],
+      ["to before from", { from: 5, to: 4 }],
+      ["a string to", { from: 4, to: "6" }],
+      ["a fractional to", { from: 4, to: 5.5 }],
+      ["not an object", "Round 4–6"],
+    ])("returns null and clears the key when the window is %s", (_label, respawnWindow) => {
+      window.localStorage.setItem(
+        BATTLE_STATE_STORAGE_KEY,
+        JSON.stringify({ ...withWindow(respawnWindow), updatedAt: new Date().toISOString() }),
+      );
 
       expect(loadBattleState()).toBeNull();
       expect(window.localStorage.getItem(BATTLE_STATE_STORAGE_KEY)).toBeNull();
@@ -1861,7 +1955,7 @@ describe("saveBattleState / loadBattleState", () => {
     // split exists to prevent: bumping the battle schema must never make
     // loadDraft() also expect a migration that doesn't exist for drafts.
     it("loadDraft still loads a schema-1 draft after CURRENT_BATTLE_SCHEMA_VERSION has been bumped past 1", () => {
-      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(16);
+      expect(CURRENT_BATTLE_SCHEMA_VERSION).toBe(17);
       saveDraft(midDraftState);
 
       expect(loadDraft()).toEqual(midDraftState);

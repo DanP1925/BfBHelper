@@ -151,6 +151,7 @@ export function BattleTeamPanel({
               onHpChange={(value) => onHeroHpChange(hero.id, value)}
               onLevelChange={(value) => onHeroLevelChange(hero.id, value)}
               canAffordLevelUp={canAffordLevelUp(hero.id, team.gold, heroState.level)}
+              respawnWindow={heroState.respawnWindow}
               tokenPicker={{
                 expanded: openTokenKey === pickerKey,
                 onExpandedChange: (open) => onOpenTokenKeyChange(open ? pickerKey : null),

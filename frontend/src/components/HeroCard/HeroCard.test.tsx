@@ -460,3 +460,40 @@ describe("HeroCard level-up gold (intent/22)", () => {
     expect(screen.getByRole("button", { name: "Increase Ceralin level" })).toBeDisabled();
   });
 });
+
+describe("HeroCard respawn window (intent/24)", () => {
+  function renderWindow(hp: number, respawnWindow?: { from: number; to: number | null } | null) {
+    render(
+      <HeroCard
+        hero={boreas}
+        variant="battle"
+        hp={hp}
+        level={1}
+        onHpChange={vi.fn()}
+        respawnWindow={respawnWindow}
+      />,
+    );
+  }
+
+  const band = () => screen.queryByTitle(/^Boreas respawns /);
+
+  it("shows the window over a defeated hero's portrait", () => {
+    renderWindow(0, { from: 4, to: 6 });
+    expect(band()).toHaveAttribute("title", "Boreas respawns Round 4–6");
+    expect(band()).toHaveTextContent(/^RespawnRound 4–6$/);
+  });
+
+  it("shows the single-round and open-ended forms", () => {
+    renderWindow(0, { from: 7, to: null });
+    expect(band()).toHaveTextContent("Round 7+");
+  });
+
+  it("shows nothing on a standing hero, or a defeated one with no window", () => {
+    renderWindow(5, { from: 4, to: 6 });
+    expect(band()).toBeNull();
+    renderWindow(0, null);
+    expect(band()).toBeNull();
+    renderWindow(0);
+    expect(band()).toBeNull();
+  });
+});

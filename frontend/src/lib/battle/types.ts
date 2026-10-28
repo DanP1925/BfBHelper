@@ -12,6 +12,12 @@ export type BattlePhase = (typeof BATTLE_PHASES)[number];
  * battle/reducer.ts's SET_HERO_POSITION and useBattle.ts's setHeroHp. */
 export type HeroPosition = MapSpaceId | typeof ARENA_POSITION | null;
 
+/** The rounds whose Cleanup is expected to draw a defeated hero's card
+ * (intent/24): `from` at 8 cards a Cleanup, `to` at one card per living
+ * hero. `to` is `null` when no hero was left standing, since the slowest
+ * draw is then 0 cards. */
+export type RespawnWindow = { from: number; to: number | null };
+
 export type StructuresState = {
   top: number;
   middle: number;
@@ -72,6 +78,11 @@ export type HeroBattleState = {
   battleFistFaceUp: boolean;
   autoDeflectorFaceUp: boolean;
   shieldAmuletFaceUp: boolean;
+  /** The respawn window (intent/24), set by useBattle.setHeroHp when HP
+   * reaches 0, and `null` while the hero is standing. Fixed once set:
+   * level changes, phase steps and other heroes' defeats never change it.
+   * Cleared when HP goes back above 0. */
+  respawnWindow: RespawnWindow | null;
 };
 
 /** A per-hero counted token's stored field (intents 06, 11, 12, 13). Each
@@ -106,7 +117,7 @@ export type BattleTeamState = {
 export type IceWallPosition = { xPct: number; yPct: number };
 
 export type BattleState = {
-  schemaVersion: 16;
+  schemaVersion: 17;
   p1: BattleTeamState;
   p2: BattleTeamState;
   /** The board's 3 neutral bonus-gold piles — shared state, not per-team,

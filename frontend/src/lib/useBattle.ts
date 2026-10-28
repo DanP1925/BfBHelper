@@ -5,6 +5,7 @@ import { goldForLevelChange, hpAfterLevelChange } from "./battle/levelUp";
 import { SIDES } from "./battle/constants";
 import { cleanupGoldChange, crossesRound } from "./battle/phase";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
+import { respawnWindow } from "./battle/respawn";
 import { getBattleWinner } from "./battle/selectors";
 import type {
   ArtifactField,
@@ -23,6 +24,8 @@ export type UseBattleResult = {
   state: BattleState | null;
   winner: PlayerId | "draw" | null;
   setGold: (side: PlayerId, value: number) => void;
+  /** Landing on 0 also moves the hero to its respawn area and sets its
+   * respawn window (intent/24); back above 0 clears the window. */
   setHeroHp: (side: PlayerId, heroId: HeroId, value: number) => void;
   /** Also moves HP (intent/19) and pays or refunds the level's gold
    * (intent/22). A no-op if the team can't afford it. */
@@ -172,13 +175,29 @@ export function useBattle(
   // fields, triggered together by this one user action, not a combined
   // reducer action. Raising HP back above 0 afterward does NOT reverse
   // this: respawning is always its own explicit setHeroPosition call.
+  // The same update sets the hero's respawn window (intent/24), from the
+  // team as it is after the defeat, and HP back above 0 clears it. A no-op
+  // returns early, so landing on 0 here always means a new defeat.
   const setHeroHp = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
     setState((prev) => {
       if (prev === null) return prev;
       const afterHp = battleReducer(prev, { type: "SET_HERO_HP", side, heroId, value });
       if (afterHp === prev) return prev;
-      if (afterHp[side].heroes[heroId]?.hp !== 0) return afterHp;
-      return battleReducer(afterHp, { type: "SET_HERO_POSITION", side, heroId, spaceId: null });
+      if (afterHp[side].heroes[heroId]?.hp !== 0) {
+        return battleReducer(afterHp, {
+          type: "SET_HERO_RESPAWN_WINDOW",
+          side,
+          heroId,
+          window: null,
+        });
+      }
+      const afterWindow = battleReducer(afterHp, {
+        type: "SET_HERO_RESPAWN_WINDOW",
+        side,
+        heroId,
+        window: respawnWindow(afterHp[side], afterHp.round),
+      });
+      return battleReducer(afterWindow, { type: "SET_HERO_POSITION", side, heroId, spaceId: null });
     });
   }, []);
 

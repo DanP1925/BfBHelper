@@ -11,8 +11,10 @@ import type {
   CountedTokenField,
   HeroBattleState,
   OnOffTokenField,
+  RespawnWindow,
 } from "../../lib/battle/types";
 import { levelUpCost } from "../../lib/battle/levelUp";
+import { formatRespawnWindow } from "../../lib/battle/respawn";
 import { ARTIFACTS, artifactSummary } from "../artifacts";
 import { ArtifactToggle } from "../ArtifactToggle/ArtifactToggle";
 import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
@@ -65,6 +67,9 @@ type HeroCardProps =
       /** Runika's Artifacts (intent/17). The artifact row renders only when
        * this is provided: the Board passes it on Runika's card alone. */
       artifacts?: HeroCardArtifacts;
+      /** The respawn window (intent/24), shown over the portrait while the
+       * hero is defeated. `null` or left out shows nothing. */
+      respawnWindow?: RespawnWindow | null;
     });
 
 /** Runika's three Artifacts' faces (`true` is face-up) and one setter
@@ -199,8 +204,10 @@ export function HeroCard(props: HeroCardProps) {
       tokenPicker,
       tokens = {},
       artifacts,
+      respawnWindow,
     } = props;
     const isDefeated = hp === 0;
+    const respawnLabel = isDefeated && respawnWindow ? formatRespawnWindow(respawnWindow) : null;
     // Shown only when the team can afford it, so never at level 4 either
     // (intent/22).
     const nextLevelCost = canAffordLevelUp ? levelUpCost(hero.id, level) : null;
@@ -229,6 +236,12 @@ export function HeroCard(props: HeroCardProps) {
               isDefeated ? `${styles.battleToken} ${styles.tokenDefeated}` : styles.battleToken
             }
           />
+          {respawnLabel && (
+            <div className={styles.respawnBand} title={`${hero.name} respawns ${respawnLabel}`}>
+              <span className={styles.respawnLabel}>Respawn</span>
+              <span className={styles.respawnValue}>{respawnLabel}</span>
+            </div>
+          )}
         </div>
         <div className={styles.battleInfo}>
           <div>

@@ -47,6 +47,7 @@ import {
   type PersistedBattleStateV14,
   type PersistedBattleStateV15,
   type PersistedBattleStateV16,
+  type PersistedBattleStateV17,
   type PersistedDraftV1,
   type View,
 } from "./schema";
@@ -248,6 +249,11 @@ const upgradeV14ToV15 = addTopLevelFieldsStep<PersistedBattleStateV15>(15, { bea
  * control). */
 const upgradeV15ToV16 = addTopLevelFieldsStep<PersistedBattleStateV16>(16, BATTLE_START);
 
+/** Schema 16 → 17: every hero gets `respawnWindow: null` (intent/24:
+ * "upgrades in place"; a hero already at 0 HP shows no window until its
+ * next defeat). */
+const upgradeV16ToV17 = addHeroFieldsStep<PersistedBattleStateV17>(17, { respawnWindow: null });
+
 /**
  * Same idea as `migrations` above, for the battle-state payload.
  * `loadPersisted` runs these in order from the stored version up to the
@@ -269,6 +275,7 @@ const battleMigrations: MigrationSteps = {
   13: upgradeV13ToV14,
   14: upgradeV14ToV15,
   15: upgradeV15ToV16,
+  16: upgradeV16ToV17,
 };
 
 function isBrowser(): boolean {
@@ -424,7 +431,8 @@ function hasValidLegacyBattleTeamShape(data: unknown): data is LegacyBattleTeamS
  * each on/off token in `ON_OFF_TOKEN_FIELDS` a boolean (shape only: it doesn't check
  * hero-specific visibility, `HERO_SPECIFIC_TOKENS`), and each Artifact in
  * `ARTIFACT_FIELDS` a boolean (shape only: any hero may hold a face-down
- * one, though only Runika's are ever flipped), and every one of those
+ * one, though only Runika's are ever flipped), each `respawnWindow` `null`
+ * or a valid window (`isValidRespawnWindow`), and every one of those
  * hero ids also has a `heroPositions` entry that's either `null`, `"arena"`
  * or a real map-space id (shape only: it doesn't check who may be in the
  * Arena, `canEnterArena`).
@@ -447,6 +455,7 @@ function hasValidBattleTeamShape(data: unknown): data is BattleTeamState {
     for (const field of [...ON_OFF_TOKEN_FIELDS, ...ARTIFACT_FIELDS]) {
       if (typeof hv[field] !== "boolean") return false;
     }
+    if (!isValidRespawnWindow(hv.respawnWindow)) return false;
     if (!(heroId in positions)) return false;
     const position = positions[heroId];
     if (position !== null && position !== ARENA_POSITION && !isMapSpaceIdLike(position)) {
@@ -483,7 +492,18 @@ function isValidPhase(value: unknown): boolean {
   return (BATTLE_PHASES as readonly unknown[]).includes(value);
 }
 
-function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV16 {
+/** `null` (standing) or a window of whole rounds (intent/24): `from` from
+ * 1, and `to` `null` (no hero was left standing) or no earlier than
+ * `from`. Shape only: it doesn't check the hero is at 0 HP. */
+function isValidRespawnWindow(value: unknown): boolean {
+  if (value === null) return true;
+  if (typeof value !== "object") return false;
+  const { from, to } = value as Record<string, unknown>;
+  if (!isValidRound(from)) return false;
+  return to === null || (Number.isInteger(to) && (to as number) >= (from as number));
+}
+
+function isValidPersistedBattleState(data: unknown): data is PersistedBattleStateV17 {
   if (typeof data !== "object" || data === null) return false;
 
   const candidate = data as Record<string, unknown>;
@@ -666,7 +686,7 @@ export function loadDraft(): DraftState | null {
 export function saveBattleState(state: BattleState): void {
   if (!isBrowser()) return;
 
-  const payload: PersistedBattleStateV16 = {
+  const payload: PersistedBattleStateV17 = {
     schemaVersion: CURRENT_BATTLE_SCHEMA_VERSION,
     p1: state.p1,
     p2: state.p2,
@@ -699,7 +719,7 @@ export function loadBattleState(): BattleState | null {
   if (data === null) return null;
 
   return {
-    schemaVersion: 16,
+    schemaVersion: 17,
     p1: data.p1,
     p2: data.p2,
     goldPiles: data.goldPiles,
