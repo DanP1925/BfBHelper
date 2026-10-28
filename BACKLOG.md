@@ -70,8 +70,12 @@ error, manual control where it keeps the table in charge.
   each was designed on its own. Review the Board's token row and picker, colors
   and icons, the Map's status panel and Runika's Artifacts for one consistent
   look.
-- `Triage` **A board-game, high-fantasy look.** The app doesn't feel like a board
-  game or like Biternia's medieval world. Give every screen a theme that does.
+- `Triage` **Give the Draft screen the JRPG look.** The Battle Board and Map now
+  look like the hero cards and map (intent 28), but the Draft screen keeps the
+  old look. Players see both looks in one game.
+- `Triage` **Give the Start, Results and Win screens the JRPG look.** They still
+  have the old look from before intent 28. Theme them too so the whole app
+  matches the game.
 - `Triage` **Hide an empty respawn area on the Map.** It takes room even when no
   hero is defeated. It still has to show at battle start and as a drop target
   while dragging.
@@ -79,14 +83,10 @@ error, manual control where it keeps the table in charge.
   space under the board. Move them somewhere else so the board can grow.
 - `Triage` **Auto-focus the Map's camera.** Have the camera move on its own to where
   the action is, instead of only by hand.
-- `Triage` **Defeat and destruction animations.** Animate a hero's defeat and a
-  Tower's or Bit's destruction.
 - `Triage` **Coin-flip animation at draft start.** Show the initiative coin flip
   instead of just stating the result.
 - `Triage` **Turn-passing animation in the draft.** Animate the turn banner and team
   highlight when the pick passes to the other player.
-- `Triage` **Level 4 animation.** Animate a hero reaching level 4, the max level,
-  so the moment stands out on the Board.
 
 ### Done
 
@@ -108,3 +108,11 @@ error, manual control where it keeps the table in charge.
 - `Done` **Show each defeated hero's respawn window.** A defeated hero shows the
   rounds in which its card can come back, estimated from the deck. It replaced the
   idea of showing the round it fell (v1.7.0).
+- `Done` **Level 4 animation.** A Board hero card plays a short burst in its
+  team's color when the hero reaches level 4, the max level (v1.8.0).
+- `Done` **Defeat and destruction animations.** A hero's portrait, or a Tower's or
+  Bit's icon, animates into its gray look when its HP reaches 0 on the Board
+  (v1.9.0).
+- `Done` **A 16-bit JRPG look for the Board and Map.** The Battle Board and Battle
+  Map now look like the hero cards and map: gold frames, dark stone boxes and pixel
+  lettering. It replaced the idea of a board-game, high-fantasy look (v1.10.0).
