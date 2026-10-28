@@ -98,3 +98,66 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
+
+/* JRPG theme (intent/28): the hero cards' gold frame, with a gem in each
+   top corner. The border grows by 2px and the padding gives them back, so
+   the panel keeps its size; the gems sit in the Board's gutter. */
+:global([data-theme="jrpg"]) .panel {
+  position: relative;
+  border: 3px solid var(--jr-gold);
+  border-top-color: var(--jr-gold-light);
+  border-bottom-color: var(--jr-gold-dark);
+  border-radius: 0;
+  padding: 18px;
+  box-shadow: var(--jr-frame-shadow);
+}
+
+:global([data-theme="jrpg"]) .panel::before,
+:global([data-theme="jrpg"]) .panel::after {
+  content: "";
+  position: absolute;
+  top: -9px;
+  width: 14px;
+  height: 14px;
+  background: var(--jr-gem);
+  border: 2px solid var(--jr-gold-dark);
+  box-shadow: var(--jr-gem-shadow);
+}
+
+:global([data-theme="jrpg"]) .panel::before {
+  left: -9px;
+}
+
+:global([data-theme="jrpg"]) .panel::after {
+  right: -9px;
+}
+
+:global([data-theme="jrpg"]) .headerLabel {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-shadow: 2px 2px 0 var(--jr-ink);
+}
+
+:global([data-theme="jrpg"]) .sectionLabel {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-shadow: 1px 1px 0 var(--jr-ink);
+}
+
+/* Stone plates, in place of the pills. */
+:global([data-theme="jrpg"]) .pill {
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-radius: 0;
+  box-shadow: var(--jr-plate-shadow);
+}
+
+:global([data-theme="jrpg"]) .levelBadge {
+  padding: 5px 11px;
+}
+
+:global([data-theme="jrpg"]) .goldBadge {
+  padding: 3px 11px 3px 3px;
+}

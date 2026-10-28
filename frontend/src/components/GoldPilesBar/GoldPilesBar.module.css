@@ -23,3 +23,19 @@
   font-size: 0.75rem;
   color: var(--color-muted);
 }
+
+/* JRPG theme (intent/28): a stone plate. Border +1, padding −1, so the bar
+   keeps its size. */
+:global([data-theme="jrpg"]) .bar {
+  padding: 11px 19px;
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-radius: 0;
+  box-shadow: var(--jr-plate-shadow);
+}
+
+:global([data-theme="jrpg"]) .label {
+  font-family: var(--font-heading);
+  letter-spacing: 0.04em;
+}

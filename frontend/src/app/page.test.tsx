@@ -153,6 +153,35 @@ describe("Home", () => {
     expect(screen.getByRole("button", { name: "Zoom out" })).toBeEnabled();
   });
 
+  describe("the JRPG theme (intent/28)", () => {
+    // jsdom applies no CSS, so these check the switch every themed rule keys
+    // on; the look itself is checked in the browser.
+    const themedRoots = () => document.querySelectorAll('[data-theme="jrpg"]');
+
+    it("themes the Battle Board and the Battle Map", () => {
+      saveBattleState(seedDoneDraft());
+      saveView("battle");
+      render(<Home />);
+      expect(themedRoots()).toHaveLength(1);
+      // The top bar renders inside the themed root.
+      expect(themedRoots()[0]).toContainElement(screen.getByRole("button", { name: "Map" }));
+
+      fireEvent.click(screen.getByRole("button", { name: "Map" }));
+      expect(themedRoots()).toHaveLength(1);
+      expect(themedRoots()[0]).toContainElement(screen.getByRole("button", { name: "Zoom in" }));
+    });
+
+    it("leaves the Start screen and the Draft unthemed", () => {
+      const { unmount } = render(<Home />);
+      expect(themedRoots()).toHaveLength(0);
+      unmount();
+
+      saveDraft({ initiative: "p1", picks: { p1: [], p2: [] } });
+      render(<Home />);
+      expect(themedRoots()).toHaveLength(0);
+    });
+  });
+
   it("starts a new battle with initiative on the draft's coin-flip winner", () => {
     seedDoneDraft();
     saveView("battle");

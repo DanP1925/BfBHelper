@@ -125,3 +125,55 @@
   font-weight: 700;
   color: var(--color-text);
 }
+
+/* JRPG theme (intent/28): the cards' gold frame, a size down from the
+   Board's team panels, with a small gem in each top corner. Border +1,
+   padding −1, so the panel keeps its size. */
+:global([data-theme="jrpg"]) .panel {
+  position: relative;
+  padding: 13px 11px;
+  border: 2px solid var(--jr-gold);
+  border-top-color: var(--jr-gold-light);
+  border-bottom-color: var(--jr-gold-dark);
+  border-radius: 0;
+  box-shadow: 0 0 0 2px var(--jr-ink);
+}
+
+:global([data-theme="jrpg"]) .panel::before,
+:global([data-theme="jrpg"]) .panel::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 10px;
+  height: 10px;
+  background: var(--jr-gem);
+  border: 2px solid var(--jr-gold-dark);
+  box-shadow:
+    0 0 0 1px var(--jr-ink),
+    inset -2px -2px 0 var(--jr-gem-dark);
+}
+
+:global([data-theme="jrpg"]) .panel::before {
+  left: -7px;
+}
+
+:global([data-theme="jrpg"]) .panel::after {
+  right: -7px;
+}
+
+:global([data-theme="jrpg"]) .headerLabel {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-shadow: 1px 1px 0 var(--jr-ink);
+}
+
+:global([data-theme="jrpg"]) .sectionLabel {
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+}
+
+/* Numbers stay in the clean font (intent's "Readability wins over flavor"). */
+:global([data-theme="jrpg"]) .respawnWindow {
+  font-family: var(--font-body);
+}

@@ -20,3 +20,9 @@
   outline: 2px solid var(--token-accent);
   outline-offset: 2px;
 }
+
+/* JRPG theme (intent/28): a square pixel chip, in the same accent. Runika's
+   Artifacts compose this rule, so they square off too. */
+:global([data-theme="jrpg"]) .toggle {
+  border-radius: 0;
+}

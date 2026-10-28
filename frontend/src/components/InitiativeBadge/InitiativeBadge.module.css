@@ -42,3 +42,19 @@
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+
+/* JRPG theme (intent/28): a square plate, its 2px border in the holder's
+   team color (padding −1, the same 32px tall). */
+:global([data-theme="jrpg"]) .badge {
+  padding: 0 13px;
+  background: var(--jr-well);
+  border-width: 2px;
+  border-radius: 0;
+  box-shadow: var(--jr-plate-shadow);
+}
+
+:global([data-theme="jrpg"]) .name {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+}

@@ -39,3 +39,10 @@
   white-space: nowrap;
   pointer-events: none;
 }
+
+/* JRPG theme (intent/28): the token stays round, like the physical token it
+   stands for; its name label becomes a square ink plate. */
+:global([data-theme="jrpg"]) .label {
+  border-radius: 0;
+  background: rgb(10 8 16 / 0.85);
+}

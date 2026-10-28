@@ -73,3 +73,49 @@
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+
+/* JRPG theme (intent/28): a dialog window framed like the team panels,
+   Cancel as a raised key and the confirm button as a gold bar. */
+:global([data-theme="jrpg"]) .backdrop {
+  background: rgb(8 6 14 / 0.7);
+}
+
+:global([data-theme="jrpg"]) .panel {
+  border: 3px solid var(--jr-gold);
+  border-top-color: var(--jr-gold-light);
+  border-bottom-color: var(--jr-gold-dark);
+  border-radius: 0;
+  box-shadow:
+    var(--jr-frame-shadow),
+    0 10px 28px rgb(0 0 0 / 0.55);
+}
+
+:global([data-theme="jrpg"]) .title {
+  color: var(--jr-gold);
+  font-weight: 700;
+  text-shadow: 2px 2px 0 var(--jr-ink);
+}
+
+:global([data-theme="jrpg"]) .cancelButton,
+:global([data-theme="jrpg"]) .confirmButton {
+  font-family: var(--font-heading);
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .cancelButton {
+  color: var(--color-text);
+  background: var(--jr-key-bg);
+  border-color: var(--jr-ink);
+  box-shadow: var(--jr-key-shadow);
+}
+
+:global([data-theme="jrpg"]) .cancelButton:hover {
+  background: var(--jr-key-bg-hover);
+}
+
+:global([data-theme="jrpg"]) .confirmButton {
+  color: var(--jr-on-gold);
+  background: var(--jr-gold);
+  border-color: var(--jr-ink);
+  box-shadow: var(--jr-bar-shadow);
+}

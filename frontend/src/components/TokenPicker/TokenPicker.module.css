@@ -92,3 +92,24 @@
   flex-shrink: 0;
   color: var(--token-accent);
 }
+
+/* JRPG theme (intent/28): a square "+", and the popover in a small gold
+   frame. The popover is position: fixed, so its border costs no room. */
+:global([data-theme="jrpg"]) .add,
+:global([data-theme="jrpg"]) .option {
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .popover {
+  border: 2px solid var(--jr-gold);
+  border-top-color: var(--jr-gold-light);
+  border-bottom-color: var(--jr-gold-dark);
+  border-radius: 0;
+  box-shadow:
+    0 0 0 2px var(--jr-ink),
+    0 10px 28px rgb(0 0 0 / 0.55);
+}
+
+:global([data-theme="jrpg"]) .option:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--jr-gold) 10%, transparent);
+}
