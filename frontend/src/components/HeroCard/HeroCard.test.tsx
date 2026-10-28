@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getHeroById } from "../../data/heroes";
 import type { CountedTokenField } from "../../lib/battle/types";
 import type { HeroId } from "../../lib/draft/types";
+import { installFakeAnimations, type FakeAnimations } from "../../test/fakeAnimations";
+import { stubMatchMedia } from "../../test/stubMatchMedia";
 import { HeroCard } from "./HeroCard";
 
 const boreas = getHeroById("boreas");
@@ -458,6 +460,46 @@ describe("HeroCard level-up gold (intent/22)", () => {
     renderLevel("ceralin", 4, false);
     expect(cost()).toBeNull();
     expect(screen.getByRole("button", { name: "Increase Ceralin level" })).toBeDisabled();
+  });
+});
+
+describe("HeroCard level 4 burst (intent/26)", () => {
+  let fakes: FakeAnimations;
+  beforeEach(() => {
+    fakes = installFakeAnimations();
+    stubMatchMedia(false);
+  });
+  afterEach(() => fakes.restore());
+
+  function BoardCard({ level, hp = 8 }: { level: number; hp?: number }) {
+    return (
+      <HeroCard
+        hero={boreas}
+        variant="battle"
+        hp={hp}
+        level={level}
+        onLevelChange={vi.fn()}
+        side="p1"
+      />
+    );
+  }
+
+  it("plays on a Board card going from 3 to 4", () => {
+    const { rerender } = render(<BoardCard level={3} />);
+    rerender(<BoardCard level={4} />);
+    expect(fakes.animations.length).toBeGreaterThan(0);
+  });
+
+  it("plays on a defeated hero too", () => {
+    const { rerender } = render(<BoardCard level={3} hp={0} />);
+    rerender(<BoardCard level={4} hp={0} />);
+    expect(fakes.animations.length).toBeGreaterThan(0);
+  });
+
+  it("never plays on the Win Screen's read-only cards", () => {
+    const { rerender } = render(<HeroCard hero={boreas} variant="battle" hp={8} level={3} />);
+    rerender(<HeroCard hero={boreas} variant="battle" hp={8} level={4} />);
+    expect(fakes.animations).toHaveLength(0);
   });
 });
 

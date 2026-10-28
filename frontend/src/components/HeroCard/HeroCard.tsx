@@ -1,5 +1,5 @@
-import { Fragment, type ReactNode } from "react";
-import type { Hero } from "../../lib/draft/types";
+import { Fragment, useRef, type ReactNode } from "react";
+import type { Hero, PlayerId } from "../../lib/draft/types";
 import {
   HERO_COUNTED_TOKEN_CEILINGS,
   HERO_HP_CEILING,
@@ -23,6 +23,7 @@ import { TokenChip } from "../TokenChip/TokenChip";
 import { TokenPicker, type TokenPickerOption } from "../TokenPicker/TokenPicker";
 import { TokenToggle } from "../TokenToggle/TokenToggle";
 import styles from "./HeroCard.module.css";
+import { useLevelFourBurst } from "./useLevelFourBurst";
 
 type HeroCardCommonProps = {
   hero: Hero;
@@ -70,6 +71,10 @@ type HeroCardProps =
       /** The respawn window (intent/24), shown over the portrait while the
        * hero is defeated. `null` or left out shows nothing. */
       respawnWindow?: RespawnWindow | null;
+      /** The card's team, for the level-4 burst's color (intent/26). Only
+       * read with `onLevelChange`: the Battle Board passes both, so the
+       * Win Screen's cards never play it. */
+      side?: PlayerId;
     });
 
 /** Runika's three Artifacts' faces (`true` is face-up) and one setter
@@ -178,6 +183,13 @@ function toggleEntry(
 export function HeroCard(props: HeroCardProps) {
   const { hero, variant, onClick } = props;
   const altText = `${hero.name}, ${hero.className}`;
+  const battleCardRef = useRef<HTMLDivElement>(null);
+  // Called before the variant branches so the hook order never changes.
+  useLevelFourBurst(
+    battleCardRef,
+    variant === "battle" ? props.level : undefined,
+    variant === "battle" && props.onLevelChange ? props.side : undefined,
+  );
 
   if (variant === "pool") {
     return (
@@ -226,7 +238,7 @@ export function HeroCard(props: HeroCardProps) {
       return toggle ? [toggleEntry(token, toggle, hero.name)] : [];
     });
     return (
-      <div className={styles.battleCard}>
+      <div ref={battleCardRef} className={styles.battleCard}>
         <div className={styles.battleTokenWrapper}>
           {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
           <img
