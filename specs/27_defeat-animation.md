@@ -1,7 +1,6 @@
 # Spec 27: Defeat Animation
 
-> **DRAFT.** Architecture for intent 27's scope. Build-out has not started
-> yet. See [../intent/27_defeat-animation.md](../intent/27_defeat-animation.md)
+> **BUILT.** Architecture for intent 27's scope, all built in one PR. See [../intent/27_defeat-animation.md](../intent/27_defeat-animation.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -49,33 +48,38 @@
 - **`useTransitionAnimation`** (new, `frontend/src/lib/useTransitionAnimation.ts`),
   extracted from spec 26's `useLevelFourBurst`:
   ```ts
-  /** Plays `play(element)` when `value` changes in a way `plays` accepts,
-   * and cancels the running animation when it changes in a way `cancels`
-   * accepts. Never on mount: the previous value starts at the mounted one.
-   * Reads `motionAllowed()` when an animation would start. */
+  /** Plays an animation when `value` changes in a way `plays` accepts.
+   * Never on mount. Any other change of `value`, and unmounting, cancels
+   * whatever is still running. Reads `motionAllowed()` when an animation
+   * would start. */
   export function useTransitionAnimation<T>(options: {
     elementRef: RefObject<HTMLElement | null>;
     value: T;
     enabled: boolean;
     plays: (previous: T, next: T) => boolean;
-    cancels: (previous: T, next: T) => boolean;
-    play: (element: HTMLElement) => Animation;
+    play: (element: HTMLElement) => Animation[];
   }): void;
   ```
   - **A `previousRef`** starts at the mounted value. A layout effect on
     `[value]` compares it with the new value, then stores the new one. A
     layout effect, so an animation's first frame is in place before the
     re-render is painted.
-  - **`plays`, `enabled` and `motionAllowed()`:** cancel any running
-    animation, then start a new one.
-  - **`cancels`:** cancel the running animation.
-  - **Unmount:** cancel the running animation.
+  - **Any change of `value` cancels** what's running, as spec 26's hook
+    already did. Then, with `plays`, `enabled`, the element and
+    `motionAllowed()`, it starts the new animations. There's no separate
+    `cancels` rule (drafted here first, dropped in the build): a running
+    defeat means HP is 0, so any change leaves 0 and cancels it.
+  - **`play` returns `Animation[]`**, since the level-4 burst runs two, on
+    the card and on its level `<output>`.
+  - **The callbacks are read through a latest-value ref**, so callers pass
+    inline functions without re-running the effect: only `value` drives it.
+  - **Unmount:** cancel the running animations.
   - **`motionAllowed()` is read when an animation would start**, as in
     specs 10 and 26, so a change to the OS setting takes effect on the
     next one.
   - `useLevelFourBurst` keeps its signature and tests, and becomes a thin
-    wrapper: `plays` is 3 to 4, `cancels` is 4 to 3, `enabled` is
-    `side !== undefined`.
+    wrapper: `plays` is 3 to 4, `enabled` is `side !== undefined`, and
+    `play` reads the team color and calls its existing `playBurst`.
 - **`useDefeatAnimation(imageRef, hp, enabled, kind)`** (new,
   `frontend/src/lib/useDefeatAnimation.ts`, next to `motion.ts`, since two
   components share it):
@@ -96,8 +100,9 @@
   - **`plays`:** above 0 to 0. A hero defeated again after a respawn
     plays it again, and so does a mistaken 0 (intent's Scope). A fast 1
     to 0 to 1 to 0 cancels the first and plays a second.
-  - **`cancels`:** 0 to above 0. The gray class is already gone, so the
-    image shows in color at once (intent's "No reverse animation").
+  - **0 to above 0 cancels it**, as any change does. The gray class is
+    already gone, so the image shows in color at once (intent's "No
+    reverse animation").
   - **`play`:** the hero or structure keyframes (see Defeat Logic), by
     `kind`.
   - With reduced motion, nothing plays and the gray look just appears
@@ -145,17 +150,27 @@
 | above 0 | 0, reduced motion on | no | nothing: the gray look just appears |
 | above 0 | 0, Win Screen card | no | nothing (`enabled` false; it never re-renders with new HP anyway) |
 
-- **Starting motions**, as drawn on the canvas, tuned in the browser (see
-  UI Design Reference and Open Items):
-  - **Hero, a hit** (`HERO_DEFEAT_MS`): over the first ~30%, the portrait
-    brightens and tints toward red (`filter: brightness(1.6) sepia(1)
-    hue-rotate(-30deg) saturate(4)`), with a small horizontal shake
-    (`translateX` ±3px). Then the `filter` eases into the gray look.
+- **The motions**, as drawn on the canvas (see UI Design Reference),
+  exported from `useDefeatAnimation.ts` as `HERO_DEFEAT_KEYFRAMES` and
+  `STRUCTURE_DEFEAT_KEYFRAMES`:
+  - **Hero, a hit** (`HERO_DEFEAT_MS`): over the first 30%, the portrait
+    brightens and tints toward red (brightness 1.6, sepia 1, hue-rotate
+    -30deg, saturate 4), with a small horizontal shake (`translateX`
+    ±3px). Then the `filter` eases into the gray look.
   - **Structure, a collapse** (`STRUCTURE_DEFEAT_MS`): the icon rumbles
-    (a few quick `translateX` ±2px steps), then sinks and squashes
+    (four `translateX` ±2px steps), then sinks and squashes
     (`translateY(4px) scaleY(0.8)`) while the `filter` darkens into the
-    gray look, and springs back to its normal shape at the end.
-  - **Both end on `grayscale(1) brightness(0.6)`**, the exact value of
+    gray look, and springs back to its normal shape at the end. The icon's
+    CSS sets `transform-origin: 50% 100%`, so it squashes from its base.
+  - **Every keyframe's `filter` lists the same five functions**, in the
+    same order (`filterOf`: grayscale, brightness, sepia, hue-rotate,
+    saturate, each at its identity unless set). A browser only blends two
+    filters whose lists match, and otherwise flips from one to the other
+    halfway: with the red hit as `brightness sepia hue-rotate saturate`
+    and the gray as `grayscale brightness`, the gray snapped in at the
+    midpoint instead of fading. Found sampling frames in the browser.
+  - **Both end on `grayscale(1) brightness(0.6)`** (plus the other three
+    functions at their identity, which look the same), the value of
     `.tokenDefeated` and `.iconDestroyed`, and on `transform: none`, so
     the end of the animation matches the class with no jump.
   - Easing per keyframe segment, as in spec 10's slot reveal, so the hit
@@ -204,7 +219,9 @@ Defeat Logic with their timings:
   darkening), After at 700ms (gray destroyed look).
 
 Version 114 also turns the Bit gray at 0 HP on the "Battle Board"
-artboard, like the Towers (intent's Scope).
+artboard, like the Towers (intent's Scope). Version 116 makes the
+artboard's gray fade in rather than snap, matching the app (see Defeat
+Logic).
 
 This is a prototype for visual direction only, the same caveat as
 earlier intents' references. If a revised canvas supersedes these
@@ -217,32 +234,30 @@ infra.
 ## Open Items for Implementation
 - ~~Draw the "Battle Board — Defeat Animation" artboard on the canvas,
   then rewrite UI Design Reference to match.~~ **Decided:** done in
-  version 114, with the starting motions as written. Check them in the
-  browser and adjust the artboard if they read too weak or too loud,
-  including `HERO_DEFEAT_MS` and `STRUCTURE_DEFEAT_MS`.
-- When building, check that spec 26 shipped as written: if
-  `useLevelFourBurst`'s mechanism ended up different, extract what it
-  actually does into `useTransitionAnimation`.
-- Check in the browser at 1280x800 and 2560x1440 (`/qa-screens`) that the
-  hit reads on the 80x120 portrait and the collapse on the 36px structure
-  icon, and that tapping + on the HP stepper mid-animation brings the
-  color back at once.
-- Tests:
-  - `useTransitionAnimation.test.tsx`, with `element.animate` and
-    `matchMedia` faked as in `useDraftPickAnimation.test.tsx`
-    (`test/fakeAnimations.ts`): plays on an accepted change, never on
-    mount, cancels on a `cancels` change, cancels and restarts on a
-    second `plays` change, nothing with reduced motion or `enabled`
-    false, cancels on unmount. `useLevelFourBurst.test.tsx` keeps passing
-    unchanged.
-  - `useDefeatAnimation.test.tsx`: 1 to 0 plays once; 0 to 3 cancels; 3
-    to 2 plays nothing; `"hero"` and `"structure"` play different
-    keyframes; each motion's last keyframe has the gray look's `filter`
-    and no transform.
-  - `HeroCard.test.tsx`: a Board card re-rendered from HP 1 to 0 calls
-    `animate` on the portrait; the Win Screen's read-only card doesn't.
-  - `StructureSlot` test (new, or in `BattleTeamPanel`'s): the Bit at 0
-    HP has the destroyed class, like a Tower; a slot re-rendered from 1
-    to 0 calls `animate` on its icon.
-  - No e2e change: Playwright can't easily assert motion, and HP to 0 is
-    already covered by the existing battle e2e tests.
+  version 114, with the motions as written.
+- ~~When building, check that spec 26 shipped as written.~~ **Decided:**
+  it had one difference: `useLevelFourBurst` cancels on any level change,
+  not only 4 to 3, and runs two animations. `useTransitionAnimation`
+  follows what shipped: no `cancels` rule, and `play` returns
+  `Animation[]` (see State Management).
+- ~~Check in the browser at 1280x800 and 2560x1440 that the hit reads on
+  the 80x120 portrait and the collapse on the 36px structure icon, and
+  that tapping + on the HP stepper mid-animation brings the color back at
+  once.~~ **Decided:** both read, and the 600 / 700ms durations are kept.
+  Sampled frame by frame on the real Board (each animation paused and
+  seeked): the hit, the rumble, the sink and the gray all land as on the
+  canvas, once the filter lists were made to match (see Defeat Logic).
+  Pressing + mid-collapse leaves no running animation and the icon in
+  color. A reload and a Board/Map switch replay nothing, reduced motion
+  plays nothing, and the level-4 burst still plays. The Board fits at
+  1280x800 and 2560x1440, and the Bit keeps its team border when gray.
+- ~~Tests.~~ **Decided:** `useTransitionAnimation.test.tsx`,
+  `useDefeatAnimation.test.tsx` (including the matching filter lists),
+  `StructureSlot.test.tsx`, and a "HeroCard defeat animation" block in
+  `HeroCard.test.tsx`. `useLevelFourBurst.test.tsx` passes unchanged. No
+  e2e change: Playwright can't easily assert motion, and HP to 0 is
+  already covered by the existing battle e2e tests.
+- ~~The canvas's CSS loops used the same mismatched filter lists, so
+  their gray snapped in rather than faded.~~ **Decided:** fixed in
+  version 116, with the same five functions in every keyframe, as in the
+  app.

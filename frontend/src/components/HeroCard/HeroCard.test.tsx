@@ -503,6 +503,58 @@ describe("HeroCard level 4 burst (intent/26)", () => {
   });
 });
 
+describe("HeroCard defeat animation (intent/27)", () => {
+  let fakes: FakeAnimations;
+  beforeEach(() => {
+    fakes = installFakeAnimations();
+    stubMatchMedia(false);
+  });
+  afterEach(() => fakes.restore());
+
+  function BoardCard({ hp, level = 3 }: { hp: number; level?: number }) {
+    return (
+      <HeroCard
+        hero={boreas}
+        variant="battle"
+        hp={hp}
+        level={level}
+        onHpChange={vi.fn()}
+        onLevelChange={vi.fn()}
+        side="p1"
+      />
+    );
+  }
+
+  const onPortrait = () => fakes.animationsOn((element) => element.tagName === "IMG");
+
+  it("plays on the portrait when a Board card's HP reaches 0", () => {
+    const { rerender } = render(<BoardCard hp={1} />);
+    rerender(<BoardCard hp={0} />);
+    expect(onPortrait()).toHaveLength(1);
+    expect(fakes.animations).toHaveLength(1);
+  });
+
+  it("plays nothing on a card mounted at 0 HP", () => {
+    render(<BoardCard hp={0} />);
+    expect(fakes.animations).toHaveLength(0);
+  });
+
+  it("never plays on the Win Screen's read-only cards", () => {
+    const { rerender } = render(<HeroCard hero={boreas} variant="battle" hp={1} level={1} />);
+    rerender(<HeroCard hero={boreas} variant="battle" hp={0} level={1} />);
+    expect(fakes.animations).toHaveLength(0);
+  });
+
+  it("doesn't touch a running level 4 burst", () => {
+    const { rerender } = render(<BoardCard hp={1} level={3} />);
+    rerender(<BoardCard hp={1} level={4} />);
+    const burst = [...fakes.animations];
+    rerender(<BoardCard hp={0} level={4} />);
+    expect(burst.every((animation) => animation.state === "running")).toBe(true);
+    expect(onPortrait()).toHaveLength(1);
+  });
+});
+
 describe("HeroCard respawn window (intent/24)", () => {
   function renderWindow(hp: number, respawnWindow?: { from: number; to: number | null } | null) {
     render(

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
+import type { RefObject } from "react";
 import { HERO_MAX_LEVEL } from "../../lib/battle/constants";
 import type { PlayerId } from "../../lib/draft/types";
-import { LEVEL_FOUR_BURST_MS, motionAllowed } from "../../lib/motion";
+import { LEVEL_FOUR_BURST_MS } from "../../lib/motion";
+import { useTransitionAnimation } from "../../lib/useTransitionAnimation";
 
 /** Starts the burst's two animations: a ring and glow in `color` on the
  * card, and a pop on its level value. Both end in the card's normal look,
@@ -67,38 +68,16 @@ export function useLevelFourBurst(
   level: number | undefined,
   side: PlayerId | undefined,
 ): void {
-  const previousLevelRef = useRef(level);
-  const runningRef = useRef<Animation[]>([]);
-
-  useLayoutEffect(() => {
-    const previous = previousLevelRef.current;
-    previousLevelRef.current = level;
-    if (previous === level) return;
-
-    for (const animation of runningRef.current) animation.cancel();
-    runningRef.current = [];
-
-    const card = cardRef.current;
-    if (
-      previous !== HERO_MAX_LEVEL - 1 ||
-      level !== HERO_MAX_LEVEL ||
-      side === undefined ||
-      card === null ||
-      !motionAllowed()
-    ) {
-      return;
-    }
-    const color =
-      getComputedStyle(document.documentElement).getPropertyValue(`--color-${side}`).trim() ||
-      "currentColor";
-    runningRef.current = playBurst(card, color);
-  }, [cardRef, level, side]);
-
-  useEffect(() => {
-    const running = runningRef;
-    return () => {
-      for (const animation of running.current) animation.cancel();
-      running.current = [];
-    };
-  }, []);
+  useTransitionAnimation({
+    elementRef: cardRef,
+    value: level,
+    enabled: side !== undefined,
+    plays: (previous, next) => previous === HERO_MAX_LEVEL - 1 && next === HERO_MAX_LEVEL,
+    play: (card) => {
+      const color =
+        getComputedStyle(document.documentElement).getPropertyValue(`--color-${side}`).trim() ||
+        "currentColor";
+      return playBurst(card, color);
+    },
+  });
 }

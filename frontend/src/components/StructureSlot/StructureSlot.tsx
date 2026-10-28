@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { useDefeatAnimation } from "../../lib/useDefeatAnimation";
 import { NumberStepper } from "../NumberStepper/NumberStepper";
 import styles from "./StructureSlot.module.css";
 
@@ -17,16 +19,16 @@ type StructureSlotProps = {
    * structure. Defaults to the ordinary border color. */
   accent?: string;
   /** Renders a `NumberStepper` in place of the plain "{hp} HP" text when
-   * provided (the Battle Board). Always passed together with `max`. */
+   * provided (the Battle Board). Always passed together with `max`. Also
+   * turns on the collapse when HP reaches 0 (intent/27). */
   onHpChange?: (value: number) => void;
   /** Ceiling for the stepper — this structure's own starting HP. */
   max?: number;
-  /** Adds "destroyed" styling at `hp === 0` (intent/03) — passed for the
-   * 3 Tower slots only, not the Bit, since the Bit's zero-HP state drives
-   * the win condition rather than a cosmetic style of its own. */
-  reactiveStyling?: boolean;
 };
 
+/** A Tower or Bit slot. At `hp === 0` its icon shows "destroyed" styling,
+ * the Bit's included since intent/27 (Towers only before), and on the Board
+ * it collapses into that look as HP reaches 0. */
 export function StructureSlot({
   label,
   teamLabel,
@@ -35,14 +37,16 @@ export function StructureSlot({
   accent,
   onHpChange,
   max,
-  reactiveStyling,
 }: StructureSlotProps) {
-  const isDestroyed = reactiveStyling && hp === 0;
+  const isDestroyed = hp === 0;
+  const iconRef = useRef<HTMLImageElement>(null);
+  useDefeatAnimation(iconRef, hp, onHpChange !== undefined, "structure");
 
   return (
     <div className={styles.slot} style={accent ? { borderColor: accent } : undefined}>
       {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
       <img
+        ref={iconRef}
         src={icon}
         alt={label}
         className={isDestroyed ? `${styles.icon} ${styles.iconDestroyed}` : styles.icon}

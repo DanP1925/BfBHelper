@@ -13,6 +13,14 @@ export const SLOT_REVEAL_MS = 600;
  * 4 (intent/26). */
 export const LEVEL_FOUR_BURST_MS = 700;
 
+/** How long a hero's defeat animation lasts on its Board portrait, when its
+ * HP goes from above 0 to 0 (intent/27). */
+export const HERO_DEFEAT_MS = 600;
+
+/** How long a Tower's or Bit's destruction animation lasts on its Board
+ * icon, when its HP goes from above 0 to 0 (intent/27). */
+export const STRUCTURE_DEFEAT_MS = 700;
+
 /**
  * True when the app may animate: the browser supports the Web Animations
  * API and the OS "reduce motion" setting is off. Read at the moment an

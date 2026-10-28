@@ -15,6 +15,9 @@
   height: 36px;
   object-fit: contain;
   image-rendering: pixelated;
+  /* The collapse (intent/27) squashes from the base, so it sinks into the
+     slot. */
+  transform-origin: 50% 100%;
 }
 
 .label {
@@ -31,8 +34,9 @@
   color: var(--color-text);
 }
 
-/* Reactive to `hp === 0` (intent/03) — clears automatically the instant
-   HP is raised above 0 again. */
+/* Reactive to `hp === 0` (intent/03; the Bit too since intent/27) — clears
+   automatically the instant HP is raised above 0 again. The collapse ends
+   on this exact filter (`DEFEATED_FILTER`). */
 .iconDestroyed {
   filter: grayscale(1) brightness(0.6);
 }
