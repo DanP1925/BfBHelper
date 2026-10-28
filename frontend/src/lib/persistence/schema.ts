@@ -35,7 +35,7 @@ export const CURRENT_DRAFT_SCHEMA_VERSION = 1 as const;
  * and writes — independent of `CURRENT_DRAFT_SCHEMA_VERSION` (intent/04):
  * bumping the battle-state schema must never make `loadDraft` also expect
  * a migration that doesn't exist for drafts. */
-export const CURRENT_BATTLE_SCHEMA_VERSION = 16 as const;
+export const CURRENT_BATTLE_SCHEMA_VERSION = 17 as const;
 
 /**
  * The on-disk (localStorage) shape of a persisted draft, version 1.
@@ -111,8 +111,10 @@ export type LegacyBattleTeamStateV5 = Omit<LegacyBattleTeamStateV10, "heroes"> &
 /** Each schema's hero is the next one's minus the field that schema added,
  * so a new schema only touches the newest legacy type. Schemas 10 and 11
  * share one hero shape (intent/14 changed positions only), and so do 12
- * and 13 (intent/16 added only the top-level `iceWall`). */
-type LegacyHeroBattleStateV13 = Omit<HeroBattleState, ArtifactField>;
+ * and 13 (intent/16 added only the top-level `iceWall`), and 14 to 16
+ * (intents 18 and 21 added only top-level fields). */
+type LegacyHeroBattleStateV16 = Omit<HeroBattleState, "respawnWindow">;
+type LegacyHeroBattleStateV13 = Omit<LegacyHeroBattleStateV16, ArtifactField>;
 type LegacyHeroBattleStateV11 = Omit<LegacyHeroBattleStateV13, "favoredEnemy">;
 type LegacyHeroBattleStateV9 = Omit<LegacyHeroBattleStateV11, "chillTokens">;
 type LegacyHeroBattleStateV8 = Omit<LegacyHeroBattleStateV9, "stoneTokens">;
@@ -210,6 +212,12 @@ export type LegacyBattleTeamStateV13 = Omit<BattleTeamState, "heroes"> & {
   heroes: Record<HeroId, LegacyHeroBattleStateV13>;
 };
 
+/** One side's battle-team state in schemas 14-16: per-hero Artifact flags,
+ * but no respawnWindow yet (intent/24). */
+export type LegacyBattleTeamStateV16 = Omit<BattleTeamState, "heroes"> & {
+  heroes: Record<HeroId, LegacyHeroBattleStateV16>;
+};
+
 /** The on-disk (localStorage) shape of a persisted battle state, version 10
  * (intent/13: per-hero `chillTokens`) — now only the migration source shape
  * `battleMigrations[10]` upgrades from. */
@@ -266,8 +274,8 @@ export type PersistedBattleStateV14 = Omit<
   "schemaVersion" | "p1" | "p2"
 > & {
   schemaVersion: 14;
-  p1: BattleTeamState;
-  p2: BattleTeamState;
+  p1: LegacyBattleTeamStateV16;
+  p2: LegacyBattleTeamStateV16;
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 15
@@ -280,11 +288,23 @@ export type PersistedBattleStateV15 = Omit<PersistedBattleStateV14, "schemaVersi
 };
 
 /** The on-disk (localStorage) shape of a persisted battle state, version 16
- * (intent/21: top-level `round`, from 1, and `phase`). */
+ * (intent/21: top-level `round`, from 1, and `phase`) — now only the
+ * migration source shape `battleMigrations[16]` upgrades from. */
 export type PersistedBattleStateV16 = Omit<PersistedBattleStateV15, "schemaVersion"> & {
   schemaVersion: 16;
   round: number;
   phase: BattlePhase;
+};
+
+/** The on-disk (localStorage) shape of a persisted battle state, version 17
+ * (intent/24: per-hero `respawnWindow`, `null` while the hero is standing). */
+export type PersistedBattleStateV17 = Omit<
+  PersistedBattleStateV16,
+  "schemaVersion" | "p1" | "p2"
+> & {
+  schemaVersion: 17;
+  p1: BattleTeamState;
+  p2: BattleTeamState;
 };
 
 /** Which screen is showing once a draft is done. Only a non-`"results"`

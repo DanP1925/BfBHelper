@@ -88,14 +88,28 @@
   color: var(--token-accent);
 }
 
-.dimmed {
+/* Dims each part of a row rather than the row, so a defeated hero's
+ * respawn window (intent/24) stays at full brightness. */
+.dimmed > :not(.respawnWindow) {
   opacity: 0.5;
 }
 
+/* min-width: 0 lets a long name give way first, with an ellipsis, so the
+ * HP or respawn window beside it never shrinks. */
 .heroName,
 .structLabel {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The respawn window (intent/24), in place of a defeated hero's HP. */
+.respawnWindow {
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-text);
   white-space: nowrap;
 }
 

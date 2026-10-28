@@ -138,11 +138,45 @@
 }
 
 .battleTokenWrapper {
+  position: relative;
   width: 80px;
   height: 120px;
   flex-shrink: 0;
   border-radius: 6px;
   overflow: hidden;
+}
+
+/* The respawn window (intent/24), over the bottom of a defeated hero's
+   greyed portrait, so the card doesn't grow. */
+.respawnBand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px 2px 5px;
+  background: rgba(10, 8, 6, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.respawnLabel {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted-strong);
+}
+
+.respawnValue {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
 }
 
 .battleToken {

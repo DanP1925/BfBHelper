@@ -292,6 +292,7 @@ describe("useBattle", () => {
       battleFistFaceUp: false,
       autoDeflectorFaceUp: true,
       shieldAmuletFaceUp: false,
+      respawnWindow: null,
     };
     saveBattleState(persisted);
 
@@ -311,6 +312,7 @@ describe("useBattle", () => {
       battleFistFaceUp: false,
       autoDeflectorFaceUp: true,
       shieldAmuletFaceUp: false,
+      respawnWindow: null,
     });
   });
 
@@ -847,6 +849,127 @@ describe("useBattle", () => {
         result.current.setHeroLevel("p1", KEN_OBI.id, 3);
       });
       expect(result.current.state?.p1.gold).toBe(3);
+    });
+  });
+
+  describe("setHeroHp (intent/24)", () => {
+    const CERALIN: Hero = {
+      id: "ceralin",
+      name: "Ceralin",
+      className: "Ranger",
+      portrait: "/heroes/ceralin.png",
+      battleToken: "/heroes-tokens/ceralin.png",
+      baseHp: 8,
+      role: "damage",
+    };
+
+    // The intent's Proposed Outcome: Player 1 at levels 1, 2, 2 and 3 (a
+    // sum of 8), in Round 3.
+    function renderRound3() {
+      const hook = renderHook(() =>
+        useBattle([HERO_A, KEN_OBI, OTHER_HERO, CERALIN], [HERO_B], "p1"),
+      );
+      const { result } = hook;
+      act(() => {
+        result.current.setGold("p1", 20);
+        result.current.setHeroLevel("p1", KEN_OBI.id, 2);
+        result.current.setHeroLevel("p1", OTHER_HERO.id, 2);
+        result.current.setHeroLevel("p1", CERALIN.id, 3);
+      });
+      for (let i = 0; i < 8; i++) {
+        act(() => {
+          result.current.advancePhase();
+        });
+      }
+      expect(result.current.state?.round).toBe(3);
+      return hook;
+    }
+
+    const windowOf = (result: { current: ReturnType<typeof useBattle> }, heroId: Hero["id"]) =>
+      result.current.state?.p1.heroes[heroId].respawnWindow;
+
+    it("a defeat sets the window from the current round, the fallen hero not living", () => {
+      const { result } = renderRound3();
+
+      act(() => {
+        result.current.setHeroHp("p1", CERALIN.id, 0);
+      });
+      // 4 + 8 - 3 living = 9 cards ahead: Round 4 at 8 a Cleanup, Round 6 at 3.
+      expect(windowOf(result, CERALIN.id)).toEqual({ from: 4, to: 6 });
+      expect(readRawState().p1.heroes[CERALIN.id].respawnWindow).toEqual({ from: 4, to: 6 });
+      expect(result.current.state?.p1.heroPositions[CERALIN.id]).toBeNull();
+    });
+
+    it("a second defeat gets its own later window and leaves the first as is", () => {
+      const { result } = renderRound3();
+
+      act(() => {
+        result.current.setHeroHp("p1", CERALIN.id, 0);
+        result.current.setHeroHp("p1", HERO_A.id, 0);
+      });
+      expect(windowOf(result, CERALIN.id)).toEqual({ from: 4, to: 6 });
+      // 4 + 8 - 2 living = 10 cards ahead: Round 4 at 8, Round 8 at 2.
+      expect(windowOf(result, HERO_A.id)).toEqual({ from: 4, to: 8 });
+    });
+
+    it("with no hero left standing, the window is open-ended", () => {
+      const { result } = renderRound3();
+
+      act(() => {
+        for (const hero of [HERO_A, KEN_OBI, OTHER_HERO, CERALIN]) {
+          result.current.setHeroHp("p1", hero.id, 0);
+        }
+      });
+      // 4 + 8 - 0 living = 12 cards ahead: Round 4 at 8, no slowest end.
+      expect(windowOf(result, CERALIN.id)).toEqual({ from: 4, to: null });
+    });
+
+    it("raising HP from 0 clears it, and a later defeat sets a new one", () => {
+      const { result } = renderRound3();
+
+      act(() => {
+        result.current.setHeroHp("p1", CERALIN.id, 0);
+      });
+      act(() => {
+        result.current.setHeroHp("p1", CERALIN.id, 11);
+      });
+      expect(windowOf(result, CERALIN.id)).toBeNull();
+      expect(readRawState().p1.heroes[CERALIN.id].respawnWindow).toBeNull();
+
+      for (let i = 0; i < 4; i++) {
+        act(() => {
+          result.current.advancePhase();
+        });
+      }
+      act(() => {
+        result.current.setHeroHp("p1", CERALIN.id, 0);
+      });
+      expect(windowOf(result, CERALIN.id)).toEqual({ from: 5, to: 7 });
+    });
+
+    it("level changes and phase steps leave a window as it is", () => {
+      const { result } = renderRound3();
+
+      act(() => {
+        result.current.setHeroHp("p1", CERALIN.id, 0);
+      });
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+        result.current.setHeroLevel("p1", CERALIN.id, 2);
+        result.current.advancePhase();
+        result.current.stepPhaseBack();
+        result.current.stepPhaseBack();
+      });
+      expect(windowOf(result, CERALIN.id)).toEqual({ from: 4, to: 6 });
+    });
+
+    it("an HP change on a standing hero leaves its window null", () => {
+      const { result } = renderRound3();
+
+      act(() => {
+        result.current.setHeroHp("p1", HERO_A.id, 3);
+      });
+      expect(windowOf(result, HERO_A.id)).toBeNull();
     });
   });
 

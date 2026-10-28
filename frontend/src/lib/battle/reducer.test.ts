@@ -97,9 +97,9 @@ describe("createInitialBattleState", () => {
     expect(baseState()).toMatchObject({ round: 1, phase: "orders" });
   });
 
-  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 16", () => {
+  it("seeds every gold pile at GOLD_PILE_STARTING_COUNT, schemaVersion 17", () => {
     const state = baseState();
-    expect(state.schemaVersion).toBe(16);
+    expect(state.schemaVersion).toBe(17);
     for (const id of GOLD_PILE_SPACE_IDS) {
       expect(state.goldPiles[id]).toBe(GOLD_PILE_STARTING_COUNT);
     }
@@ -111,6 +111,12 @@ describe("createInitialBattleState", () => {
 
   it("starts the Bear Trap in its holder", () => {
     expect(baseState().bearTrap).toBeNull();
+  });
+
+  it("starts every hero with no respawn window (intent/24)", () => {
+    const state = baseState();
+    expect(state.p1.heroes[HERO_A.id].respawnWindow).toBeNull();
+    expect(state.p2.heroes[HERO_B.id].respawnWindow).toBeNull();
   });
 });
 
@@ -807,6 +813,59 @@ describe("battleReducer", () => {
     it("STEP_PHASE_BACK at Round 1, Orders returns the same state", () => {
       const state = baseState();
       expect(battleReducer(state, { type: "STEP_PHASE_BACK" })).toBe(state);
+    });
+  });
+
+  // Intent/24. Setting it on a defeat and clearing it on a respawn are
+  // composed in useBattle.setHeroHp, so here it's one field.
+  describe("SET_HERO_RESPAWN_WINDOW", () => {
+    const set = (window: { from: number; to: number | null } | null): BattleAction => ({
+      type: "SET_HERO_RESPAWN_WINDOW",
+      side: "p1",
+      heroId: HERO_A.id,
+      window,
+    });
+
+    it("sets and clears one hero's window, changing nothing else", () => {
+      const state = baseState();
+      const withWindow = battleReducer(state, set({ from: 4, to: 6 }));
+      expect(withWindow.p1.heroes[HERO_A.id]).toEqual({
+        ...state.p1.heroes[HERO_A.id],
+        respawnWindow: { from: 4, to: 6 },
+      });
+      expect(withWindow.p2).toBe(state.p2);
+      expect({ ...withWindow, p1: state.p1 }).toEqual(state);
+      expect(battleReducer(withWindow, set(null)).p1.heroes[HERO_A.id].respawnWindow).toBeNull();
+    });
+
+    it("returns the same state for an equal window, by value", () => {
+      const state = baseState();
+      expect(battleReducer(state, set(null))).toBe(state);
+      const withWindow = battleReducer(state, set({ from: 7, to: null }));
+      expect(battleReducer(withWindow, set({ from: 7, to: null }))).toBe(withWindow);
+    });
+
+    it("returns the same state for a hero not on that side", () => {
+      const state = baseState();
+      expect(
+        battleReducer(state, {
+          type: "SET_HERO_RESPAWN_WINDOW",
+          side: "p1",
+          heroId: HERO_B.id,
+          window: { from: 2, to: 3 },
+        }),
+      ).toBe(state);
+    });
+
+    it("isn't touched by an HP change on its own: the reducer never composes it", () => {
+      const state = battleReducer(baseState(), set({ from: 4, to: 6 }));
+      const next = battleReducer(state, {
+        type: "SET_HERO_HP",
+        side: "p1",
+        heroId: HERO_A.id,
+        value: 5,
+      });
+      expect(next.p1.heroes[HERO_A.id].respawnWindow).toEqual({ from: 4, to: 6 });
     });
   });
 });

@@ -28,8 +28,10 @@ import type {
   HeroPosition,
   IceWallPosition,
   OnOffTokenField,
+  RespawnWindow,
   StructuresState,
 } from "./types";
+import { sameRespawnWindow } from "./respawn";
 
 export type BattleAction =
   | { type: "SET_GOLD"; side: PlayerId; value: number }
@@ -58,6 +60,12 @@ export type BattleAction =
     }
   | { type: "SET_STRUCTURE_HP"; side: PlayerId; slot: keyof StructuresState; value: number }
   | { type: "SET_HERO_POSITION"; side: PlayerId; heroId: HeroId; spaceId: HeroPosition }
+  | {
+      type: "SET_HERO_RESPAWN_WINDOW";
+      side: PlayerId;
+      heroId: HeroId;
+      window: RespawnWindow | null;
+    }
   | { type: "SET_GOLD_PILE"; pileId: GoldPileSpaceId; value: number }
   | { type: "SET_ICE_WALL"; position: IceWallPosition | null }
   | { type: "SET_BEAR_TRAP"; spaceId: MapSpaceId | null }
@@ -100,7 +108,9 @@ function setRoundPosition(state: BattleState, next: RoundPosition | null): Battl
  * second field (no Tower-to-Bit chip damage), matching intent's
  * player-driven-only scope. The HP-from-level bump (intent/19) and the
  * level's gold (intent/22) are composed in useBattle.setHeroLevel from
- * SET_HERO_LEVEL, SET_HERO_HP and SET_GOLD, like the defeat move, not here. The round and phase
+ * SET_HERO_LEVEL, SET_HERO_HP and SET_GOLD, like the defeat move, not here. So is the respawn
+ * window (intent/24): useBattle.setHeroHp sets it with SET_HERO_RESPAWN_WINDOW when HP
+ * reaches 0, and clears it when HP goes back above 0. The round and phase
  * move together as one position, and the initiative pass when a step
  * crosses a round (intent/21) is composed in useBattle.advancePhase and
  * stepPhaseBack from the phase action and PASS_INITIATIVE, as is each team's
@@ -230,6 +240,14 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
     case "STEP_PHASE_BACK":
       return setRoundPosition(state, previousPosition(state));
 
+    // Set and cleared only by useBattle.setHeroHp (intent/24). The window
+    // is an object, so an equal one is a no-op by value, not reference.
+    case "SET_HERO_RESPAWN_WINDOW": {
+      const hero = state[action.side].heroes[action.heroId];
+      if (!hero || sameRespawnWindow(hero.respawnWindow, action.window)) return state;
+      return setHeroField(state, action.side, action.heroId, "respawnWindow", action.window);
+    }
+
     default:
       return state;
   }
@@ -257,6 +275,7 @@ export function createInitialHeroState(hero: Hero): HeroBattleState {
     chillTokens: 0,
     favoredEnemy: false,
     ...ARTIFACTS_FACE_UP,
+    respawnWindow: null,
   };
 }
 
@@ -290,7 +309,7 @@ export function createInitialBattleState(
   initiative: PlayerId,
 ): BattleState {
   return {
-    schemaVersion: 16,
+    schemaVersion: 17,
     p1: createInitialTeamState(p1Heroes),
     p2: createInitialTeamState(p2Heroes),
     goldPiles: createFreshGoldPiles(),

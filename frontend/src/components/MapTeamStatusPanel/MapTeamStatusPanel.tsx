@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Hero, PlayerId } from "../../lib/draft/types";
 import { ARTIFACT_OWNER } from "../../lib/battle/constants";
 import { createInitialHeroState } from "../../lib/battle/reducer";
+import { formatRespawnWindow } from "../../lib/battle/respawn";
 import { teamLevel } from "../../lib/battle/selectors";
 import { TOWER_LABEL } from "../../lib/battle/structureDisplay";
 import type { BattleTeamState, HeroBattleState } from "../../lib/battle/types";
@@ -64,24 +65,39 @@ export function MapTeamStatusPanel({ label, side, heroes, team }: MapTeamStatusP
               ? ARTIFACTS.filter((artifact) => heroState[artifact.field])
               : [];
           const isDefeated = hp === 0;
+          // The respawn window (intent/24) takes the HP's place while the
+          // hero is defeated, short ("R4–6") so the row keeps one line. A
+          // defeated hero with no window (an older save) keeps "♥ 0".
+          const respawn = isDefeated && heroState.respawnWindow ? heroState.respawnWindow : null;
           return (
             <div
               key={hero.id}
               className={isDefeated ? `${styles.heroRow} ${styles.dimmed}` : styles.heroRow}
             >
               <span className={styles.heroName}>{hero.name}</span>
-              <span className={styles.heroHp}>
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="var(--color-hp)"
-                  aria-hidden="true"
+              {respawn ? (
+                <span
+                  className={styles.respawnWindow}
+                  role="img"
+                  aria-label={`${hero.name} respawns ${formatRespawnWindow(respawn)}`}
+                  title={`${hero.name} respawns ${formatRespawnWindow(respawn)}`}
                 >
-                  <path d="M12 21s-6.716-4.35-9.428-8.106C.414 9.967 1.5 6 5.1 6c2.1 0 3.6 1.2 4.5 2.7C10.5 7.2 12 6 14.1 6c3.6 0 4.686 3.967 2.528 6.894C18.716 16.65 12 21 12 21z" />
-                </svg>
-                {hp}
-              </span>
+                  {formatRespawnWindow(respawn, true)}
+                </span>
+              ) : (
+                <span className={styles.heroHp}>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="var(--color-hp)"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 21s-6.716-4.35-9.428-8.106C.414 9.967 1.5 6 5.1 6c2.1 0 3.6 1.2 4.5 2.7C10.5 7.2 12 6 14.1 6c3.6 0 4.686 3.967 2.528 6.894C18.716 16.65 12 21 12 21z" />
+                  </svg>
+                  {hp}
+                </span>
+              )}
               {/* Read-only token line (intents 06-11), only while the hero
                   holds a token or (Runika, intent/17) has a face-up
                   Artifact: tokens in BATTLE_TOKENS' order, then her face-up

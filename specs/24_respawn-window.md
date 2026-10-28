@@ -1,7 +1,7 @@
 # Spec 24: Respawn Window
 
-> **DRAFT.** Architecture for intent 24's scope. Build-out has not started
-> yet. See [../intent/24_respawn-window.md](../intent/24_respawn-window.md)
+> **BUILT.** Architecture for intent 24's scope, all built in one PR. See
+> [../intent/24_respawn-window.md](../intent/24_respawn-window.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -254,9 +254,21 @@ infra.
   then rewrite UI Design Reference to describe it.~~ **Decided:** drawn in
   versions 107-110 and signed off 2026-10-28. On the Board it's a band
   over the portrait, and on the Map it replaces the HP, in the short form.
-- Check at 1280x800 that the Board's hero card stays 172px tall with the
+- ~~Check at 1280x800 that the Board's hero card stays 172px tall with the
   band, that the band's "Round 7–10" fits the 80px portrait, and that a
-  long name (Agatha Trunch) still leaves the Map's window whole.
+  long name (Agatha Trunch) still leaves the Map's window whole.~~
+  **Decided:** it all fits.
+  - At 1280x800 and 2560x1440 every hero card stays 172px tall with the
+    band, and "Round 7–10" is 66px wide inside the 80px band.
+  - On the Map, "Agatha Trunch R7–10" fits its 22px row without
+    truncating. The window is at full opacity while the name is at 0.5.
+  - Neither page scrolls.
+  - A schema-16 save with a hero at 0 HP upgrades in place: "♥ 0" on the
+    Map and no band on the Board.
+- The reducer's equal-window no-op compares by value through
+  `sameRespawnWindow`, exported from `respawn.ts` next to the formatter,
+  since `setHeroField`'s `===` would treat every new window object as a
+  change.
 - Tests:
   - `respawn.test.ts`: `cardsAhead`, `respawnWindow` and
     `formatRespawnWindow`, covering the table above and all three label
@@ -274,10 +286,15 @@ infra.
   - `storage.test.ts`: a schema-16 payload upgrades with every
     `respawnWindow` at `null`, an older one chains to 17, and a bad window
     (`from` 0 or 1.5, `to` below `from`, a string) clears the payload.
-  - `HeroCard` and `MapTeamStatusPanel` tests: the window shows on a
-    defeated hero with one, and not on a standing hero or a defeated one
-    without a window. On the Map it replaces the HP, and a defeated hero
-    without a window still shows "♥ 0".
+  - `HeroCard.test.tsx` and `BattleMapScreen.test.tsx` (there's no
+    separate `MapTeamStatusPanel` test file; the panel is tested through
+    the Map screen): the window shows on a defeated hero with one, and not
+    on a standing hero or a defeated one without a window. On the Map it
+    replaces the HP, and a defeated hero without a window still shows
+    "♥ 0".
+  - Every older migration test strips `respawnWindow` from its legacy
+    payload, through the shared `withoutHeroFields`. The hero fixtures
+    get it from `NO_TOKENS` in `src/test/heroState.ts`.
   - A new `e2e/respawn-window.spec.ts`, following the intent's Proposed
     Outcome: defeat a hero in Round 3, see the window on the Board and the
     Map, reload to check it's kept, then raise its HP and see it go.

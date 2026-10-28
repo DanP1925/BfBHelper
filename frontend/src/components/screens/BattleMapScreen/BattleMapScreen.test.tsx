@@ -32,7 +32,7 @@ const p2Heroes: Hero[] = [makeHero("sterling", "Sterling")];
 
 function makeBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
-    schemaVersion: 16,
+    schemaVersion: 17,
     initiative: "p1",
     iceWall: null,
     bearTrap: null,
@@ -638,6 +638,58 @@ describe("BattleMapScreen", () => {
     });
   });
 
+  describe("the respawn window (intent/24)", () => {
+    // Caligar is defeated in makeBattleState; Boreas is standing.
+    function renderWindows(caligarWindow: { from: number; to: number | null } | null) {
+      const base = makeBattleState();
+      render(
+        <BattleMapScreen
+          p1Heroes={p1Heroes}
+          p2Heroes={p2Heroes}
+          battleState={{
+            ...base,
+            p1: {
+              ...base.p1,
+              heroes: {
+                ...base.p1.heroes,
+                // A standing hero's window is never shown, even if stored.
+                boreas: { ...base.p1.heroes.boreas, respawnWindow: { from: 2, to: 3 } },
+                caligar: { ...base.p1.heroes.caligar, respawnWindow: caligarWindow },
+              },
+            },
+          }}
+          winner={null}
+          setHeroPosition={() => {}}
+          setGoldPile={() => {}}
+          onNewDraft={() => {}}
+          onEndBattle={() => {}}
+          onSwitchView={() => {}}
+          {...fixedProps}
+        />,
+      );
+    }
+
+    // Caligar's name is also on his token in the respawn area, so the row is
+    // found by its whole text.
+    const rowTexts = () =>
+      screen.getAllByText("Caligar").map((name) => name.parentElement?.textContent);
+
+    it("replaces a defeated hero's HP with the short window, named in full", () => {
+      renderWindows({ from: 4, to: 6 });
+      const window = screen.getByRole("img", { name: "Caligar respawns Round 4–6" });
+      expect(window).toHaveTextContent(/^R4–6$/);
+      expect(window).toHaveAttribute("title", "Caligar respawns Round 4–6");
+      expect(window.parentElement).toHaveTextContent(/^CaligarR4–6$/);
+      expect(screen.queryByRole("img", { name: /^Boreas respawns/ })).not.toBeInTheDocument();
+    });
+
+    it("keeps a defeated hero's 0 HP when it has no window (an older save)", () => {
+      renderWindows(null);
+      expect(screen.queryByRole("img", { name: /respawns/ })).not.toBeInTheDocument();
+      expect(rowTexts()).toContain("Caligar0");
+    });
+  });
+
   it('shows "End Battle" in the menu only once a winner exists', () => {
     const { rerender } = render(
       <BattleMapScreen
@@ -764,7 +816,7 @@ describe("BattleMapScreen", () => {
     ];
     const sharedSpace = MAP_SPACE_IDS[0];
     const battleState: BattleState = {
-      schemaVersion: 16,
+      schemaVersion: 17,
       initiative: "p1",
       iceWall: null,
       bearTrap: null,
