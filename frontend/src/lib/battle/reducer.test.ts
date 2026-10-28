@@ -26,6 +26,7 @@ const HERO_A: Hero = {
   portrait: "/heroes/baldwin.png",
   battleToken: "/heroes-tokens/baldwin.png",
   baseHp: 9,
+  role: "support",
 };
 
 const HERO_B: Hero = {
@@ -35,6 +36,7 @@ const HERO_B: Hero = {
   portrait: "/heroes/cyrus.png",
   battleToken: "/heroes-tokens/cyrus.png",
   baseHp: 9,
+  role: "support",
 };
 
 function baseState(): BattleState {

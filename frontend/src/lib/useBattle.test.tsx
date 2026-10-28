@@ -18,6 +18,7 @@ const HERO_A: Hero = {
   portrait: "/heroes/baldwin.png",
   battleToken: "/heroes-tokens/baldwin.png",
   baseHp: 9,
+  role: "support",
 };
 
 const HERO_B: Hero = {
@@ -27,6 +28,7 @@ const HERO_B: Hero = {
   portrait: "/heroes/cyrus.png",
   battleToken: "/heroes-tokens/cyrus.png",
   baseHp: 9,
+  role: "support",
 };
 
 const OTHER_HERO: Hero = {
@@ -36,6 +38,7 @@ const OTHER_HERO: Hero = {
   portrait: "/heroes/felix.png",
   battleToken: "/heroes-tokens/felix.png",
   baseHp: 9,
+  role: "damage",
 };
 
 const KEN_OBI: Hero = {
@@ -45,6 +48,7 @@ const KEN_OBI: Hero = {
   portrait: "/heroes/ken-obi.png",
   battleToken: "/heroes-tokens/ken-obi.png",
   baseHp: 9,
+  role: "utility",
 };
 
 function readRawState() {

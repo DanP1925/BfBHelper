@@ -34,7 +34,13 @@ export type Hero = {
   battleToken: string;
   /** Fixed per-hero HP printed on the card (heart icon) — never changes. */
   baseHp: number;
+  /** The draft filter's role (intent/23). */
+  role: HeroRole;
 };
+
+/** The project owner's own hero roles (intent/23), not the rulebook's
+ * printed Type. Every hero has exactly one. */
+export type HeroRole = "damage" | "utility" | "support";
 
 /**
  * The only stored/dispatched draft state. Phase, step, turn, remaining

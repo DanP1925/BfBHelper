@@ -46,6 +46,7 @@ const sampleBattleState: BattleState = createInitialBattleState(
       portrait: "/heroes/agatha-trunch.png",
       battleToken: "/heroes-tokens/agatha-trunch.png",
       baseHp: 10,
+      role: "damage",
     },
   ],
   [
@@ -56,6 +57,7 @@ const sampleBattleState: BattleState = createInitialBattleState(
       portrait: "/heroes/baldwin.png",
       battleToken: "/heroes-tokens/baldwin.png",
       baseHp: 9,
+      role: "support",
     },
   ],
   "p1",

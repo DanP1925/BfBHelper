@@ -8,6 +8,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/agatha-trunch.png",
     battleToken: "/heroes-tokens/agatha-trunch.png",
     baseHp: 10,
+    role: "damage",
   },
   {
     id: "baldwin",
@@ -16,6 +17,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/baldwin.png",
     battleToken: "/heroes-tokens/baldwin.png",
     baseHp: 9,
+    role: "support",
   },
   {
     id: "boreas",
@@ -24,6 +26,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/boreas.png",
     battleToken: "/heroes-tokens/boreas.png",
     baseHp: 10,
+    role: "damage",
   },
   {
     id: "caligar",
@@ -32,6 +35,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/caligar.png",
     battleToken: "/heroes-tokens/caligar.png",
     baseHp: 10,
+    role: "support",
   },
   {
     id: "ceralin",
@@ -40,6 +44,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/ceralin.png",
     battleToken: "/heroes-tokens/ceralin.png",
     baseHp: 10,
+    role: "utility",
   },
   {
     id: "cynthia",
@@ -48,6 +53,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/cynthia.png",
     battleToken: "/heroes-tokens/cynthia.png",
     baseHp: 8,
+    role: "damage",
   },
   {
     id: "cyrus",
@@ -56,6 +62,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/cyrus.png",
     battleToken: "/heroes-tokens/cyrus.png",
     baseHp: 9,
+    role: "support",
   },
   {
     id: "dazeem",
@@ -64,6 +71,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/dazeem.png",
     battleToken: "/heroes-tokens/dazeem.png",
     baseHp: 8,
+    role: "utility",
   },
   {
     id: "dolgolae",
@@ -72,6 +80,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/dolgolae.png",
     battleToken: "/heroes-tokens/dolgolae.png",
     baseHp: 10,
+    role: "damage",
   },
   {
     id: "felix",
@@ -80,6 +89,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/felix.png",
     battleToken: "/heroes-tokens/felix.png",
     baseHp: 9,
+    role: "damage",
   },
   {
     id: "ken-obi",
@@ -88,6 +98,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/ken-obi.png",
     battleToken: "/heroes-tokens/ken-obi.png",
     baseHp: 9,
+    role: "utility",
   },
   {
     id: "kerrick",
@@ -96,6 +107,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/kerrick.png",
     battleToken: "/heroes-tokens/kerrick.png",
     baseHp: 8,
+    role: "utility",
   },
   {
     id: "kunoichi",
@@ -104,6 +116,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/kunoichi.png",
     battleToken: "/heroes-tokens/kunoichi.png",
     baseHp: 9,
+    role: "damage",
   },
   {
     id: "longshanks",
@@ -112,6 +125,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/longshanks.png",
     battleToken: "/heroes-tokens/longshanks.png",
     baseHp: 10,
+    role: "utility",
   },
   {
     id: "motley",
@@ -120,6 +134,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/motley.png",
     battleToken: "/heroes-tokens/motley.png",
     baseHp: 10,
+    role: "utility",
   },
   {
     id: "runika",
@@ -128,6 +143,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/runika.png",
     battleToken: "/heroes-tokens/runika.png",
     baseHp: 8,
+    role: "utility",
   },
   {
     id: "sedusa",
@@ -136,6 +152,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/sedusa.png",
     battleToken: "/heroes-tokens/sedusa.png",
     baseHp: 9,
+    role: "utility",
   },
   {
     id: "sterling",
@@ -144,6 +161,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/sterling.png",
     battleToken: "/heroes-tokens/sterling.png",
     baseHp: 7,
+    role: "damage",
   },
   {
     id: "vladiator",
@@ -152,6 +170,7 @@ export const HERO_ROSTER: Hero[] = [
     portrait: "/heroes/vladiator.png",
     battleToken: "/heroes-tokens/vladiator.png",
     baseHp: 10,
+    role: "damage",
   },
 ];
 
