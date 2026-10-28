@@ -63,9 +63,6 @@ error, manual control where it keeps the table in charge.
 - `Triage` **Automate steps when a phase starts.** Starting Cleanup could give each
   team its 2 gold, which players now add by hand. Split out of intent 21, since
   stepping back to an earlier phase would have to undo it.
-- `Triage` **Take gold on level-up automatically.** Leveling up costs the hero's
-  current level plus one in gold, which players now take off by hand. Split out of
-  intent 19 for its own edge cases, like a team that can't afford it.
 - `Triage` **Show token and Artifact rules in the app, not in a tooltip.** Runika's
   Artifact bonuses only show on hover, which is easy to miss. Show them, and
   what every token does, somewhere visible so nobody needs the rulebook.
@@ -96,19 +93,20 @@ error, manual control where it keeps the table in charge.
   highlight when the pick passes to the other player.
 - `Triage` **Level 4 animation.** Animate a hero reaching level 4, the max level,
   so the moment stands out on the Board.
-- `Triage` **Make the level read-only.** The level's number field can be typed in,
-  which makes it easy to set a wrong level. Show it read-only and change it only
-  through the steppers.
 
 ### Spec
 
-- `Spec` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
-  and the Map, to compare both teams at a glance.
-- `Spec` **Show the current round and phase.** Show the round and phase (Orders,
-  Movement, Action, Cleanup) on the Board and the Map. One control steps through the
-  phases, keeping round, phase and initiative in step.
+- `Spec` **Take gold on level-up automatically.** Leveling up costs the hero's
+  current level plus one in gold, which players now take off by hand. The app will
+  take it (and refund it on a level-down), and the level becomes read-only so it
+  only changes one paid step at a time.
 
 ### Done
 
 - `Done` **Add the HP bump on level-up automatically.** Per the rulebook, leveling
   up also raises the hero's HP by one. The app now adds it on level-up (v1.1.0).
+- `Done` **Team level.** Show each team's level-ups taken (0 to 12) on the Board
+  and the Map, to compare both teams at a glance (v1.2.0).
+- `Done` **Show the current round and phase.** Show the round and phase (Orders,
+  Movement, Action, Cleanup) on the Board and the Map. One control steps through the
+  phases, keeping round, phase and initiative in step (v1.3.0).
