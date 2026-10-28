@@ -98,3 +98,11 @@
   opacity: 0.4;
   cursor: default;
 }
+
+/* JRPG theme (intent/28): square pixel chips. The token's own accent and
+   icon don't change. */
+:global([data-theme="jrpg"]) .chip,
+:global([data-theme="jrpg"]) .toggle,
+:global([data-theme="jrpg"]) .step {
+  border-radius: 0;
+}

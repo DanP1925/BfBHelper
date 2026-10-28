@@ -317,3 +317,63 @@
 .levelPipFilled {
   background: var(--color-gold);
 }
+
+/* JRPG theme (intent/28), battle variant only: the cards' dark text box in
+   a stone frame (border +1, padding −1, so the card keeps its size). The
+   portrait gets square corners and no frame (decided 2026-10-29). */
+:global([data-theme="jrpg"]) .battleCard {
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-radius: 0;
+  box-shadow: var(--jr-plate-shadow);
+  padding: 11px;
+}
+
+:global([data-theme="jrpg"]) .battleTokenWrapper {
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .battleName {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Numbers stay in the clean font (intent's "Readability wins over flavor"). */
+:global([data-theme="jrpg"]) .respawnValue {
+  font-family: var(--font-body);
+}
+
+:global([data-theme="jrpg"]) .respawnBand {
+  background: rgb(10 8 16 / 0.85);
+}
+
+/* The card's red heart box: square, its border 2px (padding −1). */
+:global([data-theme="jrpg"]) .hpBadge {
+  border-width: 2px;
+  border-radius: 0;
+  padding: 4px 9px;
+  box-shadow: var(--jr-plate-shadow);
+}
+
+:global([data-theme="jrpg"]) .levelLabel {
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+}
+
+/* Level pips: square gems. */
+:global([data-theme="jrpg"]) .levelPip {
+  border-radius: 0;
+  background: var(--jr-stone);
+  box-shadow: inset -1px -1px 0 rgb(0 0 0 / 0.35);
+}
+
+:global([data-theme="jrpg"]) .levelPipFilled {
+  border-radius: 0;
+  background: var(--jr-gold);
+  box-shadow:
+    inset -1px -1px 0 var(--jr-gold-dark),
+    inset 1px 1px 0 var(--jr-gold-light);
+}

@@ -1,7 +1,7 @@
 # Spec 28: JRPG Theme
 
-> **DRAFT.** Architecture for intent 28's scope. Build-out has not started
-> yet. See [../intent/28_jrpg-theme.md](../intent/28_jrpg-theme.md) for the
+> **BUILT.** Architecture for intent 28's scope, all built in one PR. See
+> [../intent/28_jrpg-theme.md](../intent/28_jrpg-theme.md) for the
 > product-level problem, scope, and behavior this spec exists to satisfy.
 
 ## Architecture Overview
@@ -63,20 +63,35 @@
 - **Fonts** (`app/layout.tsx`), loaded with `next/font/google` like Cinzel
   and Spectral today, and added to `<html>`'s `className`:
   ```ts
-  const pixelify = Pixelify_Sans({
-    variable: "--font-pixelify",
+  const jersey = Jersey_15({
+    variable: "--font-jersey",
     subsets: ["latin"],
-    weight: ["400", "500", "600", "700"],
+    weight: "400",
   });
   const rubik = Rubik({
     variable: "--font-rubik",
     subsets: ["latin"],
-    weight: ["400", "500", "600", "700"],
+    weight: ["400", "500", "600", "700", "800"],
   });
   ```
   Cinzel and Spectral stay: the unthemed screens still use them.
+- **Jersey 15, not Pixelify Sans** (decided 2026-10-29). Drafted with the
+  canvas's Pixelify Sans, but in the app its "C" read as an "O" and its
+  "2" as an "8" ("Oyrus", "Player 8") at the app's sizes, which breaks the
+  intent's readability rule. Jersey 15 was the clearest of seven pixel
+  fonts compared side by side, and it's bold and blocky like the cards'
+  names. Rubik gets weight 800 for `HeroCard .hpValue`.
+- **Jersey 15 is sized to Rubik's x-height:** its letters are small for
+  their font size (an x-height of 0.41 against Rubik's 0.52, measured in
+  the browser), so the themed root sets `font-size-adjust: 0.52`. Rubik
+  renders exactly as set and Jersey 15 scales up about 28%, so every rule
+  keeps one `font-size` whichever font it uses. Jersey 15 has a single
+  weight, so `font-synthesis-weight: none` keeps a `font-weight: 700` from
+  smearing its pixels with a faux bold.
 - **Tokens** (`app/globals.css`), the values from the canvas (see UI Design
-  Reference):
+  Reference). As built, the block also sets `font-size-adjust`,
+  `font-synthesis-weight`, `color`, `font-family` and a `--jr-gem-shadow`
+  recipe for the gems:
   ```css
   /* JRPG theme (intent/28): the Battle Board and Battle Map. Taken from
    * the hero cards: gold frames with gem corners, dark purple text
@@ -92,7 +107,7 @@
     --color-button-border: #5a5070;
     --color-p1: #56aab1; /* same hue as #4f9aa0, brighter */
     --color-p2: #d4705f; /* same hue as #c1665a, brighter */
-    --font-heading: var(--font-pixelify), monospace;
+    --font-heading: var(--font-jersey), monospace;
     --font-body: var(--font-rubik), sans-serif;
 
     /* New: the frame palette. */
@@ -140,17 +155,22 @@ them.
 
 | Recipe | Look | Used by |
 |---|---|---|
-| **Gold frame** | 3px `--jr-gold` border, `--jr-gold-light` top edge and `--jr-gold-dark` bottom edge (a pixel bevel), `--jr-frame-shadow`, on `--color-panel-bg`. Large frames get a cyan gem on each top corner. | `BattleTeamPanel .panel` (with gems), `MapTeamStatusPanel .panel` (2px, smaller gems), `OverflowMenu .dropdown`, `ConfirmDialog .panel`, `TokenPicker .popover` (2px), the Map's `.zoomControls` (2px); the Map's `.board` as a box-shadow only (see below) |
-| **Stone well** | 2px `--jr-stone` border with a `--jr-stone-light` top edge, `--jr-plate-shadow`, on `--jr-well`: the cards' dark text box | `HeroCard .battleCard`, `StructureSlot .slot` |
-| **Stone plate** | The stone well's look on a small control: every pill (`border-radius: 999px`) becomes a square plate | `BattleTeamPanel .pill` (gold and team level), `ViewToggle .toggle`, `PhaseControl .pill` (round and phase), `GoldPilesBar .item`, `InitiativeBadge .badge` (border in the holder's team color, as today) |
+| **Gold frame** | 3px `--jr-gold` border, `--jr-gold-light` top edge and `--jr-gold-dark` bottom edge (a pixel bevel), `--jr-frame-shadow`, on `--color-panel-bg`. Large frames get a cyan gem on each top corner. | `BattleTeamPanel .panel` (with gems), `MapTeamStatusPanel .panel` (2px, smaller gems), `OverflowMenu .dropdown`, `ConfirmDialog .panel`, `TokenPicker .popover` (2px), the Map's `.zoomControls` (2px, with 3px of padding: the buttons had no container look before); the Map's `.board` as a box-shadow only (see below) |
+| **Stone well** | 2px `--jr-stone` border with a `--jr-stone-light` top edge, `--jr-plate-shadow`, on `--jr-well`: the cards' dark text box | `HeroCard .battleCard`, `StructureSlot .slot`, `NumberStepper .input` (its 1px border in stone) |
+| **Stone plate** | The stone well's look on a small control: every pill (`border-radius: 999px`) becomes a square plate | `BattleTeamPanel .pill` (gold and team level), `ViewToggle .toggle`, `PhaseControl .pill` (round and phase), `GoldPilesBar .bar` (the bar is the bordered box; its items have none), `InitiativeBadge .badge` (border in the holder's team color, as today) |
 | **Raised key** | `--jr-key-bg`, 1px `--jr-ink` border, `--jr-key-shadow`; hover `--jr-key-bg-hover`; `:active` swaps to `--jr-key-shadow-pressed` | `NumberStepper .button`, `OverflowMenu .trigger`, `ConfirmDialog .cancelButton`, the Map's `.zoomButton` |
 | **Gold bar** | `--jr-gold` background, `--jr-bar-shadow`, `--jr-on-gold` text: the cards' title rails | `ViewToggle`'s selected option, `PhaseControl .current`, `ConfirmDialog .confirmButton` |
 
 Other overrides:
 - **Square corners everywhere** on the themed screens: `border-radius: 0`
-  on every element that has one, token chips (`TokenChip`,
-  `TokenToggle`, `ArtifactToggle`, `TokenPicker .add`) and `MapToken`
-  included. Each keeps its own token color border and fill.
+  on every element that has one, token chips included (`TokenChip`,
+  `TokenToggle`, `TokenPicker .add`; `ArtifactToggle` composes
+  `TokenToggle`'s rule, so it needs no override). Each keeps its own token
+  color border and fill.
+- **Except the Map's hero tokens** (decided 2026-10-29, in the build):
+  `MapToken .ring` stays round, like the physical token it stands for and
+  the round dials printed on the map. Only its name label becomes a square
+  ink plate. The Map's gold markers on the board are squared.
 - **Gems:** `::before` and `::after` on the framed element (which gets
   `position: relative`), 14px squares at -9px (10px at -7px on the Map's
   status panels): `--jr-gem` with a `--jr-gem-dark` shade, a
@@ -170,17 +190,22 @@ Other overrides:
 - **Team rules stay:** the 2px rules under each team name
   (`BattleTeamPanel .header`, `MapTeamStatusPanel .header`) keep their
   team color and width.
-- **Respawn area and holders:** `RespawnAreaStrip .strip`,
-  `ArenaPanel .box`, `BearTrapHolder .box` and `IceWallHolder .box` keep
-  their dashed outline, as a 2px dashed `--jr-stone` rim on `--jr-well`.
-  Their drag-over states keep today's highlight.
+- **Respawn area and holders:** `RespawnAreaStrip .strip` gets a 2px
+  dashed `--jr-stone` rim on `--jr-well`. `ArenaPanel .box`,
+  `BearTrapHolder .box` and `IceWallHolder .box` get the same well but
+  keep their own rim color (gold, emerald, frost cyan), which says whose
+  piece each is. Their drag-over highlight is re-declared under the theme,
+  since the themed background would otherwise win over it.
 - **Fonts, by role** (intent's "Readability wins over flavor"):
-  - Pixel lettering (`--font-heading`, now Pixelify Sans): team names,
-    hero names, section labels, the round and phase labels, the view
-    toggle, button labels and dialog titles. Team names, section labels,
-    phases and dialog titles already read `--font-heading`, so they need
-    no override. Hero names (`HeroCard .battleName`), `ViewToggle .option`
-    and the button labels read `--font-body` today and get one.
+  - Pixel lettering (`--font-heading`, now Jersey 15): team names, hero
+    names, section and slot labels, "Lv", the round and phase labels, the
+    view toggle, the initiative holder, button labels and dialog titles.
+    Team names, section labels, phases and dialog titles already read
+    `--font-heading`, so they need no override. Hero names
+    (`HeroCard .battleName`), `HeroCard .levelLabel`, `StructureSlot
+    .label`, `MapTeamStatusPanel .headerLabel/.sectionLabel`,
+    `GoldPilesBar .label`, `InitiativeBadge .name`, `ViewToggle .option`
+    and the dialog's button labels get one.
   - Clean text (`--font-body`, now Rubik): body text and **every number**.
     The three numbers that read `--font-heading` today switch to
     `--font-body`: `PhaseControl .roundValue`, `HeroCard .respawnValue` and
@@ -208,11 +233,13 @@ Other overrides:
   32px of vertical padding around the team panels, and the Map's 24px, so
   a gem 9px (or 7px) outside a panel's corner isn't clipped and adds no
   scroll.
-- **Fonts:** a bigger x-height or wider glyphs could make a label wrap or
-  a fixed-width box overflow. Pixelify Sans is only for short labels, and
-  every number uses Rubik. Check it at 1280x800 (see Open Items).
+- **Fonts:** Rubik and Jersey 15 set tighter lines than Spectral, so a
+  few boxes that size to their text come out shorter than on `main`, never
+  wider or taller. Measured at 1280x800: a hero card is 15px shorter, the
+  team panel 39px, the Map's status panel 49px. Every width matches, and
+  the scroll area is 1px taller than on `main`.
 - **Both QA screens:** at 1280x800 (must pass) and 2560x1440, the Board
-  and the Map show no new scrollbar and no element moves, compared with
+  and the Map show no new scrollbar, and no element grows, compared with
   `main`.
 
 ## Assets
@@ -220,7 +247,7 @@ Other overrides:
   dither are CSS. Nothing is cut out of the publisher's card or map art
   (intent's "Original pieces").
 - **Two fonts**, both on Google Fonts under the SIL Open Font License:
-  Pixelify Sans and Rubik. `next/font` self-hosts them at build time, as
+  Jersey 15 and Rubik. `next/font` self-hosts them at build time, as
   it does Cinzel and Spectral.
 
 ## UI Design Reference
@@ -239,11 +266,12 @@ Battle Board column, with two artboards:
   panels with small gems, stone respawn wells, the gold-piles plates and
   the framed zoom controls.
 - Both have a **Tweaks** switch for the type: "Pixel titles, clean text"
-  (Pixelify Sans for titles and labels, Rubik for text and numbers, the
-  default and this spec's choice) or "All pixel" (Pixelify Sans
-  throughout).
+  (pixel lettering for titles and labels, Rubik for text and numbers, the
+  default and what was built) or "All pixel" (pixel lettering throughout).
 - Version 118 removes the gold frame around the Board's hero portraits
   (decided 2026-10-29).
+- Version 119 swaps the artboards' pixel font for Jersey 15, sized with
+  `font-size-adjust` as in the app (see Data Model).
 
 The Map artboard predates intents 14, 16 and 18, so it has no Arena, Ice
 Wall or Bear Trap holder. Those follow the same recipes (see JRPG Theme
@@ -259,26 +287,27 @@ infra. The two new fonts are self-hosted by `next/font`, so there are no
 runtime calls to Google.
 
 ## Open Items for Implementation
-- **Type pairing.** This spec takes the canvas default, "Pixel titles,
-  clean text". If the user prefers "All pixel" after seeing it in the
-  app, `--font-body` takes Pixelify Sans too. Check that the numbers stay
-  readable at a glance at 1280x800 either way (intent's Constraints).
-- **Check the layout in the browser** at 1280x800 and 2560x1440 with
-  `/qa-screens`, against `main`: no new scrollbar on the Board or the Map,
-  the team panels and the Map's board the same size, and no label wrapping
-  in the new fonts. Measure a few boxes (team panel, hero card, status
-  panel, board) with `getBoundingClientRect` before and after, rather than
-  by eye.
-- **The pieces missing from the canvas:** the Arena, Ice Wall and Bear
-  Trap holders, the hero card's tooltips and the token picker's popover
-  on the Map. Check each in the app against the recipes, and show the user
-  before calling it done.
-- **Focus rings:** today's `:focus-visible` outlines use `--color-gold`
-  or a token color. Check they still read on the new frames, especially
-  a gold outline on a gold bar.
-- **Tests.** One test per screen that its root has `data-theme="jrpg"`,
-  and one that `DraftBoardScreen`'s root doesn't. jsdom doesn't apply the
-  CSS, so the look itself is checked in the browser. No e2e change.
+- ~~**Type pairing.** This spec takes the canvas default, "Pixel titles,
+  clean text".~~ **Decided:** pixel titles with clean text and numbers,
+  with Jersey 15 in place of Pixelify Sans (see Data Model).
+- ~~**Check the layout in the browser** at 1280x800 and 2560x1440 against
+  `main`.~~ **Decided:** measured with `getBoundingClientRect` on both
+  servers. Every width and position along the row is unchanged, some
+  heights are shorter (see Layout), no screen scrolls, and no label wraps.
+- ~~**The pieces missing from the canvas.**~~ **Decided:** checked in the
+  app at 1280x800: the token picker, the ⋯ menu with its cursor, the End
+  Battle dialog, a defeated hero's respawn band, a 0 HP Bit, and the Ice
+  Wall and Bear Trap holders all follow the recipes. The Arena uses the
+  same rule as the two holders.
+- ~~**Focus rings.**~~ **Decided:** no change needed. The gold outlines read
+  on every plate, key and well, and the gold bars (the selected view, the
+  current phase) are never focusable. `ViewToggle` keeps the browser's
+  default ring, as on `main`.
+- ~~**Tests.**~~ **Decided:** `page.test.tsx` checks that the Board and the
+  Map are themed and the Start screen and the Draft aren't, and
+  `BattleMapScreen.test.tsx` checks the root carries the attribute. No
+  e2e change. The Start and Draft screens were also screenshot-compared
+  with `main`: pixel-identical.
 - **Folding the overrides in.** Once every screen has the theme (the two
   new `BACKLOG.md` items), the `:global([data-theme="jrpg"])` overrides
   can become each component's base rules and the old look can be

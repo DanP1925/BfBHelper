@@ -115,7 +115,9 @@ export function BattleBoardScreen({
   ];
 
   return (
-    <div className={styles.screen}>
+    // The JRPG theme (intent/28): its tokens and every component's
+    // overrides key on this attribute, pop-ups included (none use a portal).
+    <div className={styles.screen} data-theme="jrpg">
       <div className={styles.topBar}>
         <ViewToggle active="battle" onSwitchView={onSwitchView} />
         <PhaseControl

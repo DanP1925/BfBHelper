@@ -266,7 +266,8 @@ export function BattleMapScreen({
   ];
 
   return (
-    <div className={styles.screen} {...spaceDragTracking}>
+    // The JRPG theme (intent/28), as on the Battle Board.
+    <div className={styles.screen} data-theme="jrpg" {...spaceDragTracking}>
       <div className={styles.topBar}>
         <ViewToggle active="map" onSwitchView={onSwitchView} />
         <PhaseControl

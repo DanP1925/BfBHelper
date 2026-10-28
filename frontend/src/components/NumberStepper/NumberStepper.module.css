@@ -69,3 +69,33 @@
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+
+/* JRPG theme (intent/28): raised pixel keys, lit top-left and shaded
+   bottom-right; pressing swaps the two. Same 1px border, so the same size. */
+:global([data-theme="jrpg"]) .button {
+  color: var(--color-text);
+  background: var(--jr-key-bg);
+  border-color: var(--jr-ink);
+  border-radius: 0;
+  box-shadow: var(--jr-key-shadow);
+}
+
+:global([data-theme="jrpg"]) .button:hover:not(:disabled) {
+  background: var(--jr-key-bg-hover);
+}
+
+:global([data-theme="jrpg"]) .button:active:not(:disabled) {
+  box-shadow: var(--jr-key-shadow-pressed);
+}
+
+/* The typed field: a sunken well. */
+:global([data-theme="jrpg"]) .input {
+  background: var(--jr-well);
+  border-color: var(--jr-stone);
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .readOnly {
+  border-color: transparent;
+  background: none;
+}

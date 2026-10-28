@@ -40,3 +40,19 @@
 .iconDestroyed {
   filter: grayscale(1) brightness(0.6);
 }
+
+/* JRPG theme (intent/28): the cards' dark text box in a stone frame. The
+   Bit's team border (`accent`, inline) still wins over the stone color. */
+:global([data-theme="jrpg"]) .slot {
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-radius: 0;
+  box-shadow: var(--jr-plate-shadow);
+  padding: 9px 5px;
+}
+
+:global([data-theme="jrpg"]) .label {
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+}

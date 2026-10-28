@@ -48,3 +48,23 @@
   background: rgba(201, 162, 75, 0.14);
   box-shadow: 0 0 0 2px var(--color-gold) inset;
 }
+
+/* JRPG theme (intent/28): a sunken stone well with a dashed pixel rim.
+   Border +1, padding −1, so the strip keeps its size. The drag-over
+   highlight above still wins, being declared for its own class. */
+:global([data-theme="jrpg"]) .label {
+  letter-spacing: 0.06em;
+  border-left-width: 4px;
+  padding-left: 5px;
+}
+
+:global([data-theme="jrpg"]) .strip {
+  padding: 11px 7px 25px;
+  background: var(--jr-well);
+  border: 2px dashed var(--jr-stone);
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .stripDragOver {
+  background: rgba(201, 162, 75, 0.14);
+}

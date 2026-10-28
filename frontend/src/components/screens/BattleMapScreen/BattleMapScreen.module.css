@@ -216,3 +216,51 @@
   width: 12px;
   height: 12px;
 }
+
+/* JRPG theme (intent/28): the map in the cards' gold frame. The border
+   stays 1px and the rest of the frame is box-shadow, drawn outside the box
+   (overflow: hidden clips the children, not the box's own shadow), so the
+   board keeps its full size. */
+:global([data-theme="jrpg"]) .board {
+  border-color: var(--jr-ink);
+  border-radius: 0;
+  box-shadow:
+    0 0 0 3px var(--jr-gold),
+    0 -1px 0 3px var(--jr-gold-light),
+    0 0 0 4px var(--jr-gold-dark),
+    0 0 0 6px var(--jr-ink);
+}
+
+/* The zoom buttons sit in a small gold-framed window over the board's
+   corner (absolutely placed, so the frame moves nothing). */
+:global([data-theme="jrpg"]) .zoomControls {
+  padding: 3px;
+  background: var(--color-panel-bg);
+  border: 2px solid var(--jr-gold);
+  border-top-color: var(--jr-gold-light);
+  border-bottom-color: var(--jr-gold-dark);
+  box-shadow:
+    0 0 0 1px var(--jr-ink),
+    0 6px 18px rgb(0 0 0 / 0.45);
+}
+
+:global([data-theme="jrpg"]) .zoomButton {
+  border-color: var(--jr-ink);
+  border-radius: 0;
+  background: var(--jr-key-bg);
+  box-shadow: var(--jr-key-shadow);
+}
+
+:global([data-theme="jrpg"]) .zoomButton:hover:not(:disabled) {
+  background: var(--jr-key-bg-hover);
+}
+
+:global([data-theme="jrpg"]) .zoomButton:active:not(:disabled) {
+  box-shadow: var(--jr-key-shadow-pressed);
+}
+
+:global([data-theme="jrpg"]) .goldMarker {
+  border-radius: 0;
+  background: rgb(10 8 16 / 0.88);
+  box-shadow: var(--jr-plate-shadow);
+}

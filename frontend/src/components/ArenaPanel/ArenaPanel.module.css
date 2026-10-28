@@ -33,3 +33,16 @@
   background: rgba(201, 162, 75, 0.14);
   box-shadow: 0 0 0 2px var(--color-gold) inset;
 }
+
+/* JRPG theme (intent/28): the respawn area's sunken well, keeping the
+   Arena's gold rim. Border +1, padding −1. */
+:global([data-theme="jrpg"]) .box {
+  padding: 7px 13px 19px;
+  background: var(--jr-well);
+  border-width: 2px;
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .boxDragOver {
+  background: rgba(201, 162, 75, 0.14);
+}

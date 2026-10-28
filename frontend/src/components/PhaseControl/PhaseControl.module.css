@@ -109,3 +109,37 @@
     transition: none;
   }
 }
+
+/* JRPG theme (intent/28): stone plates (border +1, padding −1, the same
+   32px tall), the current phase as a gold bar. */
+:global([data-theme="jrpg"]) .pill {
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-radius: 0;
+  box-shadow: var(--jr-plate-shadow);
+}
+
+:global([data-theme="jrpg"]) .round {
+  padding: 0 13px;
+}
+
+:global([data-theme="jrpg"]) .phaseControl {
+  padding: 0 1px;
+}
+
+/* Numbers stay in the clean font (intent's "Readability wins over flavor"). */
+:global([data-theme="jrpg"]) .roundValue {
+  font-family: var(--font-body);
+}
+
+:global([data-theme="jrpg"]) .arrow,
+:global([data-theme="jrpg"]) .phase {
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .current {
+  background: var(--jr-gold);
+  color: var(--jr-on-gold);
+  box-shadow: var(--jr-bar-shadow);
+}

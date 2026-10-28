@@ -111,6 +111,28 @@ describe("BattleMapScreen", () => {
     expect(screen.getByAltText("Boreas")).toBeInTheDocument();
   });
 
+  it("carries the JRPG theme on its root, around the top bar and the board (intent/28)", () => {
+    const { container } = render(
+      <BattleMapScreen
+        p1Heroes={p1Heroes}
+        p2Heroes={p2Heroes}
+        battleState={makeBattleState()}
+        winner={null}
+        setHeroPosition={() => {}}
+        setGoldPile={() => {}}
+        onNewDraft={() => {}}
+        onEndBattle={() => {}}
+        onSwitchView={() => {}}
+        {...fixedProps}
+      />,
+    );
+
+    const root = container.firstElementChild;
+    expect(root).toHaveAttribute("data-theme", "jrpg");
+    expect(root).toContainElement(screen.getByRole("button", { name: "Board" }));
+    expect(root).toContainElement(screen.getByAltText("Boreas"));
+  });
+
   it("shows the round and phase in the top bar, and the arrows call the phase props (intent/21)", () => {
     const onAdvancePhase = vi.fn();
     const onStepPhaseBack = vi.fn();

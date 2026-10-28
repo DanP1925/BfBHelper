@@ -49,6 +49,74 @@
   --font-body: var(--font-spectral), serif;
 }
 
+/* JRPG theme (intent/28): the Battle Board and Battle Map, whose screen
+ * roots carry data-theme="jrpg". Taken from the hero cards: gold frames
+ * with gem corners, dark purple text boxes, pixel lettering. Each
+ * component's shape overrides live in its own module, under
+ * :global([data-theme="jrpg"]). --color-gold, --color-hp and every token
+ * color keep their values, so tokens look as they do everywhere else. */
+[data-theme="jrpg"] {
+  --color-bg: #15121d;
+  --color-panel-bg: #221d2e;
+  --color-border: #3b3350;
+  --color-muted: #a59db8;
+  --color-muted-strong: #d8d1e7;
+  --color-text: #f6f2fc;
+  --color-button-border: #5a5070;
+  /* The same hues as the unthemed screens' #4f9aa0 and #c1665a, brighter. */
+  --color-p1: #56aab1;
+  --color-p2: #d4705f;
+
+  /* Pixel lettering for titles and labels; Rubik for text and every
+   * number, so numbers stay readable at a glance. */
+  --font-heading: var(--font-jersey), monospace;
+  --font-body: var(--font-rubik), sans-serif;
+  /* Rubik's own x-height (0.52, measured), so Rubik renders as set while
+   * Jersey 15, whose letters are small for their size (0.41), is scaled up
+   * to match it: each rule keeps its font-size in either font. */
+  font-size-adjust: 0.52;
+  /* Jersey 15 has one weight: no faux bold smearing its pixels. */
+  font-synthesis-weight: none;
+
+  /* The frame palette. */
+  --jr-gold: #f4c443;
+  --jr-gold-light: #fde68f;
+  --jr-gold-dark: #b8770f;
+  --jr-ink: #0a0810;
+  --jr-gem: #9ee8f3;
+  --jr-gem-dark: #3a9cb1;
+  --jr-stone: #5f5679;
+  --jr-stone-light: #8a80a6;
+  --jr-well: #1a1624;
+  --jr-on-gold: #2b1a04;
+
+  /* The recipes (spec 28's JRPG Theme Logic). Everything here is drawn
+   * outside the layout, so a frame never changes an element's size. */
+  --jr-frame-shadow:
+    0 0 0 2px var(--jr-ink), inset 0 0 0 2px var(--jr-gold-dark), inset 0 0 0 3px var(--jr-ink);
+  --jr-plate-shadow: 0 0 0 1px var(--jr-ink);
+  --jr-key-bg: linear-gradient(#4b4265, #352e49);
+  --jr-key-bg-hover: linear-gradient(#5c5180, #40385a);
+  --jr-key-shadow: inset 1px 1px 0 rgb(255 255 255 / 0.2), inset -1px -1px 0 rgb(0 0 0 / 0.4);
+  --jr-key-shadow-pressed:
+    inset -1px -1px 0 rgb(255 255 255 / 0.14), inset 1px 1px 0 rgb(0 0 0 / 0.45);
+  --jr-bar-shadow: inset 0 2px 0 var(--jr-gold-light), inset 0 -2px 0 var(--jr-gold-dark);
+  /* A gem for a frame's corner, drawn by a ::before or ::after. */
+  --jr-gem-shadow:
+    0 0 0 2px var(--jr-ink), inset -3px -3px 0 var(--jr-gem-dark), inset 2px 2px 0 #effcff;
+
+  color: var(--color-text);
+  font-family: var(--font-body);
+  /* The cards' dark dither, fading out under the panels. */
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(180deg, rgb(21 18 29 / 0) 0, var(--color-bg) 420px),
+    repeating-conic-gradient(#201a2d 0 25%, var(--color-bg) 0 50%);
+  background-size:
+    100% 100%,
+    8px 8px;
+}
+
 html {
   height: 100%;
 }

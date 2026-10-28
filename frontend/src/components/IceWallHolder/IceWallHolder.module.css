@@ -26,3 +26,15 @@
   background: rgba(92, 207, 230, 0.14);
   box-shadow: 0 0 0 2px var(--color-chill) inset;
 }
+
+/* JRPG theme (intent/28): the respawn area's sunken well, keeping the Ice
+   Wall's frost-cyan rim. The box is a fixed 48px tall, so the 2px rim fits. */
+:global([data-theme="jrpg"]) .box {
+  background: var(--jr-well);
+  border-width: 2px;
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .boxDragOver {
+  background: rgba(92, 207, 230, 0.14);
+}

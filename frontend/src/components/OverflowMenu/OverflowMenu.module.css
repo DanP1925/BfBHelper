@@ -65,3 +65,55 @@
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+
+/* JRPG theme (intent/28): the trigger is a raised key; the dropdown is
+   framed like the team panels, and a JRPG cursor marks the hovered or
+   focused row. The dropdown is absolutely placed, so its frame and the
+   cursor's padding move nothing on the screen. */
+:global([data-theme="jrpg"]) .trigger {
+  color: var(--color-text);
+  background: var(--jr-key-bg);
+  border-color: var(--jr-ink);
+  border-radius: 0;
+  box-shadow: var(--jr-key-shadow);
+}
+
+:global([data-theme="jrpg"]) .trigger:hover {
+  background: var(--jr-key-bg-hover);
+}
+
+:global([data-theme="jrpg"]) .trigger:active {
+  box-shadow: var(--jr-key-shadow-pressed);
+}
+
+:global([data-theme="jrpg"]) .dropdown {
+  border: 3px solid var(--jr-gold);
+  border-top-color: var(--jr-gold-light);
+  border-bottom-color: var(--jr-gold-dark);
+  border-radius: 0;
+  box-shadow:
+    0 0 0 2px var(--jr-ink),
+    0 10px 28px rgb(0 0 0 / 0.55);
+}
+
+:global([data-theme="jrpg"]) .item {
+  position: relative;
+  padding-left: 24px;
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--jr-gold) 10%, transparent);
+}
+
+:global([data-theme="jrpg"]) .item:hover:not(:disabled)::before,
+:global([data-theme="jrpg"]) .item:focus-visible::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  margin-top: -5px;
+  border-left: 6px solid var(--jr-gold);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
