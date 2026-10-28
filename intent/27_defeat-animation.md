@@ -45,8 +45,8 @@ This phase covers only:
   mid-animation loses nothing.
 - **Reduced motion is respected.** With the OS "reduce motion" setting
   on, nothing animates: the gray look just appears, as it does today.
-- The exact motion and styling are settled in the spec/design, including
-  whether heroes and structures share one style.
+- **Heroes and structures animate differently** (decided 2026-10-28).
+  The exact motion and styling are settled in the spec/design.
 
 ## Proposed Outcome
 In Round 4, Player 2 lowers Ceralin's HP from 1 to 0 on the Battle Board.
