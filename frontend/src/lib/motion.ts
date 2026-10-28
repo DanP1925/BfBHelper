@@ -9,6 +9,10 @@ export const POOL_GLIDE_MS = 300;
  * color, starting once the picked card has faded out. */
 export const SLOT_REVEAL_MS = 600;
 
+/** How long a Board hero card's burst lasts when its level goes from 3 to
+ * 4 (intent/26). */
+export const LEVEL_FOUR_BURST_MS = 700;
+
 /**
  * True when the app may animate: the browser supports the Web Animations
  * API and the OS "reduce motion" setting is off. Read at the moment an

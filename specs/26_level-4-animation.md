@@ -1,7 +1,6 @@
 # Spec 26: Level 4 Animation
 
-> **DRAFT.** Architecture for intent 26's scope. Build-out has not started
-> yet. See [../intent/26_level-4-animation.md](../intent/26_level-4-animation.md)
+> **BUILT.** Architecture for intent 26's scope, all built in one PR. See [../intent/26_level-4-animation.md](../intent/26_level-4-animation.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -111,11 +110,10 @@
   (ring, glow) and its level `<output>` (scale). Nothing takes space, so
   the Board's panels keep their height at 1280x800.
 - **The card gets a ref.** `HeroCard`'s battle `<div className=
-  {styles.battleCard}>` passes `cardRef`. The hook finds the level
-  `<output>` inside it by a `data-level-value` attribute that
-  `NumberStepper` gets through a new optional `valueProps` prop, or, if
-  that's heavier than it's worth, by querying `output` inside
-  `.levelRow`. Settled in the build (see Open Items).
+  {styles.battleCard}>` passes `cardRef`. The hook finds the level value
+  with `card.querySelector("output")`: it's the battle card's only
+  `<output>` (`NumberStepper`'s read-only value), since HP is an
+  `<input>`. `NumberStepper` doesn't change.
 - **The Battle Map and the Win Screen don't change** (intent's "The Battle
   Board only").
 
@@ -150,20 +148,27 @@ infra.
 - ~~Confirm the burst's color on the "Battle Board — Level 4 Animation"
   artboard: gold, or the team's color as in spec 10's slot flash.~~
   **Decided:** the team's color (2026-10-28).
-- Check the ring, pop and 700ms in the browser at 1280x800; adjust on the
-  artboard if they read too weak or too loud.
+- ~~Check the ring, pop and 700ms in the browser at 1280x800; adjust on
+  the artboard if they read too weak or too loud.~~ **Decided:** kept as
+  drawn. Peak screenshots at 1280x800 and 2560x1440 match the artboard,
+  red on Player 2 and teal on Player 1.
 - The "Battle Board" artboard still draws level pips and "3/4" next to
   the stepper, which the app's Board card doesn't show.
   Out of scope here; worth a canvas cleanup.
-- Settle how the hook reaches the level value: a `data-level-value`
-  attribute through `NumberStepper`, or a query inside `.levelRow`.
+- ~~Settle how the hook reaches the level value: a `data-level-value`
+  attribute through `NumberStepper`, or a query inside `.levelRow`.~~
+  **Decided:** `querySelector("output")` on the card, with no
+  `NumberStepper` change (see Layout).
 - Spec 27 (defeat animation) also plays a burst on a `HeroCard` when a
   prop crosses a value (HP to 0). If it's built after this one, it can
   generalize `useLevelFourBurst` into a shared "play on transition" hook
   rather than copy it.
-- Check in the browser at 1280x800 and 2560x1440 (`/qa-screens`) that the
-  glow isn't clipped badly on the edge cards, and that tapping + or −
-  mid-burst works.
+- ~~Check in the browser at 1280x800 and 2560x1440 (`/qa-screens`) that
+  the glow isn't clipped badly on the edge cards, and that tapping + or −
+  mid-burst works.~~ **Decided:** checked in Chromium at both sizes. The
+  ring and glow show in full on the edge cards; a 3 to 4 starts 2
+  animations, which end on their own; − mid-burst stops them; a reload at
+  4 and reduced motion play nothing; page height and width don't change.
 - Tests:
   - `useLevelFourBurst.test.tsx`, with `element.animate` and
     `matchMedia` faked as in `useDraftPickAnimation.test.tsx`: 3 to 4

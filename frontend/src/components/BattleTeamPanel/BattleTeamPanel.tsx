@@ -148,6 +148,7 @@ export function BattleTeamPanel({
               variant="battle"
               hp={heroState.hp}
               level={heroState.level}
+              side={side}
               onHpChange={(value) => onHeroHpChange(hero.id, value)}
               onLevelChange={(value) => onHeroLevelChange(hero.id, value)}
               canAffordLevelUp={canAffordLevelUp(hero.id, team.gold, heroState.level)}
