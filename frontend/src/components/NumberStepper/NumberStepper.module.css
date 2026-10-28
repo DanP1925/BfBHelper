@@ -54,6 +54,14 @@
   margin: 0;
 }
 
+/* The read-only value (intent/22) keeps the input's box, so the row
+   doesn't shift, but drops its field look: it can't be typed in. */
+.readOnly {
+  display: inline-block;
+  border-color: transparent;
+  background: none;
+}
+
 .input:focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;

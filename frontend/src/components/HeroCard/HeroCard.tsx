@@ -12,6 +12,7 @@ import type {
   HeroBattleState,
   OnOffTokenField,
 } from "../../lib/battle/types";
+import { levelUpCost } from "../../lib/battle/levelUp";
 import { ARTIFACTS, artifactSummary } from "../artifacts";
 import { ArtifactToggle } from "../ArtifactToggle/ArtifactToggle";
 import { BATTLE_TOKENS, type CountedToken, type OnOffToken } from "../battleTokens";
@@ -49,6 +50,10 @@ type HeroCardProps =
       level: number;
       onHpChange?: (value: number) => void;
       onLevelChange?: (value: number) => void;
+      /** Whether the team can buy this hero's next level (intent/22).
+       * When false, + is disabled and no cost is shown. Only read with
+       * `onLevelChange`. */
+      canAffordLevelUp?: boolean;
       /** The "+" picker's open state (intent/09). The token row renders only
        * when this is provided (the Battle Board), so the Win Screen's cards
        * stay as they are. */
@@ -185,8 +190,20 @@ export function HeroCard(props: HeroCardProps) {
   }
 
   if (variant === "battle") {
-    const { hp, level, onHpChange, onLevelChange, tokenPicker, tokens = {}, artifacts } = props;
+    const {
+      hp,
+      level,
+      onHpChange,
+      onLevelChange,
+      canAffordLevelUp = true,
+      tokenPicker,
+      tokens = {},
+      artifacts,
+    } = props;
     const isDefeated = hp === 0;
+    // Shown only when the team can afford it, so never at level 4 either
+    // (intent/22).
+    const nextLevelCost = canAffordLevelUp ? levelUpCost(hero.id, level) : null;
 
     // The fixed order (BATTLE_TOKENS): +1 Attack, Confuse, Immobilize, then
     // the hero-specific tokens. The row's chips and the picker's options
@@ -249,13 +266,28 @@ export function HeroCard(props: HeroCardProps) {
           >
             <span className={styles.levelLabel}>Lv</span>
             {onLevelChange ? (
-              <NumberStepper
-                value={level}
-                min={HERO_STARTING_LEVEL}
-                max={HERO_MAX_LEVEL}
-                onChange={onLevelChange}
-                label={`${hero.name} level`}
-              />
+              <>
+                <NumberStepper
+                  value={level}
+                  min={HERO_STARTING_LEVEL}
+                  max={HERO_MAX_LEVEL}
+                  onChange={onLevelChange}
+                  label={`${hero.name} level`}
+                  readOnly
+                  increaseDisabled={!canAffordLevelUp}
+                />
+                {nextLevelCost !== null && (
+                  <span
+                    className={styles.levelCost}
+                    role="img"
+                    aria-label={`${hero.name}'s next level costs ${nextLevelCost} gold`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- static export has no Image Optimization API, see next.config.ts */}
+                    <img src="/structures/gold.png" alt="" className={styles.levelCostIcon} />
+                    {nextLevelCost}
+                  </span>
+                )}
+              </>
             ) : (
               <>
                 <div className={styles.levelPips}>

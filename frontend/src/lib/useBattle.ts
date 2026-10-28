@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { hpAfterLevelChange } from "./battle/levelUp";
+import { goldForLevelChange, hpAfterLevelChange } from "./battle/levelUp";
 import { crossesRound } from "./battle/phase";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
@@ -23,6 +23,8 @@ export type UseBattleResult = {
   winner: PlayerId | "draw" | null;
   setGold: (side: PlayerId, value: number) => void;
   setHeroHp: (side: PlayerId, heroId: HeroId, value: number) => void;
+  /** Also moves HP (intent/19) and pays or refunds the level's gold
+   * (intent/22). A no-op if the team can't afford it. */
   setHeroLevel: (side: PlayerId, heroId: HeroId, value: number) => void;
   /** Every counted token (+1 Attack, Shield, Stone, Chill) goes through this one
    * setter, named by its stored field. Clamped in the reducer. */
@@ -170,18 +172,22 @@ export function useBattle(
   }, []);
 
   // A level change also moves HP by the levels actually moved, after the
-  // level clamp (intent/19) — the same two-action composition as the
-  // defeat move above. It dispatches the reducer's SET_HERO_HP, not
-  // setHeroHp, so it never moves a hero to the respawn area.
+  // level clamp (intent/19) — the same composition as the defeat move
+  // above. It dispatches the reducer's SET_HERO_HP, not setHeroHp, so it
+  // never moves a hero to the respawn area. It also pays or refunds each
+  // level's gold (intent/22), and does nothing if the team can't afford it.
   const setHeroLevel = useCallback((side: PlayerId, heroId: HeroId, value: number) => {
     setState((prev) => {
       if (prev === null) return prev;
       const afterLevel = battleReducer(prev, { type: "SET_HERO_LEVEL", side, heroId, value });
       if (afterLevel === prev) return prev;
       const before = prev[side].heroes[heroId];
-      const levelDelta = afterLevel[side].heroes[heroId].level - before.level;
-      const hp = hpAfterLevelChange(before.hp, levelDelta);
-      return battleReducer(afterLevel, { type: "SET_HERO_HP", side, heroId, value: hp });
+      const toLevel = afterLevel[side].heroes[heroId].level;
+      const cost = goldForLevelChange(heroId, before.level, toLevel);
+      if (cost > prev[side].gold) return prev;
+      const hp = hpAfterLevelChange(before.hp, toLevel - before.level);
+      const afterHp = battleReducer(afterLevel, { type: "SET_HERO_HP", side, heroId, value: hp });
+      return battleReducer(afterHp, { type: "SET_GOLD", side, value: prev[side].gold - cost });
     });
   }, []);
 

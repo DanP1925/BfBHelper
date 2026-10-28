@@ -97,10 +97,10 @@ function setRoundPosition(state: BattleState, next: RoundPosition | null): Battl
 /**
  * Pure reducer over the only stored/dispatched battle state. Every branch
  * is a clamp-and-replace on one field — no action ever reads or changes a
- * second field (no gold-on-level-up, no Tower-to-Bit chip damage),
- * matching intent's player-driven-only scope. The HP-from-level bump
- * (intent/19) is composed in useBattle.setHeroLevel from SET_HERO_LEVEL
- * and SET_HERO_HP, like the defeat move, not here. The round and phase
+ * second field (no Tower-to-Bit chip damage), matching intent's
+ * player-driven-only scope. The HP-from-level bump (intent/19) and the
+ * level's gold (intent/22) are composed in useBattle.setHeroLevel from
+ * SET_HERO_LEVEL, SET_HERO_HP and SET_GOLD, like the defeat move, not here. The round and phase
  * move together as one position, and the initiative pass when a step
  * crosses a round (intent/21) is composed in useBattle.advancePhase and
  * stepPhaseBack from the phase action and PASS_INITIATIVE. Returns the

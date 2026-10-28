@@ -1,7 +1,6 @@
 # Spec 22: Level-Up Gold
 
-> **DRAFT.** Architecture for intent 22's scope. Build-out has not started
-> yet. See [../intent/22_level-up-gold.md](../intent/22_level-up-gold.md)
+> **BUILT.** Architecture for intent 22's scope, all built in one PR. See [../intent/22_level-up-gold.md](../intent/22_level-up-gold.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -73,7 +72,7 @@
 ## Data Model
 - No new types, fields or reducer actions.
 - **No schema change** (intent's Constraints). `CURRENT_BATTLE_SCHEMA_VERSION`
-  stays 15 (or whatever intent 21 lands it at, which this doesn't touch),
+  stays 16 (intent 21's),
   and existing saved battles load as they are. Level-ups paid by hand
   before this ships aren't revisited: a later level-down still refunds
   that level's price, which is correct either way.
@@ -156,10 +155,12 @@ Cases, per intent's Scope and Proposed Outcome:
    * can't afford (intent/22). */
   increaseDisabled?: boolean;
   ```
-  - With `readOnly`, the `<input>` is replaced by a plain element with
-    the same box and the same `aria-label` (e.g. "Felix level"), so it
-    keeps its size in the row and its accessible name. The text buffer
-    and commit logic are skipped.
+  - With `readOnly`, the `<input>` is replaced by an `<output>` with the
+    input's box (border and background cleared) and the same
+    `aria-label` (e.g. "Felix level"), so it keeps its size in the row
+    and its accessible name. Its role is `status`, which tests and e2e
+    query it by in place of `spinbutton`. The text buffer and commit
+    logic are skipped.
   - + is disabled when `atMax || increaseDisabled`. − is unaffected:
     a refund is always allowed.
   - `NumberStepper` stays domain-agnostic: it doesn't know about gold,
@@ -178,8 +179,9 @@ Cases, per intent's Scope and Proposed Outcome:
     and `levelUpCost(hero.id, level)`, so Ken Obi shows his discounted
     price. It's rendered only when `canAffordLevelUp` is true: an
     unaffordable level-up, like level 4, shows no cost and a disabled +
-    (intent's Scope, decided on the canvas). Its accessible name is e.g.
-    "Next level costs 3 gold".
+    (intent's Scope, decided on the canvas). It's a `role="img"` span
+    named after the hero, e.g. "Ceralin's next level costs 3 gold", so
+    eight costs on one Board don't share a name.
   - The read-only branch (pips and "n/4", used outside the Board) shows
     no cost.
 - **`BattleTeamPanel`** computes `canAffordLevelUp(hero.id, team.gold, hero.level)`
@@ -190,7 +192,7 @@ Cases, per intent's Scope and Proposed Outcome:
   read-only value is no wider than the input it replaces. It must not
   wrap the row or grow the card's height, since the Board's four hero
   cards per side have no spare vertical room. Checked in the browser
-  before shipping (Open Items).
+  (Open Items): it holds.
 - Nothing changes on the Battle Map: it shows team level, not hero
   levels or costs (intent 20).
 
@@ -226,8 +228,12 @@ infra.
   the canvas's "Battle Board" artboard, and get sign-off before building
   the UI.~~ **Decided:** drawn in version 104 and signed off 2026-10-28.
   An unaffordable cost is hidden rather than dimmed.
-- Check in the browser at 1280x800 that the level row doesn't wrap or
-  grow the hero card with the cost added.
+- ~~Check in the browser at 1280x800 that the level row doesn't wrap or
+  grow the hero card with the cost added.~~ **Decided:** it fits. At
+  1280x800 and 2560x1440 the level row is 144px wide and 26px tall,
+  with no overflow, and every hero card stays 172px tall with or without
+  the cost, including Agatha Trunch's long name. The page doesn't
+  scroll.
 - Tests:
   - `levelUp.test.ts`: `levelUpCost`, `goldForLevelChange` and
     `canAffordLevelUp`, covering the table above.
@@ -248,4 +254,6 @@ infra.
     Outcome, including a reload. The existing `level-up-hp.spec.ts`,
     `arena.spec.ts` and `team-level.spec.ts` level heroes up from 0 gold
     and find the level by its `spinbutton` role, so they need gold set
-    first and a new locator for the read-only level.
+    first and a new locator for the read-only level. Built: a shared
+    `setTeamGold(page, team, gold)` in `e2e/helpers.ts` types a team's
+    gold, and the level is found by its `status` role.
