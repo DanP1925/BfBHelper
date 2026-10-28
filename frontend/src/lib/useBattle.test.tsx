@@ -175,6 +175,88 @@ describe("useBattle", () => {
     });
   });
 
+  describe("advancePhase / stepPhaseBack (intent/25)", () => {
+    function steps(result: { current: ReturnType<typeof useBattle> }, n: number) {
+      for (let i = 0; i < n; i++) {
+        act(() => {
+          result.current.advancePhase();
+        });
+      }
+    }
+
+    function gold(result: { current: ReturnType<typeof useBattle> }) {
+      return [result.current.state?.p1.gold, result.current.state?.p2.gold];
+    }
+
+    it("Action → Cleanup gives both teams 2 gold, and persists it", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+
+      steps(result, 2);
+      expect(gold(result)).toEqual([0, 0]);
+
+      steps(result, 1);
+      expect(result.current.state?.phase).toBe("cleanup");
+      expect(gold(result)).toEqual([2, 2]);
+      expect(readRawState()).toMatchObject({ p1: { gold: 2 }, p2: { gold: 2 } });
+    });
+
+    it("Cleanup → Action takes the 2 back, never below 0", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      steps(result, 3);
+      act(() => {
+        result.current.setGold("p1", 1);
+      });
+
+      act(() => {
+        result.current.stepPhaseBack();
+      });
+      expect(result.current.state?.phase).toBe("action");
+      expect(gold(result)).toEqual([0, 0]);
+
+      // Nothing remembers the shortfall: stepping forward again pays the full 2.
+      steps(result, 1);
+      expect(gold(result)).toEqual([2, 2]);
+    });
+
+    it("crossing a round in either direction leaves gold alone", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      steps(result, 4);
+      expect(result.current.state).toMatchObject({ round: 2, phase: "orders" });
+      expect(gold(result)).toEqual([2, 2]);
+
+      act(() => {
+        result.current.stepPhaseBack();
+      });
+      expect(result.current.state).toMatchObject({ round: 1, phase: "cleanup" });
+      expect(gold(result)).toEqual([2, 2]);
+    });
+
+    it("a level-up refunded by a level-down, then a step back, restores the gold from before Cleanup", () => {
+      const { result } = renderHook(() => useBattle([HERO_A], [HERO_B], "p1"));
+      steps(result, 2);
+      act(() => {
+        result.current.setGold("p1", 1);
+        result.current.setGold("p2", 4);
+      });
+
+      steps(result, 1);
+      expect(gold(result)).toEqual([3, 6]);
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      expect(gold(result)).toEqual([1, 6]);
+
+      act(() => {
+        result.current.setHeroLevel("p1", HERO_A.id, 1);
+      });
+      act(() => {
+        result.current.stepPhaseBack();
+      });
+      expect(gold(result)).toEqual([1, 4]);
+    });
+  });
+
   it("a persisted battle keeps its own initiative, not the coin-flip winner", () => {
     saveBattleState({ ...createInitialBattleState([HERO_A], [HERO_B], "p1"), initiative: "p2" });
 

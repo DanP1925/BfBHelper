@@ -2,6 +2,7 @@ import type { HeroId, PlayerId } from "../draft/types";
 import { otherPlayer } from "../draft/selectors";
 import { ARENA_POSITION } from "../map/constants";
 import type { HeroDragPayload } from "../map/dragPayload";
+import { SIDES } from "./constants";
 import { heroSide } from "./selectors";
 import type { BattleState } from "./types";
 
@@ -11,8 +12,6 @@ export const ARENA_OWNER: HeroId = "felix";
 /** The power card's level. Equal to HERO_MAX_LEVEL today, but kept apart:
  * it's a card fact, not the level cap. */
 export const ARENA_UNLOCK_LEVEL = 4;
-
-const SIDES: readonly PlayerId[] = ["p1", "p2"];
 
 /** The side Felix was drafted on, or `null` if he wasn't. Read from the
  * battle state, which is built from the draft, so it agrees with the

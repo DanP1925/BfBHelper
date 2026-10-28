@@ -1,9 +1,8 @@
 # Spec 25: Cleanup Gold
 
-> **DRAFT.** Architecture for intent 25's scope. Build-out has not started
-> yet. See [../intent/25_cleanup-gold.md](../intent/25_cleanup-gold.md)
-> for the product-level problem, scope, and behavior this spec exists to
-> satisfy.
+> **BUILT.** Architecture for intent 25's scope, all built in one PR. See
+> [../intent/25_cleanup-gold.md](../intent/25_cleanup-gold.md) for the
+> product-level problem, scope, and behavior this spec exists to satisfy.
 
 ## Architecture Overview
 - Same frontend-only architecture as intents 01-24: React + TypeScript,
@@ -126,9 +125,11 @@ No change from earlier intents: same static Vercel deployment, no new
 infra.
 
 ## Open Items for Implementation
-- Check existing tests that step into Cleanup, in `useBattle.test.tsx`,
+- ~~Check existing tests that step into Cleanup, in `useBattle.test.tsx`,
   `e2e/round-and-phase.spec.ts` and any other e2e spec, for gold
-  assertions the +2 now breaks.
+  assertions the +2 now breaks.~~ **Decided:** none did. Their Cleanup
+  cases check round, phase and initiative only, and the full Vitest and
+  Playwright runs stayed green.
 - Tests:
   - `phase.test.ts`: `cleanupGoldChange` for every row of the table above.
   - `useBattle.test.tsx`: an `advancePhase / stepPhaseBack (intent/25)`

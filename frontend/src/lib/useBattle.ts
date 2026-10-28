@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { goldForLevelChange, hpAfterLevelChange } from "./battle/levelUp";
-import { crossesRound } from "./battle/phase";
+import { SIDES } from "./battle/constants";
+import { cleanupGoldChange, crossesRound } from "./battle/phase";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
 import { getBattleWinner } from "./battle/selectors";
 import type {
@@ -60,23 +61,33 @@ export type UseBattleResult = {
    * correction for the round-change pass below (intent/21). */
   passInitiative: () => void;
   /** One phase forward (intent/21). Cleanup → Orders also starts the next
-   * round and passes initiative. */
+   * round and passes initiative. Action → Cleanup also gives each team 2
+   * gold (intent/25). */
   advancePhase: () => void;
   /** One phase back, undoing exactly what advancePhase did: Orders → the
-   * previous round's Cleanup also passes initiative back. A no-op at
-   * Round 1, Orders. */
+   * previous round's Cleanup also passes initiative back, and Cleanup →
+   * Action takes each team's 2 gold back, never below 0 (intent/25). A
+   * no-op at Round 1, Orders. */
   stepPhaseBack: () => void;
 };
 
 /** A phase step, plus the initiative pass when it crosses a round
- * (intent/21): two single-purpose reducer actions triggered together, like
- * setHeroHp's defeat move. Passing always alternates (intent/05), so the
- * same flip both hands initiative on and hands it back. */
+ * (intent/21) or each team's Cleanup gold when it enters or leaves Cleanup
+ * within a round (intent/25): single-purpose reducer actions triggered
+ * together, like setHeroHp's defeat move. Passing always alternates
+ * (intent/05), so the same flip both hands initiative on and hands it back.
+ * SET_GOLD's clamp keeps a step back from taking gold below 0. */
 function stepPhase(prev: BattleState, type: "ADVANCE_PHASE" | "STEP_PHASE_BACK"): BattleState {
   const afterStep = battleReducer(prev, { type });
-  // A no-op step (the same reference) never crosses a round.
-  if (!crossesRound(prev, afterStep)) return afterStep;
-  return battleReducer(afterStep, { type: "PASS_INITIATIVE" });
+  // A no-op step (the same reference) never crosses a round or pays gold.
+  if (crossesRound(prev, afterStep)) return battleReducer(afterStep, { type: "PASS_INITIATIVE" });
+  const gold = cleanupGoldChange(prev, afterStep);
+  if (gold === 0) return afterStep;
+  return SIDES.reduce(
+    (state, side) =>
+      battleReducer(state, { type: "SET_GOLD", side, value: state[side].gold + gold }),
+    afterStep,
+  );
 }
 
 function heroIdKey(heroes: Hero[]): string {
