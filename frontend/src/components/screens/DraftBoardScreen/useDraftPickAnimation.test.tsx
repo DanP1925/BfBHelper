@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import type { CSSProperties } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getHeroById, HERO_IDS } from "../../../data/heroes";
 import type { Hero, HeroId, PlayerId } from "../../../lib/draft/types";
@@ -15,6 +16,11 @@ let fakes: FakeAnimations;
 let animations: FakeAnimation[] = [];
 
 const CARD_WIDTH = 100;
+
+const THEMED_TEAM_COLORS = {
+  "--color-p1": "#56aab1",
+  "--color-p2": "#d4705f",
+} as CSSProperties;
 
 /** Lays pool cards out in a row, 100px apart, by their current DOM order,
  * so a card's rect changes when an earlier card is removed. */
@@ -75,7 +81,9 @@ function Harness({
   });
   api.expose(beforePick);
   return (
-    <div ref={rootRef}>
+    // The themed team colors on the root, as the Draft's data-theme root
+    // has them (intent/29); the document keeps the unthemed ones.
+    <div ref={rootRef} style={THEMED_TEAM_COLORS}>
       <div>
         {pool.map((hero) => (
           <button key={hero.id} type="button" data-pool-hero={hero.id}>
@@ -137,8 +145,8 @@ describe("useDraftPickAnimation", () => {
   beforeEach(() => {
     fakes = installFakeAnimations();
     animations = fakes.animations;
-    document.documentElement.style.setProperty("--color-p1", "#c1665a");
-    document.documentElement.style.setProperty("--color-p2", "#4f9aa0");
+    document.documentElement.style.setProperty("--color-p1", "#4f9aa0");
+    document.documentElement.style.setProperty("--color-p2", "#c1665a");
     Element.prototype.getBoundingClientRect = function (this: Element) {
       return fakeRect(this);
     };
@@ -197,15 +205,16 @@ describe("useDraftPickAnimation", () => {
     expect(slotReveal()).toBeDefined();
   });
 
-  it("fades the slot in with a flash in the picking team's color", () => {
+  it("fades the slot in with a flash in the picking team's themed color", () => {
     pick(b, { side: "p2" });
     flushFrames();
 
     const [reveal] = animationsOn((element) => element.hasAttribute("data-slot-hero"));
     expect(reveal.keyframes[0].opacity).toBe(0);
-    expect(reveal.keyframes[1].outlineColor).toBe("#4f9aa0");
+    // The root's themed Player 2 red, not the document's unthemed one.
+    expect(reveal.keyframes[1].outlineColor).toBe("#d4705f");
     expect(reveal.keyframes[1].outlineOffset).toBe("-3px");
-    expect(reveal.keyframes[1].boxShadow).toContain("#4f9aa0");
+    expect(reveal.keyframes[1].boxShadow).toContain("#d4705f");
     expect(reveal.keyframes[2].opacity).toBe(1);
     expect(reveal.options).toMatchObject({
       duration: SLOT_REVEAL_MS,

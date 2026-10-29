@@ -49,3 +49,29 @@
 .count {
   font-size: 12px;
 }
+
+/* JRPG theme (intent/29): a stone plate (border +1, padding −1), the
+   chosen role a gold bar. Labels in pixel lettering, counts stay Rubik. */
+:global([data-theme="jrpg"]) .filter {
+  padding: 2px;
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-radius: 0;
+  box-shadow: var(--jr-plate-shadow);
+}
+
+:global([data-theme="jrpg"]) .option {
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .option[aria-pressed="true"] {
+  background: var(--jr-gold);
+  color: var(--jr-on-gold);
+  box-shadow: var(--jr-bar-shadow);
+}
+
+:global([data-theme="jrpg"]) .label {
+  font-family: var(--font-heading);
+  letter-spacing: 0.03em;
+}
