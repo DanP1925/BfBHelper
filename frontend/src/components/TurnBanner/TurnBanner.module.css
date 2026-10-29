@@ -14,3 +14,9 @@
   font-size: 22px;
   font-weight: 600;
 }
+
+/* JRPG theme (intent/29): an ink shadow under the pixel lettering, as on
+   the cards' names. */
+:global([data-theme="jrpg"]) .bannerText {
+  text-shadow: 2px 2px 0 var(--jr-ink);
+}

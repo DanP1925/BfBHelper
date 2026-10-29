@@ -49,8 +49,8 @@
   --font-body: var(--font-spectral), serif;
 }
 
-/* JRPG theme (intent/28): the Battle Board and Battle Map, whose screen
- * roots carry data-theme="jrpg". Taken from the hero cards: gold frames
+/* JRPG theme (intent/28): the Battle Board, the Battle Map and the Draft
+ * (intent/29), whose screen roots carry data-theme="jrpg". Taken from the hero cards: gold frames
  * with gem corners, dark purple text boxes, pixel lettering. Each
  * component's shape overrides live in its own module, under
  * :global([data-theme="jrpg"]). --color-gold, --color-hp and every token
@@ -66,6 +66,11 @@
   /* The same hues as the unthemed screens' #4f9aa0 and #c1665a, brighter. */
   --color-p1: #56aab1;
   --color-p2: #d4705f;
+  /* Only the Draft reads these (its empty slots and disabled role options):
+   * a stone well, the label as faint as the old #5c5142 on purple. */
+  --color-slot-empty-bg: var(--jr-well);
+  --color-slot-empty-border: var(--jr-stone);
+  --color-slot-empty-label: #6b6285;
 
   /* Pixel lettering for titles and labels; Rubik for text and every
    * number, so numbers stay readable at a glance. */

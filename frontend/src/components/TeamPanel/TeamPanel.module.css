@@ -49,3 +49,22 @@
   text-transform: uppercase;
   color: var(--color-slot-empty-label);
 }
+
+/* JRPG theme (intent/29): no frame, the team name on a stone plate. Its
+   top and side borders come out of the padding, so the header keeps its
+   size, and the 3px rule under it still shows whose turn it is. */
+:global([data-theme="jrpg"]) .header {
+  padding: 8px 8px 10px;
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-bottom-width: 3px;
+  box-shadow: var(--jr-plate-shadow);
+  text-shadow: 2px 2px 0 var(--jr-ink);
+}
+
+/* An empty slot: a dashed stone well (its colors are the theme's). */
+:global([data-theme="jrpg"]) .emptySlot {
+  border-width: 2px;
+  border-radius: 0;
+}

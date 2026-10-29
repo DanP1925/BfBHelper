@@ -1,7 +1,6 @@
 # Spec 29: Draft JRPG Theme
 
-> **DRAFT.** Architecture for intent 29's scope. Build-out has not started
-> yet. See [../intent/29_draft-jrpg-theme.md](../intent/29_draft-jrpg-theme.md)
+> **BUILT.** Architecture for intent 29's scope, all built in one PR. See [../intent/29_draft-jrpg-theme.md](../intent/29_draft-jrpg-theme.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -113,16 +112,17 @@ Other rules:
   - `HeroCard .slot`: 1px border → 2px. The extra pixel on each side is paid
     back from `.slotInfo`'s 8px padding (→ 7px), so the card's width is
     unchanged. The 5:4 image wrapper loses 2px of width, and so 1.6px of
-    height, so a filled slot comes out under a pixel shorter, never taller.
+    height, and the caption's Jersey 15 name sets a tighter line than
+    Spectral: as built, a filled slot is about 7px shorter, never taller.
   - `TeamPanel .emptySlot` sizes by `aspect-ratio` with no padding, so a
     2px border changes nothing outside it.
 - **Fonts and fit-to-height sizing.** The slots and the pool size their
   cards to the height they're given, so a header or role filter that came
   out taller would shrink every card. Jersey 15 and Rubik set tighter lines
   than Cinzel and Spectral (spec 28 measured shorter boxes, never taller),
-  so the cards should keep their size or grow slightly, up to their caps
-  (150px for a slot, 260px for a pool card). Measured in the build (see
-  Open Items).
+  so the cards keep their size or grow slightly, up to their caps (150px
+  for a slot, 260px for a pool card). As built, every card keeps its size
+  (see Open Items).
 - **Both QA screens:** at 1280x800 (must pass) and 2560x1440, the Draft
   shows no new scrollbar, the pool keeps its column count, and no card is
   narrower than on `main`.
@@ -138,7 +138,8 @@ https://claude.ai/artifact/3ReGvV7g9bML75BULfWhsK
 Version 121 adds a row titled **"Intent 29 — Draft JRPG Theme"** beside
 intent 28's, under the Draft column, with one artboard:
 - **"Draft — JRPG Theme"** is the Draft as built today (the full-card
-  pool, the cropped slot cards in a 120px column), mid-draft as the
+  pool, the cropped slot cards), drawn with one 120px slot column where
+  the app fits one or two 150px columns to the height. It's mid-draft as the
   "Draft — Mid-Selection" artboard: step 3, Player 1 to pick, filtering
   Damage. It shows the team names on stone plates over the team-color
   rule, the filled slots as stone wells and the empty ones as dashed
@@ -162,14 +163,27 @@ No change from earlier intents: same static Vercel deployment, no new
 infra and no new font.
 
 ## Open Items for Implementation
-- **Check the layout in the browser** at 1280x800 and 2560x1440 against
-  `main`, with `getBoundingClientRect` as in spec 28: slot and pool card
-  widths, the pool's column count, the team panels' width, no new scroll.
-- **`--color-slot-empty-label`'s value.** `#6b6285` is a starting point.
-  The "Empty" label and a disabled role option should look as faint as on
-  `main`, but stay legible.
-- **Tests.** `page.test.tsx`'s "leaves the Start screen and the Draft
-  unthemed" becomes: the Draft is themed and the Start screen isn't. A
-  `DraftBoardScreen` test checks the root carries the attribute. No e2e
-  change. The Results and Win screens are screenshot-compared with
-  `main`: they should be pixel-identical.
+- ~~**Check the layout in the browser** at 1280x800 and 2560x1440 against
+  `main`.~~ **Decided:** measured mid-draft with `getBoundingClientRect` on
+  both servers. Every width matches: the team panels (310px, two slot
+  columns, at 1280x800; 150px at 2560x1440), the slots (150px), the pool
+  cards (121px and 260px) and the pool's columns (4 and 7). Some heights
+  are shorter, none taller: the team header 44px against 45px, the role
+  filter 36px against 43px, a filled slot about 7px. The pool scrolls at
+  1280x800 exactly as on `main`, and nothing else scrolls.
+- ~~**`--color-slot-empty-label`'s value.**~~ **Decided:** `#6b6285` kept.
+  In the screenshots the "Empty" label is as faint as on `main` and still
+  legible.
+- ~~**Tests.**~~ **Decided:** `page.test.tsx` checks that the Draft is
+  themed (one root, around the role filter and New Draft) and the Start
+  screen isn't. `DraftBoardScreen.test.tsx` checks the root carries the
+  attribute around the banner, the panels and the pool. In
+  `useDraftPickAnimation.test.tsx`, the document has the unthemed team
+  colors and the hook's root the themed ones, and the flash uses the root's
+  (jsdom doesn't inherit custom properties, so they're set on the root
+  itself). No e2e change. With the coin flip matched, the Results screen
+  at 1280x800 is pixel-identical to `main`'s and has no themed root. The
+  Win screen wasn't screenshot-compared: it uses `HeroCard`'s `result`
+  variant and no Draft component, and no override matches it without the
+  attribute. In the browser, a pick's flash used the themed team color,
+  and the slot was a stone well again after it.

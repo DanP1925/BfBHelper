@@ -77,7 +77,7 @@ export function DraftBoardScreen({
   }
 
   return (
-    <div ref={rootRef} className={styles.screen}>
+    <div ref={rootRef} className={styles.screen} data-theme="jrpg">
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <span className={styles.title}>Battle for Biternia</span>

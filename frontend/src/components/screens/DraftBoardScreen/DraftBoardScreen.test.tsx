@@ -130,3 +130,17 @@ describe("DraftBoardScreen role filter (intent/23)", () => {
     expect(activeRole()).toBe("All");
   });
 });
+
+describe("DraftBoardScreen JRPG theme (intent/29)", () => {
+  // jsdom applies no CSS, so this checks the switch every themed rule keys
+  // on; the look itself is checked in the browser.
+  it("carries the theme on its root, around the banner, the panels and the pool", () => {
+    const { container } = render(<DraftBoardScreen {...boardProps(1, "p1")} />);
+
+    const root = container.firstElementChild;
+    expect(root).toHaveAttribute("data-theme", "jrpg");
+    expect(root).toContainElement(screen.getByText("Step 1 of 5"));
+    expect(root).toContainElement(screen.getByText("Player 2"));
+    expect(root).toContainElement(screen.getAllByRole("button", { name: /^Pick / })[0]);
+  });
+});

@@ -79,6 +79,26 @@
   color: var(--color-muted);
 }
 
+/* JRPG theme (intent/29), slot variant only: a stone well. The border
+   grows by 1px and the caption's padding gives it back. No outer outline:
+   TeamPanel's slot list clips anything outside a slot. The pool's cards
+   stay bare. */
+:global([data-theme="jrpg"]) .slot {
+  background: var(--jr-well);
+  border: 2px solid var(--jr-stone);
+  border-top-color: var(--jr-stone-light);
+  border-radius: 0;
+}
+
+:global([data-theme="jrpg"]) .slotInfo {
+  padding: 7px 8px;
+}
+
+:global([data-theme="jrpg"]) .slotName {
+  font-family: var(--font-heading);
+  letter-spacing: 0.02em;
+}
+
 .resultCard {
   background: var(--color-panel-bg);
   border: 1px solid var(--color-border);

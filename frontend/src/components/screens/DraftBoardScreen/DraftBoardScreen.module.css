@@ -77,3 +77,38 @@
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+
+/* JRPG theme (intent/29). The Draft has no tokens, so every gold on it
+   (the title, "Draft complete", the pool's hover, focus outlines) is
+   decoration and takes the frames' gold. +1 Attack's --color-gold is only
+   kept on the Board and the Map. */
+:global([data-theme="jrpg"]).screen {
+  --color-gold: var(--jr-gold);
+}
+
+:global([data-theme="jrpg"]) .title {
+  text-shadow: 2px 2px 0 var(--jr-ink);
+}
+
+:global([data-theme="jrpg"]) .subtitle {
+  font-family: var(--font-heading);
+}
+
+/* New Draft: a raised key. */
+:global([data-theme="jrpg"]) .newDraftButton {
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  letter-spacing: 0.03em;
+  background: var(--jr-key-bg);
+  border-color: var(--jr-ink);
+  border-radius: 0;
+  box-shadow: var(--jr-key-shadow);
+}
+
+:global([data-theme="jrpg"]) .newDraftButton:hover {
+  background: var(--jr-key-bg-hover);
+}
+
+:global([data-theme="jrpg"]) .newDraftButton:active {
+  box-shadow: var(--jr-key-shadow-pressed);
+}

@@ -259,10 +259,10 @@ export function useDraftPickAnimation({
       if (!root) return;
       // Every read before any write: the team color and the glide's layout
       // reads come before the stand-in is appended and animations start.
+      // Read from the screen's root, which carries the theme's team colors
+      // (intent/29).
       const color =
-        getComputedStyle(document.documentElement)
-          .getPropertyValue(`--color-${pending.side}`)
-          .trim() || "currentColor";
+        getComputedStyle(root).getPropertyValue(`--color-${pending.side}`).trim() || "currentColor";
       glide(running, root, pending.rects);
       if (pending.fadeImage) fadeOut(running, pending.fadeImage);
       const slot = root.querySelector<HTMLElement>(`[data-slot-hero="${pending.heroId}"]`);

@@ -153,7 +153,7 @@ describe("Home", () => {
     expect(screen.getByRole("button", { name: "Zoom out" })).toBeEnabled();
   });
 
-  describe("the JRPG theme (intent/28)", () => {
+  describe("the JRPG theme (intents 28 and 29)", () => {
     // jsdom applies no CSS, so these check the switch every themed rule keys
     // on; the look itself is checked in the browser.
     const themedRoots = () => document.querySelectorAll('[data-theme="jrpg"]');
@@ -171,12 +171,17 @@ describe("Home", () => {
       expect(themedRoots()[0]).toContainElement(screen.getByRole("button", { name: "Zoom in" }));
     });
 
-    it("leaves the Start screen and the Draft unthemed", () => {
-      const { unmount } = render(<Home />);
-      expect(themedRoots()).toHaveLength(0);
-      unmount();
-
+    it("themes the Draft", () => {
       saveDraft({ initiative: "p1", picks: { p1: [], p2: [] } });
+      render(<Home />);
+      expect(themedRoots()).toHaveLength(1);
+      expect(themedRoots()[0]).toContainElement(
+        screen.getByRole("group", { name: "Filter heroes by role" }),
+      );
+      expect(themedRoots()[0]).toContainElement(screen.getByRole("button", { name: "New Draft" }));
+    });
+
+    it("leaves the Start screen unthemed", () => {
       render(<Home />);
       expect(themedRoots()).toHaveLength(0);
     });
