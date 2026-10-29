@@ -39,8 +39,9 @@ settled in the spec and its design on the canvas.
 
 ## Proposed Outcome
 The players start a new draft. The title and the turn banner read in
-pixel lettering, and the two team panels sit in gold frames like the ones
-they'll see on the Battle Board. Player 1's turn is as clear as before.
+pixel lettering, and each team's name sits on a stone plate like the
+plates they'll see on the Battle Board. Player 1's turn is as clear as
+before.
 They filter the pool to Utility: the role filter has the new look, and its
 counts are as easy to read as before. They tap Ceralin: her card fades,
 the pool closes the gap and she appears in Player 1's first slot, the same
