@@ -37,13 +37,16 @@
     setState((prev) => {
       if (prev === null) return prev;
       const afterMove = battleReducer(prev, { type: "SET_HERO_POSITION", side, heroId, spaceId });
-      if (afterMove === prev || !isRespawn(prev, side, heroId, spaceId)) return afterMove;
+      if (afterMove === prev) return prev;
       const hero = prev[side].heroes[heroId];
+      const isRespawn = /* see below */;
+      const drafted = heroesRef.current.find((candidate) => candidate.id === heroId);
+      if (!isRespawn || drafted === undefined) return afterMove;
       const afterHp = battleReducer(afterMove, {
         type: "SET_HERO_HP",
         side,
         heroId,
-        value: heroMaxHp(getHeroById(heroId), hero.level),
+        value: heroMaxHp(drafted, hero.level),
       });
       return battleReducer(afterHp, {
         type: "SET_HERO_RESPAWN_WINDOW",
@@ -91,9 +94,12 @@
 - **`createInitialHeroState` (`lib/battle/reducer.ts`)** uses it:
   `hp: clampHeroHp(heroMaxHp(hero, HERO_STARTING_LEVEL))`. Same value as
   today's `hero.baseHp + HERO_STARTING_LEVEL`.
-- **`useBattle`** imports `getHeroById` from `data/heroes.ts` for the
-  hero's `baseHp`. `HeroBattleState` doesn't carry it, and doesn't need
-  to.
+- **`useBattle`** reads the hero's `baseHp` from the heroes it was given
+  (`p1Heroes`, `p2Heroes`), not from `data/heroes.ts`'s `getHeroById`, so
+  a battle's own hero data wins and an unknown id is a no-op, not a throw.
+  They're kept in a `heroesRef` updated by an effect, so `setHeroPosition`
+  stays stable while callers pass fresh arrays every render.
+  `HeroBattleState` doesn't carry `baseHp`, and doesn't need to.
 - **No change** to `BattleState`, `HeroBattleState`, the reducer's
   actions or `persistence/schema.ts`. `CURRENT_BATTLE_SCHEMA_VERSION`
   stays as it is, so saved battles load unchanged (intent's Constraints).
