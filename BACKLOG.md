@@ -79,6 +79,9 @@ error, manual control where it keeps the table in charge.
 - `Triage` **Hide an empty respawn area on the Map.** It takes room even when no
   hero is defeated. It still has to show at battle start and as a drop target
   while dragging.
+- `Triage` **Restore full HP on respawn.** A respawning hero comes back at 0 HP,
+  so players have to set the HP back by hand. Set it to the hero's current max
+  HP (Base HP plus level-ups) when the hero respawns.
 - `Triage` **Move the gold-pile controls off the Map.** The gold-pile steppers take
   space under the board. Move them somewhere else so the board can grow.
 - `Triage` **Auto-focus the Map's camera.** Have the camera move on its own to where
