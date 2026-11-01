@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { canAffordLevelUp, goldForLevelChange, hpAfterLevelChange, levelUpCost } from "./levelUp";
+import {
+  canAffordLevelUp,
+  goldForLevelChange,
+  heroMaxHp,
+  hpAfterLevelChange,
+  levelUpCost,
+} from "./levelUp";
+import { getHeroById } from "../../data/heroes";
+
+describe("heroMaxHp", () => {
+  it("is Base HP plus the level", () => {
+    const ceralin = getHeroById("ceralin");
+    expect(heroMaxHp(ceralin, 1)).toBe(ceralin.baseHp + 1);
+    expect(heroMaxHp(ceralin, 4)).toBe(ceralin.baseHp + 4);
+  });
+});
 
 describe("hpAfterLevelChange", () => {
   it("adds 1 HP on a level-up", () => {

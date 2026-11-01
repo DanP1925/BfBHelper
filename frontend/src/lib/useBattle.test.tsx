@@ -1017,4 +1017,101 @@ describe("useBattle", () => {
       expect(result.current.state?.p2.heroPositions[HERO_B.id]).toBe(ARENA_POSITION);
     });
   });
+
+  describe("setHeroPosition respawn (intent/30)", () => {
+    // HERO_A at 0 HP in the respawn area, with a respawn window.
+    function renderDefeated() {
+      const hook = renderHook(() => useBattle([HERO_A, OTHER_HERO], [HERO_B], "p1"));
+      act(() => {
+        hook.result.current.setHeroHp("p1", HERO_A.id, 0);
+      });
+      expect(hook.result.current.state?.p1.heroes[HERO_A.id].respawnWindow).not.toBeNull();
+      return hook;
+    }
+
+    it("onto a Map space sets Base HP + level and clears the window, kept on reload", () => {
+      const { result, unmount } = renderDefeated();
+
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+      });
+      const hero = result.current.state?.p1.heroes[HERO_A.id];
+      expect(hero?.hp).toBe(HERO_A.baseHp + 1);
+      expect(hero?.respawnWindow).toBeNull();
+      expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
+      expect(readRawState().p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
+      unmount();
+
+      const { result: reloaded } = renderHook(() =>
+        useBattle([HERO_A, OTHER_HERO], [HERO_B], "p1"),
+      );
+      expect(reloaded.current.state?.p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
+      expect(reloaded.current.state?.p1.heroes[HERO_A.id].respawnWindow).toBeNull();
+    });
+
+    it("a level-2 hero respawns at Base HP + 2", () => {
+      const { result } = renderHook(() => useBattle([HERO_A, OTHER_HERO], [HERO_B], "p1"));
+      act(() => {
+        result.current.setGold("p1", 2);
+        result.current.setHeroLevel("p1", HERO_A.id, 2);
+      });
+      act(() => {
+        result.current.setHeroHp("p1", HERO_A.id, 0);
+      });
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 2);
+    });
+
+    it("into the Arena only moves: no hero respawns there", () => {
+      const { result } = renderDefeated();
+      const window = result.current.state?.p1.heroes[HERO_A.id].respawnWindow;
+
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, ARENA_POSITION);
+      });
+      expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(ARENA_POSITION);
+      expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(0);
+      expect(result.current.state?.p1.heroes[HERO_A.id].respawnWindow).toEqual(window);
+    });
+
+    it("Felix going from the Arena back onto a Map space keeps his HP", () => {
+      const { result } = renderDefeated();
+
+      act(() => {
+        result.current.setHeroPosition("p1", OTHER_HERO.id, ARENA_POSITION);
+        result.current.setHeroHp("p1", OTHER_HERO.id, 4);
+      });
+      act(() => {
+        result.current.setHeroPosition("p1", OTHER_HERO.id, MAP_SPACE_IDS[0]);
+      });
+      expect(result.current.state?.p1.heroes[OTHER_HERO.id].hp).toBe(4);
+    });
+
+    it("a hero above 0 HP leaving the respawn area keeps their HP", () => {
+      const { result } = renderDefeated();
+
+      act(() => {
+        result.current.setHeroHp("p1", HERO_A.id, 3);
+      });
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+      });
+      expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(3);
+    });
+
+    it("a hero moved back into the respawn area keeps their HP", () => {
+      const { result } = renderDefeated();
+
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+      });
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, null);
+      });
+      expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBeNull();
+      expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(HERO_A.baseHp + 1);
+    });
+  });
 });

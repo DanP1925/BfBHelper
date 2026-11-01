@@ -1,7 +1,6 @@
 # Spec 30: Respawn Full HP
 
-> **DRAFT.** Architecture for intent 30's scope. Build-out has not started
-> yet. See [../intent/30_respawn-full-hp.md](../intent/30_respawn-full-hp.md)
+> **BUILT.** Architecture for intent 30's scope, all built in one PR. See [../intent/30_respawn-full-hp.md](../intent/30_respawn-full-hp.md)
 > for the product-level problem, scope, and behavior this spec exists to
 > satisfy.
 
@@ -144,11 +143,12 @@ No change from earlier intents: same static Vercel deployment, no new
 infra.
 
 ## Open Items for Implementation
-- Check existing tests that move a 0-HP hero out of the respawn area, in
+- ~~Check existing tests that move a 0-HP hero out of the respawn area, in
   `useBattle.test.tsx` (the `setHeroPosition` cases near the respawn
   window block) and the e2e specs (`respawn-window.spec.ts`,
   `battle-map.spec.ts`, `arena.spec.ts`), for HP or window assertions
-  the new HP breaks.
+  the new HP breaks.~~ **Decided:** none did. They only move heroes above
+  0 HP, and the full Vitest and Playwright runs stayed green.
 - Tests:
   - `levelUp.test.ts`: `heroMaxHp` for a level-1 and a level-4 hero.
   - `useBattle.test.tsx`: a `setHeroPosition respawn (intent/30)` block:
@@ -160,6 +160,6 @@ infra.
     - a hero above 0 HP moved out of the respawn area keeps their HP;
     - a hero moved back into the respawn area keeps their HP;
     - a level-2 hero respawns with Base HP + 2 (the HP follows the level).
-  - `e2e/respawn-window.spec.ts`, or a new `e2e/respawn-full-hp.spec.ts`:
+  - New `e2e/respawn-full-hp.spec.ts` (built; it also checks a reload):
     defeat a hero, drag them from the respawn area onto the board, and see
     their HP at Base HP + level on the Map and the Board, with no window.
