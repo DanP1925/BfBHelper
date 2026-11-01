@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { goldForLevelChange, heroMaxHp, hpAfterLevelChange } from "./battle/levelUp";
 import { SIDES } from "./battle/constants";
 import { cleanupGoldChange, crossesRound } from "./battle/phase";
@@ -17,7 +17,6 @@ import type {
   StructuresState,
 } from "./battle/types";
 import type { Hero, HeroId, PlayerId } from "./draft/types";
-import { getHeroById } from "../data/heroes";
 import type { GoldPileSpaceId, MapSpaceId } from "../data/mapSpaces";
 import { ARENA_POSITION } from "./map/constants";
 import { loadBattleState, saveBattleState } from "./persistence/storage";
@@ -168,6 +167,14 @@ export function useBattle(
     }
   }, [state]);
 
+  // The drafted heroes, for a respawn's Base HP (intent/30). A ref, so
+  // setHeroPosition stays stable while callers pass fresh arrays every
+  // render (see the hero-id keys above).
+  const heroesRef = useRef<Hero[]>([]);
+  useEffect(() => {
+    heroesRef.current = [...p1Heroes, ...p2Heroes];
+  });
+
   const setGold = useCallback((side: PlayerId, value: number) => {
     setState((prev) =>
       prev === null ? prev : battleReducer(prev, { type: "SET_GOLD", side, value }),
@@ -284,12 +291,13 @@ export function useBattle(
         spaceId !== null &&
         spaceId !== ARENA_POSITION &&
         hero.hp === 0;
-      if (!isRespawn) return afterMove;
+      const drafted = heroesRef.current.find((candidate) => candidate.id === heroId);
+      if (!isRespawn || drafted === undefined) return afterMove;
       const afterHp = battleReducer(afterMove, {
         type: "SET_HERO_HP",
         side,
         heroId,
-        value: heroMaxHp(getHeroById(heroId), hero.level),
+        value: heroMaxHp(drafted, hero.level),
       });
       return battleReducer(afterHp, {
         type: "SET_HERO_RESPAWN_WINDOW",

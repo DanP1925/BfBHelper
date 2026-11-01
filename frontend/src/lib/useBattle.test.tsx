@@ -1089,6 +1089,40 @@ describe("useBattle", () => {
       expect(result.current.state?.p1.heroes[OTHER_HERO.id].hp).toBe(4);
     });
 
+    it("a 0-HP hero going from the Arena onto a Map space stays at 0", () => {
+      const { result } = renderDefeated();
+
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, ARENA_POSITION);
+      });
+      act(() => {
+        result.current.setHeroPosition("p1", HERO_A.id, MAP_SPACE_IDS[0]);
+      });
+      expect(result.current.state?.p1.heroPositions[HERO_A.id]).toBe(MAP_SPACE_IDS[0]);
+      expect(result.current.state?.p1.heroes[HERO_A.id].hp).toBe(0);
+    });
+
+    it("reads Base HP from the battle's own heroes", () => {
+      // Ceralin's Base HP is 10 in data/heroes.ts; this hero says 7.
+      const ceralin: Hero = {
+        id: "ceralin",
+        name: "Ceralin",
+        className: "Fighter",
+        portrait: "/heroes/ceralin.png",
+        battleToken: "/heroes-tokens/ceralin.png",
+        baseHp: 7,
+        role: "damage",
+      };
+      const { result } = renderHook(() => useBattle([ceralin], [HERO_B], "p1"));
+      act(() => {
+        result.current.setHeroHp("p1", ceralin.id, 0);
+      });
+      act(() => {
+        result.current.setHeroPosition("p1", ceralin.id, MAP_SPACE_IDS[0]);
+      });
+      expect(result.current.state?.p1.heroes[ceralin.id].hp).toBe(8);
+    });
+
     it("a hero above 0 HP leaving the respawn area keeps their HP", () => {
       const { result } = renderDefeated();
 
