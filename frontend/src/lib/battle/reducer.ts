@@ -16,6 +16,7 @@ import {
   TEAM_STARTING_GOLD,
   TOWER_STARTING_HP,
 } from "./constants";
+import { heroMaxHp } from "./levelUp";
 import { BATTLE_START, nextPosition, previousPosition, type RoundPosition } from "./phase";
 import { createFreshGoldPiles, seedHeroPositions } from "../../data/mapSpaces";
 import type { GoldPileSpaceId, MapSpaceId } from "../../data/mapSpaces";
@@ -110,7 +111,9 @@ function setRoundPosition(state: BattleState, next: RoundPosition | null): Battl
  * level's gold (intent/22) are composed in useBattle.setHeroLevel from
  * SET_HERO_LEVEL, SET_HERO_HP and SET_GOLD, like the defeat move, not here. So is the respawn
  * window (intent/24): useBattle.setHeroHp sets it with SET_HERO_RESPAWN_WINDOW when HP
- * reaches 0, and clears it when HP goes back above 0. The round and phase
+ * reaches 0, and clears it when HP goes back above 0. So is the respawn HP (intent/30):
+ * useBattle.setHeroPosition sets it with SET_HERO_HP when a 0-HP hero leaves the respawn
+ * area for a Map space. The round and phase
  * move together as one position, and the initiative pass when a step
  * crosses a round (intent/21) is composed in useBattle.advancePhase and
  * stepPhaseBack from the phase action and PASS_INITIATIVE, as is each team's
@@ -264,7 +267,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
  * Artifacts face-up (only Runika's are ever read, intent/17). */
 export function createInitialHeroState(hero: Hero): HeroBattleState {
   return {
-    hp: clampHeroHp(hero.baseHp + HERO_STARTING_LEVEL),
+    hp: clampHeroHp(heroMaxHp(hero, HERO_STARTING_LEVEL)),
     level: HERO_STARTING_LEVEL,
     attackTokens: 0,
     confused: false,

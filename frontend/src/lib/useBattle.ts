@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { goldForLevelChange, hpAfterLevelChange } from "./battle/levelUp";
+import { goldForLevelChange, heroMaxHp, hpAfterLevelChange } from "./battle/levelUp";
 import { SIDES } from "./battle/constants";
 import { cleanupGoldChange, crossesRound } from "./battle/phase";
 import { battleReducer, createInitialBattleState } from "./battle/reducer";
@@ -17,7 +17,9 @@ import type {
   StructuresState,
 } from "./battle/types";
 import type { Hero, HeroId, PlayerId } from "./draft/types";
+import { getHeroById } from "../data/heroes";
 import type { GoldPileSpaceId, MapSpaceId } from "../data/mapSpaces";
+import { ARENA_POSITION } from "./map/constants";
 import { loadBattleState, saveBattleState } from "./persistence/storage";
 
 export type UseBattleResult = {
@@ -51,7 +53,9 @@ export type UseBattleResult = {
   setHeroArtifact: (side: PlayerId, heroId: HeroId, field: ArtifactField, faceUp: boolean) => void;
   setStructureHp: (side: PlayerId, slot: keyof StructuresState, value: number) => void;
   /** Also moves a hero into or out of the Arena (intent/14): its position
-   * is just another `HeroPosition`. */
+   * is just another `HeroPosition`. Moving a hero at 0 HP from the respawn
+   * area onto a Map space also sets their HP to Base HP + level and clears
+   * their respawn window (intent/30). Never into the Arena. */
   setHeroPosition: (side: PlayerId, heroId: HeroId, spaceId: HeroPosition) => void;
   setGoldPile: (pileId: GoldPileSpaceId, value: number) => void;
   /** Places or moves Dazeem's Ice Wall (intent/16), or sends it back to its
@@ -174,7 +178,8 @@ export function useBattle(
   // area in the same update (intent/04) — two independently-replaceable
   // fields, triggered together by this one user action, not a combined
   // reducer action. Raising HP back above 0 afterward does NOT reverse
-  // this: respawning is always its own explicit setHeroPosition call.
+  // this: respawning is always its own explicit setHeroPosition call,
+  // which also sets the HP (intent/30).
   // The same update sets the hero's respawn window (intent/24), from the
   // team as it is after the defeat, and HP back above 0 clears it. A no-op
   // returns early, so landing on 0 here always means a new defeat.
@@ -263,12 +268,36 @@ export function useBattle(
     [],
   );
 
+  // Moving a hero at 0 HP from the respawn area onto a Map space is a
+  // respawn (intent/30): it also sets their HP to their max HP, which
+  // clears the respawn window (intent/24), in the same update. A hero
+  // above 0 HP, as at battle start, only moves, and so does one dropped
+  // into the Arena: no hero respawns there.
   const setHeroPosition = useCallback((side: PlayerId, heroId: HeroId, spaceId: HeroPosition) => {
-    setState((prev) =>
-      prev === null
-        ? prev
-        : battleReducer(prev, { type: "SET_HERO_POSITION", side, heroId, spaceId }),
-    );
+    setState((prev) => {
+      if (prev === null) return prev;
+      const afterMove = battleReducer(prev, { type: "SET_HERO_POSITION", side, heroId, spaceId });
+      if (afterMove === prev) return prev;
+      const hero = prev[side].heroes[heroId];
+      const isRespawn =
+        prev[side].heroPositions[heroId] === null &&
+        spaceId !== null &&
+        spaceId !== ARENA_POSITION &&
+        hero.hp === 0;
+      if (!isRespawn) return afterMove;
+      const afterHp = battleReducer(afterMove, {
+        type: "SET_HERO_HP",
+        side,
+        heroId,
+        value: heroMaxHp(getHeroById(heroId), hero.level),
+      });
+      return battleReducer(afterHp, {
+        type: "SET_HERO_RESPAWN_WINDOW",
+        side,
+        heroId,
+        window: null,
+      });
+    });
   }, []);
 
   const setGoldPile = useCallback((pileId: GoldPileSpaceId, value: number) => {

@@ -1,5 +1,12 @@
 import { HERO_MAX_LEVEL } from "./constants";
-import type { HeroId } from "../draft/types";
+import type { Hero, HeroId } from "../draft/types";
+
+/** A hero's maximum HP: their Base HP plus their current level (rulebook
+ * p. 6, intent/30). Nothing else changes it. The flat HERO_HP_CEILING is
+ * applied by the reducer's SET_HERO_HP. */
+export function heroMaxHp(hero: Hero, level: number): number {
+  return hero.baseHp + level;
+}
 
 /** A hero's HP after their level moves by `levelDelta` (intent/19).
  * +1 HP per level gained and -1 per level lost. A defeated hero (0 HP)
