@@ -16,6 +16,9 @@ This phase covers only:
   from the respawn area onto a Map space, their HP is set to their
   current max HP: Base HP plus their level. The drag is the only trigger,
   as it's already the respawn step.
+- **Never in the Arena** (decided 2026-11-02). No hero respawns in Felix's
+  Arena: dropping a hero there from the respawn area only moves them, and
+  so does any move into or out of the Arena.
 - **Only from 0 HP** (decided 2026-11-02). The HP is set only if it's 0
   when the hero leaves the respawn area. A hero above 0 keeps their HP:
   every hero at battle start, or one whose HP was already raised by hand.
